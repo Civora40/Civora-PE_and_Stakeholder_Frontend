@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { CivoraLogo } from '@/components/brand/CivoraLogo';
 import { ShieldCheck, HardHat, CheckCircle2 } from 'lucide-react';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
 export function PublicFooter() {
   const currentYear = new Date().getFullYear();
@@ -98,6 +99,9 @@ export function PublicFooter() {
           </div>
         </div>
       </div>
+
+      {/* Interactive Scroll to Top Floating UI */}
+      <ScrollToTop />
     </footer>
   );
 }
