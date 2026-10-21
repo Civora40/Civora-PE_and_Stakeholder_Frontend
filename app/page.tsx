@@ -20,12 +20,14 @@ import {
   Clock,
   AlertCircle,
   FileSpreadsheet,
+  Mail,
 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Badge } from '@/components/ui/Badge';
 import { InteractiveProductPreview } from '@/components/landing/InteractiveProductPreview';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { ContactForm } from '@/components/forms/ContactForm';
 
 export default function LandingPage() {
   return (
@@ -1061,6 +1063,67 @@ export default function LandingPage() {
               </ScrollReveal>
             ))}
           </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* SECTION 12: TECHNICAL INQUIRY & CONTACT                                   */}
+        {/* ========================================================================= */}
+        <section id="contact" className="scroll-mt-24 py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-100">
+          <ScrollReveal animation="fade-up">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+              {/* Left Column: Direct Inquiries Context */}
+              <div className="lg:col-span-5 space-y-6">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[#4FAAA7] font-['Encode_Sans_Condensed',sans-serif]">
+                    GET IN TOUCH
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase mt-1">
+                    Speak With Our Technical Advisory Team
+                  </h2>
+                </div>
+
+                <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                  Whether you are evaluating Civora for a multi-phase build, standardizing quality gates across an enterprise portfolio, or seeking technical integration, our engineering advisory team is at your disposal.
+                </p>
+
+                <div className="space-y-3 pt-2">
+                  <div className="p-4 rounded-2xl bg-[#f8fafc] border border-slate-200/90 flex items-center gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-400 uppercase font-mono">Advisory Desk</div>
+                      <div className="text-xs font-bold text-[#001237] font-mono">advisory@civora.com</div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[#f8fafc] border border-slate-200/90 flex items-center gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#001237] text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-400 uppercase font-mono">Compliance & Standards</div>
+                      <div className="text-xs font-bold text-[#001237] font-mono">compliance@civora.com</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#001237] text-white space-y-2">
+                  <div className="text-xs font-bold text-[#4FAAA7] uppercase tracking-wider font-['Encode_Sans_Condensed',sans-serif]">
+                    Rapid Response Commitment
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Direct technical consultation with civil engineers. Guaranteed response within 2 business hours for active project operations.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Contact Form */}
+              <div className="lg:col-span-7">
+                <ContactForm />
+              </div>
+            </div>
+          </ScrollReveal>
         </section>
 
         {/* ========================================================================= */}

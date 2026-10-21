@@ -56,6 +56,11 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/contact" className="hover:text-[#4FAAA7] transition-colors">
+                  Contact
+                </Link>
+              </li>
+              <li>
                 <Link href="/register" className="text-[#4FAAA7] font-bold hover:underline">
                   Register on Platform &rarr;
                 </Link>

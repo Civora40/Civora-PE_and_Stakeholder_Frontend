@@ -22,6 +22,7 @@ export function PublicNavbar() {
     { name: 'Capabilities', href: '/capabilities' },
     { name: 'Workflow', href: '/workflow' },
     { name: 'Governance', href: '/governance' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   return (
