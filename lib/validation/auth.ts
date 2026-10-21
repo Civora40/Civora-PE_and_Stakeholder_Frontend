@@ -25,24 +25,70 @@ export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export const registerSchema = z
   .object({
-    name: z.string().min(2, 'Full name is required (min 2 characters)'),
+    firstName: z
+      .string()
+      .trim()
+      .min(1, 'Enter your first name.')
+      .max(50, 'First name is too long (maximum 50 characters).'),
+    lastName: z
+      .string()
+      .trim()
+      .min(1, 'Enter your last name.')
+      .max(50, 'Last name is too long (maximum 50 characters).'),
     email: z
       .string()
-      .min(1, 'Work email is required')
-      .email('Please enter a valid work email address'),
-    organization: z.string().min(2, 'Organization or company name is required'),
-    role: z.enum(['project_engineer', 'platform_admin', 'read_only_stakeholder']),
+      .trim()
+      .toLowerCase()
+      .min(1, 'Enter a valid work email address.')
+      .email('Enter a valid work email address.'),
+    organization: z
+      .string()
+      .trim()
+      .min(2, 'Enter your organization or company name.')
+      .max(100, 'Organization name is too long.'),
+    jobTitle: z.string().trim().max(100).optional().default(''),
     password: z
       .string()
-      .min(6, 'Password must be at least 6 characters long'),
-    confirmPassword: z.string().min(6, 'Please confirm your password'),
+      .min(1, 'Enter a password.')
+      .min(6, 'Password must be at least 6 characters long.'),
+    confirmPassword: z.string().min(1, 'Please confirm your password.'),
+    invitationCode: z.string().trim().optional(),
     agreeTerms: z.boolean().refine((val) => val === true, {
-      message: 'You must agree to the professional engineering terms',
+      message: 'Please accept the required terms to continue.',
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'The passwords do not match.',
     path: ['confirmPassword'],
   });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
+
+export const onboardingStep1Schema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'Enter your first name.')
+    .max(50, 'First name is too long.'),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'Enter your last name.')
+    .max(50, 'Last name is too long.'),
+  displayName: z.string().trim().max(100).optional(),
+  jobTitle: z.string().trim().max(100).optional(),
+  phone: z.string().trim().max(30).optional(),
+  timeZone: z.string().trim().optional(),
+});
+
+export type OnboardingStep1Values = z.infer<typeof onboardingStep1Schema>;
+
+export const onboardingStep2Schema = z.object({
+  organization: z.string().trim().max(100).optional(),
+  department: z.string().trim().max(100).optional(),
+  primaryResponsibility: z.string().trim().max(100).optional(),
+  defaultProject: z.string().trim().optional(),
+  reportingPreferences: z.array(z.string()).optional(),
+});
+
+export type OnboardingStep2Values = z.infer<typeof onboardingStep2Schema>;

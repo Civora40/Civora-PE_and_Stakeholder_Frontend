@@ -13,5 +13,9 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  if (!user.onboardingCompletedAt) {
+    redirect('/onboarding');
+  }
+
   return <DashboardShell user={user}>{children}</DashboardShell>;
 }

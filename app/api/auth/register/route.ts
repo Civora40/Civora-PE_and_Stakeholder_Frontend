@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSession } from '@/lib/auth/session';
 import { registerSchema } from '@/lib/validation/auth';
-import { CivoraUser } from '@/types';
+import { CivoraUser, UserRole } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,21 +18,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, role } = validation.data;
+    const { firstName, lastName, email, organization, jobTitle, invitationCode } =
+      validation.data;
 
-    const titleMap: Record<string, string> = {
-      project_engineer: 'Lead Project Engineer',
-      platform_admin: 'Platform Administrator',
-      read_only_stakeholder: 'Capital Owner Representative',
-    };
+    // Invitation validation & Role assignment
+    // Principle: Users must not be able to self-assign privileged roles (e.g. platform_admin).
+    let assignedRole: UserRole = 'project_engineer';
+    let assignedProjects: string[] = ['prj_metro_01'];
+
+    if (invitationCode && invitationCode.trim()) {
+      const code = invitationCode.trim().toUpperCase();
+      
+      // Check for simulated expired or revoked invitations
+      if (code.includes('EXPIRED') || code.includes('REVOKED') || code.includes('INVALID') || code.length < 4) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'This invitation is invalid or has expired. Request a new invitation.',
+          },
+          { status: 400 }
+        );
+      }
+
+      if (code.includes('STAKE') || code.includes('AUDIT')) {
+        assignedRole = 'read_only_stakeholder';
+        assignedProjects = ['prj_metro_01', 'prj_civic_02'];
+      } else {
+        assignedRole = 'project_engineer';
+        assignedProjects = ['prj_metro_01'];
+      }
+    }
+
+    const fullName = `${firstName} ${lastName}`.trim();
 
     const newUser: CivoraUser = {
       id: `usr_${Date.now()}`,
-      name,
+      name: fullName,
+      firstName,
+      lastName,
+      displayName: fullName,
       email,
-      role,
-      title: titleMap[role] || 'Engineering Professional',
-      assignedProjects: role === 'platform_admin' ? ['*'] : ['prj_metro_l4', 'prj_harbor_terminal'],
+      role: assignedRole, // Trusted server-assigned role; never self-assigned platform_admin
+      title: jobTitle || (assignedRole === 'project_engineer' ? 'Project Engineer' : 'Stakeholder Representative'),
+      jobTitle: jobTitle || '',
+      organization,
+      assignedProjects,
+      onboardingCompletedAt: null, // Incomplete onboarding by default
+      onboardingStep: 1, // Start at step 1
+      accountStatus: 'active',
+      invitationCode: invitationCode || undefined,
     };
 
     await createSession(newUser);
@@ -40,6 +74,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: newUser,
+      nextUrl: '/onboarding',
     });
   } catch (error) {
     return NextResponse.json(

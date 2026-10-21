@@ -4,31 +4,45 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface ScrollRevealProps {
   children: React.ReactNode;
-  animation?: 'fade-up' | 'fade-in' | 'slide-left' | 'slide-right' | 'scale-up';
+  animation?: 'fade-up' | 'fade-up-subtle' | 'fade-in' | 'slide-left' | 'slide-right' | 'scale-up' | 'zoom-fade';
   delay?: number; // in milliseconds
   duration?: number; // in milliseconds
   className?: string;
   threshold?: number;
+  rootMargin?: string;
+  easing?: string;
 }
 
 export function ScrollReveal({
   children,
   animation = 'fade-up',
   delay = 0,
-  duration = 700,
+  duration = 800,
   className = '',
-  threshold = 0.1,
+  threshold = 0.12,
+  rootMargin = '0px 0px -50px 0px',
+  easing = 'cubic-bezier(0.16, 1, 0.3, 1)',
 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window !== 'undefined') {
+      if (!('IntersectionObserver' in window)) return true;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return true;
+      }
+    }
+    return false;
+  });
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
 
-    // Check if IntersectionObserver is supported
     if (!('IntersectionObserver' in window)) {
-      setIsVisible(true);
+      return;
+    }
+
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
@@ -41,7 +55,7 @@ export function ScrollReveal({
       },
       {
         threshold,
-        rootMargin: '0px 0px -40px 0px',
+        rootMargin,
       }
     );
 
@@ -50,17 +64,19 @@ export function ScrollReveal({
     return () => {
       observer.disconnect();
     };
-  }, [threshold]);
+  }, [threshold, rootMargin]);
 
   const getAnimationStyles = () => {
-    const baseTransition = `opacity ${duration}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+    const baseTransition = `opacity ${duration}ms ${easing}, transform ${duration}ms ${easing}`;
 
     const initialTransforms = {
-      'fade-up': 'translate3d(0, 32px, 0)',
+      'fade-up': 'translate3d(0, 36px, 0)',
+      'fade-up-subtle': 'translate3d(0, 18px, 0)',
       'fade-in': 'translate3d(0, 0, 0)',
-      'slide-left': 'translate3d(-32px, 0, 0)',
-      'slide-right': 'translate3d(32px, 0, 0)',
-      'scale-up': 'scale(0.95)',
+      'slide-left': 'translate3d(-36px, 0, 0)',
+      'slide-right': 'translate3d(36px, 0, 0)',
+      'scale-up': 'scale(0.94) translate3d(0, 16px, 0)',
+      'zoom-fade': 'scale(0.92)',
     };
 
     return {
@@ -78,3 +94,4 @@ export function ScrollReveal({
     </div>
   );
 }
+

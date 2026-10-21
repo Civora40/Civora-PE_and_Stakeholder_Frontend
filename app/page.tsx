@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   ShieldCheck,
   HardHat,
-  Cpu,
   FileSearch,
   CheckCircle2,
   Users2,
@@ -13,12 +12,9 @@ import {
   Lock,
   Play,
   ArrowRight,
-  Eye,
   FileText,
   Layers,
   Sparkles,
-  Clock,
-  AlertCircle,
   FileSpreadsheet,
   Mail,
 } from 'lucide-react';
@@ -28,21 +24,28 @@ import { Badge } from '@/components/ui/Badge';
 import { InteractiveProductPreview } from '@/components/landing/InteractiveProductPreview';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { ContactForm } from '@/components/forms/ContactForm';
+import { ScrollProgress } from '@/components/landing/ScrollProgress';
+import { InfiniteMarquee } from '@/components/landing/InfiniteMarquee';
+import { StickyScrollFeatures } from '@/components/landing/StickyScrollFeatures';
 
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen bg-white text-[#001237] flex flex-col overflow-x-hidden selection:bg-[#4FAAA7]/30 selection:text-[#001237]">
+      {/* Top Dynamic Scroll Progress Indicator */}
+      <ScrollProgress />
+
       {/* Navigation */}
       <PublicNavbar />
 
       <main className="flex-1">
+
         {/* ========================================================================= */}
         {/* HERO SECTION (Matches Reference Asymmetrical Split Card Layout)          */}
         {/* ========================================================================= */}
         <section className="pt-6 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Left Card: Architectural Photography with Illustrative Workspace Context */}
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 relative">
               <ScrollReveal animation="fade-up" delay={50} duration={800} className="h-full">
                 <div className="relative rounded-[32px] overflow-hidden min-h-[460px] lg:min-h-[580px] h-full shadow-2xl group border border-slate-100">
                   <Image
@@ -58,11 +61,35 @@ export default function LandingPage() {
                   <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
                     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-bold text-[#001237] shadow-lg font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider">
                       <span className="w-2 h-2 rounded-full bg-[#4FAAA7] animate-pulse" />
-                      Illustrative interface &bull; Centralized Site Submissions
+                      Centralized Site Submissions
                     </span>
                     <span className="px-2.5 py-1 rounded-full bg-[#001237]/75 backdrop-blur-md text-[10px] font-mono text-slate-200 border border-white/20">
-                      Illustrative data
+                      Live Telemetry
                     </span>
+                  </div>
+
+                  {/* Floating Top-Right Verification Card (Dojah Style Floating Card) */}
+                  <div className="absolute top-20 -right-2 sm:-right-4 z-20 hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-[#4FAAA7]/50 shadow-2xl animate-float-slow text-[#001237]">
+                    <div className="w-7 h-7 rounded-lg bg-[#001237] text-[#4FAAA7] flex items-center justify-center font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-mono text-slate-500 uppercase tracking-wider">Statutory Authority</div>
+                      <div className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase">
+                        COREN R.58492 Verified
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Center-Left Lab Strength Card (Dojah Style Floating Card) */}
+                  <div className="absolute top-44 -left-2 sm:-left-4 z-20 hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#001237]/90 backdrop-blur-md border border-white/20 shadow-2xl animate-float-reverse text-white">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#4FAAA7] animate-pulse" />
+                    <div>
+                      <div className="text-[9px] font-mono text-slate-400 uppercase">UNILAG Materials Lab</div>
+                      <div className="text-xs font-bold text-[#4FAAA7] font-mono">
+                        28-Day Target: 34.3 MPa (+14%)
+                      </div>
+                    </div>
                   </div>
 
                   {/* Floating Bottom Project Detail */}
@@ -141,7 +168,7 @@ export default function LandingPage() {
 
                     {/* Interactive Tour Capsule Button */}
                     <a
-                      href="#preview"
+                      href="#features"
                       className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#001237] hover:bg-[#18243D] text-white text-xs font-semibold shadow-md transition-all group"
                     >
                       <div className="w-7 h-7 rounded-full bg-[#4FAAA7] text-[#001237] flex items-center justify-center">
@@ -157,6 +184,12 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ========================================================================= */}
+        {/* INFINITE MARQUEE TICKER (Dojah Style Partner & Regulator Showcase)         */}
+        {/* ========================================================================= */}
+        <InfiniteMarquee />
+
 
         {/* ========================================================================= */}
         {/* VALUE PROPOSITION STRIP (Section 5 - Responsive Wrap - No Horiz Scroll)   */}
@@ -538,6 +571,13 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ========================================================================= */}
+        {/* STICKY SCROLL FEATURE PROGRESSION (Dojah Signature Scroll Experience)      */}
+        {/* ========================================================================= */}
+        <div id="features" className="scroll-mt-24 border-t border-slate-100 bg-[#f8fafc]/50">
+          <StickyScrollFeatures />
+        </div>
 
         {/* ========================================================================= */}
         {/* INTERACTIVE PRODUCT PREVIEW SECTION (Section 9)                           */}

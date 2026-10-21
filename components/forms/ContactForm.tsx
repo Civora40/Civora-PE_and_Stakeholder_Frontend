@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Send, CheckCircle2, AlertCircle, Building2, Mail, User, MessageSquare } from 'lucide-react';
+import { Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
 
 const INQUIRY_OPTIONS: SelectOption[] = [
@@ -53,6 +53,7 @@ export function ContactForm({ className = '' }: ContactFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [referenceId, setReferenceId] = useState('CIV-849201');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +85,7 @@ export function ContactForm({ className = '' }: ContactFormProps) {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     setIsLoading(false);
+    setReferenceId(`CIV-${Math.floor(100000 + Math.random() * 900000)}`);
     setIsSuccess(true);
   };
 
@@ -105,7 +107,7 @@ export function ContactForm({ className = '' }: ContactFormProps) {
         </div>
         <div className="space-y-2">
           <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold uppercase tracking-wider font-['Encode_Sans_Condensed',sans-serif]">
-            Inquiry Dispatched &bull; Reference #CIV-{Math.floor(100000 + Math.random() * 900000)}
+            Inquiry Dispatched &bull; Reference #{referenceId}
           </span>
           <h3 className="text-2xl font-black text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">
             Thank you, {fullName.split(' ')[0]}!

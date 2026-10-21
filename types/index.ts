@@ -8,6 +8,38 @@ export interface CivoraUser {
   title: string;
   assignedProjects: string[]; // Project IDs, or ['*'] for all
   avatarUrl?: string;
+  // Extended profile and workspace context fields
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  organization?: string;
+  jobTitle?: string;
+  phone?: string;
+  timeZone?: string;
+  department?: string;
+  primaryResponsibility?: string;
+  defaultProject?: string;
+  reportingPreferences?: string[];
+  // Nigerian Construction & Regulatory Context
+  corenNumber?: string;
+  corenStatus?: string;
+  cacNumber?: string;
+  officeState?: string;
+  geopoliticalZone?: string;
+  projectCategory?: string;
+  standardsBaseline?: string[];
+  testingLab?: string;
+  reviewSlaDays?: number;
+  rfiEscalationTier?: string;
+  reportingCadence?: string;
+  lasbcaPermitNumber?: string;
+  eiaApprovalStatus?: string;
+  // Onboarding & Access State
+  onboardingCompletedAt?: number | null;
+  onboardingStep?: number; // 1 through 10
+  accountStatus?: 'active' | 'pending' | 'suspended';
+  invitationCode?: string;
+  emailVerifiedAt?: number | null;
 }
 
 export interface SessionData {

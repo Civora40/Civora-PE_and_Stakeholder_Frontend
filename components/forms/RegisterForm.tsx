@@ -1,101 +1,109 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Eye,
   EyeOff,
   AlertCircle,
-  ArrowRight,
-  Check,
-  HardHat,
-  Building2,
-  FileSpreadsheet,
-  ShieldCheck,
+  Briefcase,
+  Ticket,
+  ChevronDown,
 } from 'lucide-react';
-import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
-import { UserRole } from '@/types';
 
-const ROLE_OPTIONS: SelectOption[] = [
-  {
-    value: 'project_engineer',
-    label: 'Project Engineer',
-    description: 'Submittal intake, technical verification & clarification requests',
-    badge: 'Reviewer',
-    badgeColor: 'bg-teal-50 text-teal-700 border border-teal-200',
-    icon: <HardHat className="w-4 h-4 text-[#4FAAA7]" />,
-  },
-  {
-    value: 'project_manager',
-    label: 'Construction Project Manager',
-    description: 'Operational tracking, bottlenecks & stage progression oversight',
-    badge: 'Manager',
-    badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200',
-    icon: <Building2 className="w-4 h-4 text-blue-600" />,
-  },
-  {
-    value: 'reporting_team',
-    label: 'Reporting Team',
-    description: 'Structured report compilation from verified site evidence',
-    badge: 'Author',
-    badgeColor: 'bg-amber-50 text-amber-700 border border-amber-200',
-    icon: <FileSpreadsheet className="w-4 h-4 text-amber-600" />,
-  },
-  {
-    value: 'read_only_stakeholder',
-    label: 'Executive & Client Stakeholder',
-    description: 'View released compliance packages and final audit records',
-    badge: 'Auditor',
-    badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    icon: <ShieldCheck className="w-4 h-4 text-emerald-600" />,
-  },
+const JOB_TITLE_PRESETS = [
+  'Project Engineer',
+  'Project Manager',
+  'Site Engineer',
+  'Reporting Officer',
+  'Client/Stakeholder',
+  'Quality Assurance Inspector',
+  'Civil Superintendent',
+  'Other',
 ];
+
+interface FormErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  organization?: string;
+  password?: string;
+  confirmPassword?: string;
+  terms?: string;
+  invitationCode?: string;
+  server?: string;
+}
 
 export function RegisterForm() {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const searchParams = useSearchParams();
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [organization, setOrganization] = useState('');
-  const [role, setRole] = useState<UserRole>('project_engineer');
+  const [selectedJobTitle, setSelectedJobTitle] = useState('Project Engineer');
+  const [customJobTitle, setCustomJobTitle] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const inviteParam = searchParams.get('invitation') || searchParams.get('code') || '';
+  const [invitationCode, setInvitationCode] = useState(inviteParam);
+  const [showInvitationField, setShowInvitationField] = useState(Boolean(inviteParam));
+  const [agreeTerms, setAgreeTerms] = useState(false); // Unchecked by default per security spec
+
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
+  const effectiveJobTitle =
+    selectedJobTitle === 'Other' ? customJobTitle.trim() : selectedJobTitle;
 
-    if (!name || name.trim().length < 2) {
-      setErrorMessage('Please enter your full name.');
-      return;
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!firstName.trim()) {
+      newErrors.firstName = 'Enter your first name.';
     }
 
-    if (!email || !email.includes('@')) {
-      setErrorMessage('Please enter a valid work email address.');
-      return;
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Enter your last name.';
     }
 
-    if (!organization || organization.trim().length < 2) {
-      setErrorMessage('Please specify your organization or engineering firm.');
-      return;
+    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
+      newErrors.email = 'Enter a valid work email address.';
     }
 
-    if (!password || password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
-      return;
+    if (!organization.trim()) {
+      newErrors.organization = 'Enter your organization or company name.';
     }
 
-    if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match.');
-      return;
+    if (!password) {
+      newErrors.password = 'Enter a password.';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long.';
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password.';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'The passwords do not match.';
     }
 
     if (!agreeTerms) {
-      setErrorMessage('You must acknowledge the civil engineering compliance standard.');
+      newErrors.terms = 'Please accept the required terms to continue.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+
+    if (!validateForm()) {
       return;
     }
 
@@ -106,12 +114,14 @@ export function RegisterForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
           email: email.trim().toLowerCase(),
           organization: organization.trim(),
-          role,
+          jobTitle: effectiveJobTitle,
           password,
           confirmPassword,
+          invitationCode: invitationCode.trim() || undefined,
           agreeTerms,
         }),
       });
@@ -119,92 +129,133 @@ export function RegisterForm() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setErrorMessage(data.error || 'Registration failed. Please check your information.');
+        setErrors({
+          server:
+            data.error ||
+            'We couldn’t create your account. Check your details and try again.',
+        });
         setIsLoading(false);
         return;
       }
 
-      router.push('/dashboard');
+      // Successful registration creates session and forwards to onboarding flow
+      const destination = data.nextUrl || '/onboarding';
+      router.push(destination);
       router.refresh();
     } catch {
-      setErrorMessage('An unexpected error occurred during registration. Please try again.');
+      setErrors({
+        server: 'Your connection was interrupted. Please try again.',
+      });
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-5">
+    <div className="w-full max-w-lg mx-auto space-y-5">
       {/* Header Info */}
-      <div className="space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-black text-[#001237] font-['Encode_Sans_Condensed',sans-serif] tracking-tight">
-          Join Civora Platform
+      <div className="space-y-1.5">
+        <span className="text-[11px] font-bold text-[#4FAAA7] uppercase tracking-widest font-['Encode_Sans_Condensed',sans-serif]">
+          GET STARTED WITH CIVORA
+        </span>
+        <h1 className="text-2xl sm:text-3xl font-black text-[#001237] font-['Encode_Sans_Condensed',sans-serif] tracking-tight uppercase">
+          Create your Civora account
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 font-normal">
-          Create your verified organization account
+        <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
+          Set up your account to access the construction reporting workspace you have been invited to use.
         </p>
       </div>
 
-      {/* Error Banner */}
-      {errorMessage && (
+      {/* Global Server Error Banner */}
+      {errors.server && (
         <div
           role="alert"
           className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-fadeIn"
         >
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-500" />
-          <span>{errorMessage}</span>
+          <span>{errors.server}</span>
         </div>
       )}
 
-      {/* Form Fields */}
+      {/* Registration Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-        {/* Full Name & Organization Row */}
+        {/* Row 1: First Name & Last Name */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
             <label
-              htmlFor="reg-name"
+              htmlFor="reg-firstName"
               className="block text-xs font-semibold text-slate-700"
             >
-              Full Name
+              First Name <span className="text-rose-500">*</span>
             </label>
             <input
-              id="reg-name"
-              name="name"
+              id="reg-firstName"
+              name="firstName"
               type="text"
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sarah Lin, PE"
-              className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: undefined }));
+              }}
+              placeholder="Sarah"
+              aria-invalid={!!errors.firstName}
+              aria-describedby={errors.firstName ? 'reg-firstName-err' : undefined}
+              className={`w-full rounded-xl bg-white border px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+                errors.firstName
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                  : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+              }`}
             />
+            {errors.firstName && (
+              <p id="reg-firstName-err" className="text-[11px] text-rose-600 font-medium">
+                {errors.firstName}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">
             <label
-              htmlFor="reg-org"
+              htmlFor="reg-lastName"
               className="block text-xs font-semibold text-slate-700"
             >
-              Organization / Firm
+              Last Name <span className="text-rose-500">*</span>
             </label>
             <input
-              id="reg-org"
-              name="organization"
+              id="reg-lastName"
+              name="lastName"
               type="text"
               required
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
-              placeholder="Civora Infrastructure Ltd"
-              className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+                if (errors.lastName) setErrors((prev) => ({ ...prev, lastName: undefined }));
+              }}
+              placeholder="Lin, PE"
+              aria-invalid={!!errors.lastName}
+              aria-describedby={errors.lastName ? 'reg-lastName-err' : undefined}
+              className={`w-full rounded-xl bg-white border px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+                errors.lastName
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                  : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+              }`}
             />
+            {errors.lastName && (
+              <p id="reg-lastName-err" className="text-[11px] text-rose-600 font-medium">
+                {errors.lastName}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Work Email */}
+        {/* Row 2: Work Email */}
         <div className="space-y-1">
           <label
             htmlFor="reg-email"
             className="block text-xs font-semibold text-slate-700"
           >
-            Your Work Email
+            Work Email <span className="text-rose-500">*</span>
           </label>
           <input
             id="reg-email"
@@ -213,52 +264,162 @@ export function RegisterForm() {
             autoComplete="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+            }}
             placeholder="engineer@firm.com"
-            className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? 'reg-email-err' : undefined}
+            className={`w-full rounded-xl bg-white border px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+              errors.email
+                ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+            }`}
           />
+          {errors.email && (
+            <p id="reg-email-err" className="text-[11px] text-rose-600 font-medium">
+              {errors.email}
+            </p>
+          )}
         </div>
 
-        {/* Role Selector */}
-        <CustomSelect
-          id="reg-role"
-          name="role"
-          label="Primary Operational Role"
-          value={role}
-          onChange={(val) => setRole(val as UserRole)}
-          options={ROLE_OPTIONS}
-          variant="light"
-        />
-
-        {/* Passwords Row */}
+        {/* Row 3: Organization & Job Title */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label
+              htmlFor="reg-organization"
+              className="block text-xs font-semibold text-slate-700"
+            >
+              Organization / Company <span className="text-rose-500">*</span>
+            </label>
+            <input
+              id="reg-organization"
+              name="organization"
+              type="text"
+              required
+              autoComplete="organization"
+              value={organization}
+              onChange={(e) => {
+                setOrganization(e.target.value);
+                if (errors.organization)
+                  setErrors((prev) => ({ ...prev, organization: undefined }));
+              }}
+              placeholder="Apex Engineering Ltd"
+              aria-invalid={!!errors.organization}
+              aria-describedby={errors.organization ? 'reg-org-err' : undefined}
+              className={`w-full rounded-xl bg-white border px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+                errors.organization
+                  ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                  : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+              }`}
+            />
+            {errors.organization && (
+              <p id="reg-org-err" className="text-[11px] text-rose-600 font-medium">
+                {errors.organization}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="reg-jobTitle"
+                className="block text-xs font-semibold text-slate-700"
+              >
+                Job Title <span className="text-slate-400 font-normal">(Profile)</span>
+              </label>
+            </div>
+            <div className="relative">
+              <select
+                id="reg-jobTitle"
+                value={selectedJobTitle}
+                onChange={(e) => setSelectedJobTitle(e.target.value)}
+                className="w-full appearance-none rounded-xl bg-white border border-slate-300 pl-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
+              >
+                {JOB_TITLE_PRESETS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* If 'Other' job title chosen, show custom input */}
+        {selectedJobTitle === 'Other' && (
+          <div className="space-y-1 animate-fadeIn">
+            <label
+              htmlFor="reg-customJobTitle"
+              className="block text-xs font-semibold text-slate-700"
+            >
+              Specify Your Title
+            </label>
+            <input
+              id="reg-customJobTitle"
+              type="text"
+              value={customJobTitle}
+              onChange={(e) => setCustomJobTitle(e.target.value)}
+              placeholder="e.g. Structural Verification Lead"
+              className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
+            />
+          </div>
+        )}
+
+        {/* Security Notice: Job Title is not a permission role */}
+        <p className="text-[11px] text-slate-500 flex items-center gap-1.5 pt-0.5">
+          <Briefcase className="w-3.5 h-3.5 text-[#4FAAA7] flex-shrink-0" />
+          <span>Job titles are for profile identification. Platform access is governed by server-assigned permissions.</span>
+        </p>
+
+        {/* Row 4: Password & Confirm Password */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <div className="space-y-1">
             <label
               htmlFor="reg-pass"
               className="block text-xs font-semibold text-slate-700"
             >
-              Password
+              Password <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <input
                 id="reg-pass"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
                 placeholder="••••••••"
-                className="w-full rounded-xl bg-white border border-slate-300 pl-3.5 pr-9 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'reg-pass-err' : undefined}
+                className={`w-full rounded-xl bg-white border pl-3.5 pr-9 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+                  errors.password
+                    ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                    : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
+            {errors.password && (
+              <p id="reg-pass-err" className="text-[11px] text-rose-600 font-medium">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -266,52 +427,153 @@ export function RegisterForm() {
               htmlFor="reg-confirm"
               className="block text-xs font-semibold text-slate-700"
             >
-              Confirm
+              Confirm Password <span className="text-rose-500">*</span>
             </label>
-            <input
-              id="reg-confirm"
-              name="confirmPassword"
-              type={showPassword ? 'text' : 'password'}
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
-            />
+            <div className="relative">
+              <input
+                id="reg-confirm"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword)
+                    setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }}
+                placeholder="••••••••"
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? 'reg-confirm-err' : undefined}
+                className={`w-full rounded-xl bg-white border pl-3.5 pr-9 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all shadow-xs ${
+                  errors.confirmPassword
+                    ? 'border-rose-400 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 bg-rose-50/20'
+                    : 'border-slate-300 focus:border-[#001237] focus:ring-1 focus:ring-[#001237]'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label={showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'}
+              >
+                {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <p id="reg-confirm-err" className="text-[11px] text-rose-600 font-medium">
+                {errors.confirmPassword}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Terms Checkbox */}
+        {/* Row 5: Optional Invitation Code Accordion */}
         <div className="pt-1">
+          {!showInvitationField ? (
+            <button
+              type="button"
+              onClick={() => setShowInvitationField(true)}
+              className="text-xs text-[#001237] hover:text-[#4FAAA7] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Ticket className="w-3.5 h-3.5 text-[#4FAAA7]" />
+              <span>Have an invitation or workspace code?</span>
+            </button>
+          ) : (
+            <div className="space-y-1 p-3 rounded-xl bg-slate-50 border border-slate-200 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="reg-invitation"
+                  className="block text-xs font-semibold text-slate-700"
+                >
+                  Invitation Code <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInvitationField(false);
+                    setInvitationCode('');
+                  }}
+                  className="text-[11px] text-slate-400 hover:text-slate-600"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <input
+                id="reg-invitation"
+                name="invitationCode"
+                type="text"
+                value={invitationCode}
+                onChange={(e) => setInvitationCode(e.target.value)}
+                placeholder="e.g. INV-CIVORA-ENG-2026"
+                className="w-full rounded-lg bg-white border border-slate-300 px-3 py-2 text-xs font-mono uppercase text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none"
+              />
+              <p className="text-[10px] text-slate-500">
+                Authorized invitations automatically bind your account to pre-approved projects.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Row 6: Explicit Terms Acceptance (unchecked by default) */}
+        <div className="pt-1 space-y-1">
           <label className="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer select-none">
             <input
+              id="reg-terms"
               type="checkbox"
               checked={agreeTerms}
-              onChange={(e) => setAgreeTerms(e.target.checked)}
+              onChange={(e) => {
+                setAgreeTerms(e.target.checked);
+                if (errors.terms) setErrors((prev) => ({ ...prev, terms: undefined }));
+              }}
               className="w-4 h-4 mt-0.5 rounded border-slate-300 text-[#001237] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#001237]"
             />
             <span className="leading-snug">
-              I agree to the Civora civil engineering verification protocol and human review standards.
+              I agree to the{' '}
+              <Link
+                href="/governance"
+                target="_blank"
+                className="font-semibold text-[#001237] hover:underline"
+              >
+                Terms of Use
+              </Link>{' '}
+              and acknowledge the{' '}
+              <Link
+                href="/governance"
+                target="_blank"
+                className="font-semibold text-[#001237] hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              .
             </span>
           </label>
+          {errors.terms && (
+            <p className="text-[11px] text-rose-600 font-medium pl-6">
+              {errors.terms}
+            </p>
+          )}
         </div>
 
         {/* Primary Submit Button */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full mt-2 py-3.5 px-6 rounded-xl bg-[#001237] hover:bg-[#18243D] active:scale-[0.99] text-white font-bold text-sm tracking-wide transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer font-['Encode_Sans_Condensed',sans-serif] uppercase"
+          className="w-full mt-3 py-3.5 px-6 rounded-xl bg-[#001237] hover:bg-[#18243D] active:scale-[0.99] text-white font-bold text-sm tracking-wide transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer font-['Encode_Sans_Condensed',sans-serif] uppercase"
         >
           {isLoading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Creating account…</span>
+            </div>
           ) : (
-            <span>Create Account</span>
+            <span>Create account</span>
           )}
         </button>
       </form>
 
       {/* Bottom Switch Link */}
-      <div className="text-center pt-2 border-t border-slate-100">
+      <div className="text-center pt-3 border-t border-slate-100">
         <p className="text-xs text-slate-500">
           Already have an account?{' '}
           <Link

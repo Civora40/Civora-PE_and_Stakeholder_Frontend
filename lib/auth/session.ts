@@ -76,6 +76,24 @@ export async function getCurrentUser(): Promise<CivoraUser | null> {
 }
 
 /**
+ * Update current authenticated user profile / onboarding fields in session
+ */
+export async function updateSessionUser(updates: Partial<CivoraUser>): Promise<CivoraUser | null> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return null;
+  }
+
+  const updatedUser: CivoraUser = {
+    ...currentUser,
+    ...updates,
+  };
+
+  await createSession(updatedUser);
+  return updatedUser;
+}
+
+/**
  * Clear session cookie (sign-out)
  */
 export async function destroySession(): Promise<void> {

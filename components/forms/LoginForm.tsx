@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, AlertCircle, ArrowRight, Check, ShieldCheck, UserCheck } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Check, ShieldCheck, UserCheck } from 'lucide-react';
 import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { UserRole } from '@/types';
 
@@ -49,7 +49,8 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/dashboard');
+      const destination = data.user?.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+      router.push(destination);
       router.refresh();
     } catch {
       setErrorMessage('An unexpected authentication error occurred. Please try again.');

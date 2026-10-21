@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RegisterForm } from '@/components/forms/RegisterForm';
 
 export const metadata: Metadata = {
-  title: 'Register on Platform | Civora Control Plane',
-  description: 'Create certified credentials to access Civora construction intelligence.',
+  title: 'Create Account | Civora Construction Control Plane',
+  description: 'Set up your Civora account to access verified construction reporting and review workflows.',
 };
 
 export default function RegisterPage() {
@@ -15,16 +15,16 @@ export default function RegisterPage() {
       {/* 100% Full-Bleed Edge-to-Edge Split Layout */}
       <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
         {/* Left Half: Architectural Hero 100% Filled */}
-        <div className="relative min-h-[340px] sm:min-h-[420px] lg:min-h-screen p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden bg-[#001237]">
+        <div className="relative min-h-[360px] sm:min-h-[440px] lg:min-h-screen p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden bg-[#001237]">
           <Image
             src="/images/auth_hero.jpg"
-            alt="Civora Architectural Pavilion"
+            alt="Civora Construction Intelligence Center"
             fill
             priority
             className="object-cover object-center"
           />
           {/* Subtle gradient overlays for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#001237]/90 via-[#001237]/25 to-[#001237]/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#001237]/95 via-[#001237]/35 to-[#001237]/50" />
 
           {/* Top-Left Brand Mark & Name */}
           <div className="relative z-10">
@@ -39,16 +39,23 @@ export default function RegisterPage() {
           </div>
 
           {/* Bottom Headline, Subtext, & Indicator Dots */}
-          <div className="relative z-10 space-y-3 pt-16 sm:pt-0 max-w-lg">
+          <div className="relative z-10 space-y-3.5 pt-16 sm:pt-0 max-w-lg">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-[#4FAAA7] text-[11px] font-bold uppercase tracking-wider font-['Encode_Sans_Condensed',sans-serif]">
+              Construction Governance
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white font-['Encode_Sans_Condensed',sans-serif] tracking-tight uppercase leading-[1.08]">
-              Intelligent construction. Clearer control.
+              A clearer way to manage construction reporting.
             </h2>
             <p className="text-sm sm:text-base text-slate-200 font-normal leading-relaxed">
-              Join leading engineering teams managing submittals, specifications, and verifiable compliance records.
+              Civora brings site updates, review workflows, and project reporting into a structured workspace—helping teams see what has arrived, what needs attention, and what is ready for review.
             </p>
 
+            <div className="pt-2 text-xs font-bold text-[#4FAAA7] tracking-wider uppercase font-['Encode_Sans_Condensed',sans-serif]">
+              Intelligent Construction. Clearer Control.
+            </div>
+
             {/* Carousel Pill Indicator Dots [ — • • ] matching reference */}
-            <div className="flex items-center gap-2 pt-4">
+            <div className="flex items-center gap-2 pt-3">
               <span className="w-9 h-1.5 rounded-full bg-white shadow-xs" />
               <span className="w-2 h-1.5 rounded-full bg-white/50" />
               <span className="w-2 h-1.5 rounded-full bg-white/50" />
@@ -70,7 +77,9 @@ export default function RegisterPage() {
 
           {/* Form Container */}
           <div className="flex-1 flex flex-col justify-center py-6 sm:py-8">
-            <RegisterForm />
+            <Suspense fallback={<div className="animate-pulse text-xs text-slate-400">Loading form...</div>}>
+              <RegisterForm />
+            </Suspense>
           </div>
 
           {/* Bottom Subtle Copyright / Security Note */}
