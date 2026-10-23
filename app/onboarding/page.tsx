@@ -16,10 +16,5 @@ export default async function OnboardingPage() {
     redirect('/login?redirect=/onboarding');
   }
 
-  // If onboarding is already complete, redirect to authorized dashboard
-  if (user.onboardingCompletedAt) {
-    redirect('/dashboard');
-  }
-
   return <OnboardingFlow initialUser={user} />;
 }

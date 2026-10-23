@@ -36,17 +36,12 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Guard /onboarding route
+  // Guard /onboarding route: must be authenticated
   if (pathname === '/onboarding') {
     if (!isAuthenticated) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', '/onboarding');
       return NextResponse.redirect(loginUrl);
-    }
-
-    // If onboarding is already completed, route directly to the authorized dashboard
-    if (user.onboardingCompletedAt) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 

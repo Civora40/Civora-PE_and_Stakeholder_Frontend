@@ -398,12 +398,10 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#EBF0F5] text-[#001237] p-3 sm:p-6 lg:p-10 flex items-center justify-center font-['Inter',sans-serif]">
-      {/* Outer Card Container matching reference UI */}
-      <div className="w-full max-w-6xl bg-white rounded-[26px] sm:rounded-[32px] shadow-2xl border border-slate-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[740px]">
-        {/* LEFT SIDEBAR: Deep Forest Navy Panel */}
-        <aside className="lg:col-span-4 bg-[#091D26] text-white p-6 sm:p-8 flex flex-col justify-between relative selection:bg-[#4FAAA7]/40">
-          <div>
+    <div className="min-h-screen w-full bg-white text-[#001237] flex flex-col lg:flex-row font-['Inter',sans-serif] selection:bg-[#4FAAA7]/30 selection:text-[#001237]">
+      {/* LEFT SIDEBAR: Deep Forest Navy Panel - Fixed & Non-Scrollable on Desktop */}
+      <aside className="w-full lg:fixed lg:inset-y-0 lg:left-0 lg:w-[380px] xl:w-[420px] 2xl:w-[440px] lg:h-screen lg:overflow-y-auto bg-[#091D26] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between z-20 border-r border-[#18243D]/50 selection:bg-[#4FAAA7]/40">
+        <div>
             {/* Top Brand Logo Squircle */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
@@ -442,7 +440,12 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                   return (
                     <li key={s.title} className="relative flex items-start gap-3.5 group">
                       {/* Step Indicator Dot */}
-                      <div className="relative z-10 flex-shrink-0 mt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(stepNum)}
+                        className="relative z-10 flex-shrink-0 mt-0.5 cursor-pointer focus:outline-none"
+                        aria-label={`Jump to step ${stepNum}: ${s.title}`}
+                      >
                         {isCompleted ? (
                           <div className="w-6 h-6 rounded-full bg-[#4FAAA7] text-[#091D26] flex items-center justify-center font-bold shadow-sm">
                             <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -452,22 +455,17 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                             <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
                           </div>
                         ) : (
-                          <div className="w-6 h-6 rounded-full border border-white/30 bg-[#091D26] flex items-center justify-center text-[10px] text-white/40">
+                          <div className="w-6 h-6 rounded-full border border-white/30 bg-[#091D26] flex items-center justify-center text-[10px] text-white/40 group-hover:border-white/60">
                             {stepNum}
                           </div>
                         )}
-                      </div>
+                      </button>
 
                       {/* Step Label & Sub-description */}
                       <button
                         type="button"
-                        onClick={() => {
-                          if (stepNum < currentStep) setCurrentStep(stepNum);
-                        }}
-                        disabled={stepNum > currentStep}
-                        className={`text-left transition-all ${
-                          stepNum <= currentStep ? 'cursor-pointer' : 'cursor-default'
-                        }`}
+                        onClick={() => setCurrentStep(stepNum)}
+                        className="text-left transition-all cursor-pointer group-hover:translate-x-0.5"
                       >
                         <span
                           className={`block text-xs font-semibold leading-tight font-['Encode_Sans_Condensed',sans-serif] tracking-wide ${
@@ -528,9 +526,11 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
           </div>
         </aside>
 
-        {/* RIGHT CONTENT PANEL: Clean White Workspace */}
-        <section className="lg:col-span-8 p-6 sm:p-10 lg:p-12 flex flex-col justify-between bg-white overflow-y-auto">
-          <div>
+        {/* RIGHT CONTENT PANEL: Clean White Workspace - Scrollable Document Flow */}
+        <section className="w-full lg:pl-[380px] xl:pl-[420px] 2xl:pl-[440px] min-h-screen bg-white flex flex-col justify-between z-10">
+          <div className="p-6 sm:p-10 lg:p-12 xl:p-16 min-h-screen flex-1 flex flex-col justify-between">
+            <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col justify-between">
+              <div>
             {/* Header: Title & Subtitle */}
             <div className="space-y-1.5 mb-6">
               <span className="text-[11px] font-bold text-[#4FAAA7] uppercase tracking-widest font-['Encode_Sans_Condensed',sans-serif]">
@@ -1314,9 +1314,10 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                 We use Bank-level, 256-bit encryption to keep your data safe. Fully compliant with Nigerian Data Protection Act (NDPA 2023) &bull; COREN Practice Standards.
               </span>
             </div>
+            </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       {/* HELP MODAL */}
       {showHelpModal && (

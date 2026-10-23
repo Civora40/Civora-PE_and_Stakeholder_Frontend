@@ -49,7 +49,8 @@ export function LoginForm() {
         return;
       }
 
-      const destination = data.user?.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+      // Redirect to onboarding questionnaire to ensure the interface and implementation work as expected
+      const destination = data.redirectUrl || '/onboarding';
       router.push(destination);
       router.refresh();
     } catch {

@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: result.user,
+      redirectUrl: '/onboarding',
     });
   } catch (error) {
     return NextResponse.json(

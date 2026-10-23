@@ -40,7 +40,7 @@ export async function loginAction(
   }
 
   await createSession(authResult.user);
-  redirect('/dashboard');
+  redirect('/onboarding');
 }
 
 export async function logoutAction(): Promise<void> {

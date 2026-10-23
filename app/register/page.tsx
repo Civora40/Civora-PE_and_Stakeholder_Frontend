@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen w-full bg-white text-[#001237] selection:bg-[#4FAAA7]/30 selection:text-[#001237] overflow-x-hidden">
+    <div className="min-h-screen w-full bg-white text-[#001237] selection:bg-[#4FAAA7]/30 selection:text-[#001237]">
       {/* 100% Full-Bleed Edge-to-Edge Split Layout */}
-      <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
-        {/* Left Half: Architectural Hero 100% Filled */}
-        <div className="relative min-h-[360px] sm:min-h-[440px] lg:min-h-screen p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden bg-[#001237]">
+      <div className="relative min-h-screen w-full flex flex-col lg:flex-row">
+        {/* Left Half: Architectural Hero - Fixed & Non-Scrollable on Desktop */}
+        <div className="relative min-h-[360px] sm:min-h-[440px] lg:fixed lg:inset-y-0 lg:left-0 lg:w-1/2 lg:h-screen lg:min-h-0 p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden bg-[#001237] z-10">
           <Image
             src="/images/auth_hero.jpg"
             alt="Civora Construction Intelligence Center"
@@ -63,8 +63,8 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Right Half: Clean White Container 100% Filled */}
-        <div className="min-h-screen p-6 sm:p-10 lg:p-14 xl:p-16 flex flex-col justify-between bg-white relative">
+        {/* Right Half: Clean White Container 100% Filled - Scrollable Document Flow */}
+        <div className="w-full lg:w-1/2 lg:ml-auto min-h-screen p-6 sm:p-10 lg:p-14 xl:p-16 flex flex-col justify-between bg-white relative z-0">
           {/* Top-Right Pill Navigation Button */}
           <div className="flex justify-end">
             <Link
