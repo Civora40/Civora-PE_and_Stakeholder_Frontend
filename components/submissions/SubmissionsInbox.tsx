@@ -98,10 +98,10 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
+          <h1 className="text-2xl font-black text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
             Submittal Verification Inbox
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {canReview
               ? 'Evaluate contractor lab reports, verify AI discrepancy advisories, and record engineering decisions.'
               : 'Read-only stakeholder audit inspection of field submissions and laboratory certifications.'}
@@ -109,15 +109,15 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
         </div>
 
         {feedbackMessage && (
-          <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/40 text-emerald-700 text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>{feedbackMessage}</span>
           </div>
         )}
       </div>
 
       {/* Filter Ribbon */}
-      <div className="rounded-xl bg-[#18243D] border border-slate-700/80 p-4 space-y-3">
+      <div className="rounded-2xl bg-white border border-slate-200/80 p-4 space-y-3 shadow-sm">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -128,13 +128,13 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by ID, title, contractor..."
-              className="w-full rounded-lg bg-[#001237] border border-slate-700 pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:border-[#4FAAA7] focus:outline-none"
+              className="w-full rounded-xl bg-slate-50 border border-slate-200 pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#4FAAA7] focus:outline-none"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             {/* Status Filter */}
-            <div className="flex items-center gap-1 bg-[#001237] p-1 rounded-lg border border-slate-700 text-xs overflow-x-auto">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs overflow-x-auto">
               {[
                 { label: 'All', value: 'all' },
                 { label: 'Pending PE', value: 'pending_review' },
@@ -147,8 +147,8 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                   onClick={() => setStatusFilter(item.value)}
                   className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                     statusFilter === item.value
-                      ? 'bg-[#3B68DE] text-white'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#001237] text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {item.label}
@@ -162,7 +162,7 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                 value={groupFilter}
                 onChange={setGroupFilter}
                 options={REPORTING_GROUP_OPTIONS}
-                variant="dark"
+                variant="light"
               />
             </div>
           </div>
@@ -171,10 +171,10 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
 
       {/* Submissions Table */}
       {filteredSubmissions.length === 0 ? (
-        <div className="rounded-2xl bg-[#18243D] border border-slate-700/80 p-12 text-center space-y-3">
-          <Inbox className="w-12 h-12 text-slate-500 mx-auto" />
-          <h3 className="text-base font-bold text-white">No Submittals Found</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+        <div className="rounded-2xl bg-white border border-slate-200/80 p-12 text-center space-y-3 shadow-sm">
+          <Inbox className="w-12 h-12 text-slate-400 mx-auto" />
+          <h3 className="text-base font-bold text-slate-900">No Submittals Found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
             Try resetting your search query or status filter to view available records.
           </p>
           <Button
@@ -190,10 +190,10 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
           </Button>
         </div>
       ) : (
-        <div className="rounded-2xl bg-[#18243D] border border-slate-700/80 overflow-hidden shadow-xl">
+        <div className="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#001237] text-slate-300 font-semibold border-b border-slate-700">
+              <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                 <tr>
                   <th className="p-3.5">Identifier & Title</th>
                   <th className="p-3.5">Project Scope</th>
@@ -203,7 +203,7 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                   <th className="p-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-200">
+              <tbody className="divide-y divide-slate-100 text-slate-800">
                 {filteredSubmissions.map((sub) => (
                   <tr
                     key={sub.id}
@@ -211,19 +211,19 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                       setSelectedSubmission(sub);
                       setEngineerNotes(sub.engineerNotes || '');
                     }}
-                    className="hover:bg-slate-800/50 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
                   >
                     <td className="p-3.5">
                       <div className="font-mono text-xs font-bold text-[#4FAAA7]">
                         {sub.identifier}
                       </div>
-                      <div className="font-semibold text-white mt-0.5">{sub.title}</div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="font-semibold text-slate-900 mt-0.5">{sub.title}</div>
+                      <div className="text-[11px] text-slate-500">
                         Subcontractor: {sub.subcontractor}
                       </div>
                     </td>
                     <td className="p-3.5">
-                      <div className="text-slate-300 font-medium">{sub.projectName}</div>
+                      <div className="text-slate-800 font-medium">{sub.projectName}</div>
                       <div className="text-[10px] text-slate-400">
                         Received: {sub.receivedDate.slice(0, 10)}
                       </div>
@@ -239,7 +239,7 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                           <Badge variant="amber" size="sm" dot>
                             AI Advisory: Discrepancy
                           </Badge>
-                          <span className="text-[10px] text-amber-300 line-clamp-1 max-w-xs">
+                          <span className="text-[10px] text-amber-700 line-clamp-1 max-w-xs">
                             {sub.aiFlag.specRef}
                           </span>
                         </div>
@@ -272,7 +272,7 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                           setSelectedSubmission(sub);
                           setEngineerNotes(sub.engineerNotes || '');
                         }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#001237] hover:bg-[#3B68DE]/20 text-[#4FAAA7] border border-slate-700 text-xs font-semibold cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#001237] hover:text-white text-slate-700 border border-slate-200 text-xs font-semibold cursor-pointer transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Inspect</span>
@@ -288,11 +288,11 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
 
       {/* Inspection Drawer / Detail Modal */}
       {selectedSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-          <div className="rounded-2xl bg-[#18243D] border border-slate-700 max-w-2xl w-full p-6 space-y-6 shadow-2xl relative my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
+          <div className="rounded-2xl bg-white border border-slate-200 max-w-2xl w-full p-6 space-y-6 shadow-2xl relative my-8 text-slate-900">
             <button
               onClick={() => setSelectedSubmission(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
               aria-label="Close inspection view"
             >
               <X className="w-5 h-5" />
@@ -320,17 +320,17 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                   Status: {selectedSubmission.reviewStatus.replace('_', ' ')}
                 </Badge>
               </div>
-              <h2 className="text-xl font-bold text-white font-['Encode_Sans_Condensed',sans-serif] uppercase">
+              <h2 className="text-xl font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase">
                 {selectedSubmission.title}
               </h2>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Project: {selectedSubmission.projectName} &bull; Subcontractor: {selectedSubmission.subcontractor}
               </p>
             </div>
 
             {/* Description */}
-            <div className="p-3.5 rounded-xl bg-[#001237] border border-slate-800 text-xs text-slate-200">
-              <span className="text-slate-400 block font-semibold mb-1 uppercase tracking-wider text-[10px]">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+              <span className="text-slate-500 block font-semibold mb-1 uppercase tracking-wider text-[10px]">
                 Submission Description:
               </span>
               <p>{selectedSubmission.description}</p>
@@ -340,8 +340,8 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
             <div
               className={`p-4 rounded-xl border space-y-2 text-xs ${
                 selectedSubmission.aiFlag.status === 'advisory_discrepancy'
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-200'
-                  : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
+                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900'
               }`}
             >
               <div className="flex items-center gap-2 font-bold">
@@ -352,38 +352,38 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                     : 'AI Advisory Check: Within Tolerances'}
                 </span>
               </div>
-              <p className="text-slate-200 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 {selectedSubmission.aiFlag.message}
               </p>
-              <div className="text-[11px] font-mono text-[#4FAAA7] pt-1">
+              <div className="text-[11px] font-mono text-[#001237] font-semibold pt-1">
                 Governing Spec: {selectedSubmission.aiFlag.specRef}
               </div>
-              <div className="text-[10px] text-slate-400 border-t border-slate-700/60 pt-1.5 italic">
+              <div className="text-[10px] text-slate-500 border-t border-slate-200/80 pt-1.5 italic">
                 {selectedSubmission.aiFlag.disclaimer}
               </div>
             </div>
 
             {/* Original Evidence Attachments */}
             <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 Original Verified Evidence Files ({selectedSubmission.evidenceItems.length})
               </h3>
               <div className="space-y-2">
                 {selectedSubmission.evidenceItems.map((ev) => (
                   <div
                     key={ev.id}
-                    className="p-3 rounded-lg bg-[#001237] border border-slate-800 flex items-center justify-between text-xs"
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-2.5">
                       <FileText className="w-4 h-4 text-[#4FAAA7]" />
                       <div>
-                        <div className="font-medium text-white">{ev.title}</div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="font-medium text-slate-900">{ev.title}</div>
+                        <div className="text-[10px] text-slate-500">
                           {ev.filename} &bull; {ev.size} &bull; Logged: {ev.timestamp}
                         </div>
                       </div>
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">
                       Checksum Verified
                     </span>
                   </div>
@@ -393,7 +393,7 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
 
             {/* Engineer Notes Input */}
             <div className="space-y-1.5 text-xs">
-              <label className="font-semibold text-slate-200 flex items-center gap-1.5">
+              <label className="font-semibold text-slate-700 flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5 text-[#4FAAA7]" />
                 <span>Project Engineer Technical Rationale / Notes:</span>
               </label>
@@ -407,20 +407,20 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
                     ? 'Enter engineering review notes or justification before approving...'
                     : 'Notes are read-only under current role credentials.'
                 }
-                className="w-full rounded-lg bg-[#001237] border border-slate-700 p-3 text-white text-xs focus:border-[#4FAAA7] focus:outline-none disabled:opacity-60"
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 p-3 text-slate-900 text-xs focus:bg-white focus:border-[#4FAAA7] focus:outline-none disabled:opacity-60"
               />
             </div>
 
             {/* Gated Action Buttons */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-[11px] text-slate-400">
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-[11px] text-slate-500">
                 {canReview ? (
                   <span>
-                    Logged in as <strong>{user.name}</strong> ({user.role})
+                    Logged in as <strong className="text-slate-800">{user.name}</strong> ({user.role})
                   </span>
                 ) : (
-                  <span className="text-amber-300 flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5" />
+                  <span className="text-amber-800 flex items-center gap-1.5 font-medium">
+                    <Lock className="w-3.5 h-3.5 text-amber-600" />
                     Read-only: Technical review requires Project Engineer or Admin credentials.
                   </span>
                 )}

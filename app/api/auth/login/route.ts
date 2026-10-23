@@ -32,10 +32,12 @@ export async function POST(request: NextRequest) {
 
     await createSession(result.user);
 
+    const redirectUrl = result.user.onboardingCompletedAt ? '/dashboard' : '/onboarding';
+
     return NextResponse.json({
       success: true,
       user: result.user,
-      redirectUrl: '/onboarding',
+      redirectUrl,
     });
   } catch (error) {
     return NextResponse.json(
