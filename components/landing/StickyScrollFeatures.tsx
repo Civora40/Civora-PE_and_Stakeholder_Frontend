@@ -17,7 +17,7 @@ interface StageData {
   stepNumber: string;
   tabLabel: string;
   badgeLabel: string;
-  badgeVariant: 'teal' | 'blue' | 'amber' | 'emerald';
+  badgeVariant: 'teal' | 'blue' | 'emerald';
   title: string;
   tagline: string;
   description: string;
@@ -108,7 +108,7 @@ const STAGES: StageData[] = [
     stepNumber: '03',
     tabLabel: '03 // Clarifications & Site Instructions',
     badgeLabel: 'Site Clarification Issued',
-    badgeVariant: 'amber',
+    badgeVariant: 'teal',
     title: 'Site Instructions & Clarification Governance',
     tagline: 'Highlight discrepancies and issue formal Site Instructions to contractors.',
     description:
@@ -297,7 +297,7 @@ export function StickyScrollFeatures() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-500/80" />
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
                   </div>
                   <span className="text-xs font-mono text-slate-300 font-semibold ml-2">

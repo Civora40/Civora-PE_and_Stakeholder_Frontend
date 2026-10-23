@@ -124,8 +124,8 @@ export default function PlatformPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#f8fafc] border border-slate-200/90 space-y-3 hover:border-amber-400 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-[#001237] text-amber-400 flex items-center justify-center">
+            <div className="p-6 rounded-2xl bg-[#f8fafc] border border-slate-200/90 space-y-3 hover:border-[#4FAAA7] transition-all">
+              <div className="w-10 h-10 rounded-xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center">
                 <Eye className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">

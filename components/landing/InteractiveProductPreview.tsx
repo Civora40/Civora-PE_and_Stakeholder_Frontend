@@ -47,7 +47,7 @@ export function InteractiveProductPreview() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-              <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
+              <span className="w-3 h-3 rounded-full bg-slate-500/80 inline-block" />
               <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
             </div>
             <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export function InteractiveProductPreview() {
                       <span className="font-mono text-xs font-semibold text-[#4FAAA7]">
                         SUB-2026-RIV-01
                       </span>
-                      <Badge variant="amber" size="sm" dot>
+                      <Badge variant="teal" size="sm" dot>
                         Needs information
                       </Badge>
                       <Badge variant="blue" size="sm">
@@ -143,9 +143,9 @@ export function InteractiveProductPreview() {
                 </div>
 
                 {/* Outstanding Details Box */}
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-amber-300 font-semibold">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <div className="p-4 rounded-xl bg-[#001237] border border-slate-700/80 space-y-2 text-xs">
+                  <div className="flex items-center gap-2 text-[#4FAAA7] font-semibold">
+                    <AlertTriangle className="w-4 h-4 text-[#4FAAA7] flex-shrink-0" />
                     <span>Review note: Additional site details required (FMWH / LASBCA Code)</span>
                   </div>
                   <p className="text-slate-300 leading-relaxed">
@@ -179,9 +179,9 @@ export function InteractiveProductPreview() {
                         <td className="p-2.5 font-medium">Cylinder Slump & Air Void Records</td>
                         <td className="p-2.5 text-slate-400">Field Logs (125mm)</td>
                         <td className="p-2.5">
-                          <span className="text-amber-400 font-medium">Needs information</span>
+                          <span className="text-slate-300 font-medium">Needs information</span>
                         </td>
-                        <td className="p-2.5 text-amber-300 font-medium">Request clarification</td>
+                        <td className="p-2.5 text-[#4FAAA7] font-medium">Request clarification</td>
                       </tr>
                       <tr>
                         <td className="p-2.5 font-medium">Rebar Placement Verification Sheet</td>
@@ -213,7 +213,7 @@ export function InteractiveProductPreview() {
                     </div>
                     <div className="p-3 rounded-lg bg-[#18243D] border border-slate-700/60">
                       <span className="text-slate-400 text-[11px] block">Review Bottlenecks</span>
-                      <span className="text-amber-300 font-bold text-sm">2 Require Site Clarification</span>
+                      <span className="text-[#4FAAA7] font-bold text-sm">2 Require Site Clarification</span>
                     </div>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export function InteractiveProductPreview() {
         {/* Tab 2: AI-Assisted Checks */}
         {activeTab === 'assisted' && (
           <div className="space-y-4 transition-opacity duration-300">
-            <div className="rounded-xl bg-amber-500/10 border border-amber-500/40 p-5 space-y-3">
+            <div className="rounded-xl bg-[#001237] border border-slate-700/80 p-5 space-y-3">
               <div className="flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-[#4FAAA7] flex-shrink-0 mt-0.5" />
                 <div className="space-y-2">
@@ -238,7 +238,7 @@ export function InteractiveProductPreview() {
                     <span className="text-sm font-bold text-white">
                       AI-Assisted Check: Missing Supporting Field Documentation
                     </span>
-                    <Badge variant="amber" size="sm">
+                    <Badge variant="blue" size="sm">
                       Observation for Reviewer
                     </Badge>
                   </div>
@@ -247,7 +247,7 @@ export function InteractiveProductPreview() {
                     batch ticket timestamps and batch water-cement ratio logs. This potential gap has
                     been flagged for human review.
                   </p>
-                  <div className="p-3 rounded-lg bg-[#001237] border border-amber-500/20 text-xs text-slate-300 space-y-1">
+                  <div className="p-3 rounded-lg bg-[#18243D] border border-slate-700/60 text-xs text-slate-300 space-y-1">
                     <div className="font-semibold text-[#4FAAA7]">Suggested Action:</div>
                     <p>
                       Reviewer may request clarification or upload the missing delivery tickets before
@@ -291,7 +291,7 @@ export function InteractiveProductPreview() {
                     Riverside Commercial Development — Weekly Site Engineering Progress Report
                   </h3>
                 </div>
-                <Badge variant="amber" size="md" dot>
+                <Badge variant="teal" size="md" dot>
                   Report status: Awaiting final approval
                 </Badge>
               </div>
@@ -303,7 +303,7 @@ export function InteractiveProductPreview() {
                 </div>
                 <div className="p-3 rounded-lg bg-[#18243D] border border-slate-700/60">
                   <span className="text-slate-400 block mb-1">Items Excluded / Pending</span>
-                  <span className="text-base font-bold text-amber-300">2 Needs Information</span>
+                  <span className="text-base font-bold text-slate-200">2 Needs Information</span>
                 </div>
                 <div className="p-3 rounded-lg bg-[#18243D] border border-slate-700/60">
                   <span className="text-slate-400 block mb-1">Report Path</span>

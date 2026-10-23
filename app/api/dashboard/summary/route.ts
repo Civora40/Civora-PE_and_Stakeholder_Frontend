@@ -18,6 +18,11 @@ export async function GET() {
       (s) => s.aiFlag.status === 'advisory_discrepancy'
     ).length,
     reportsAwaitingRelease: DEMO_REPORTS.filter((r) => r.status === 'approved').length,
+    unverifiedSendersCount: DEMO_SUBMISSIONS.filter(
+      (s) => s.senderVerificationStatus === 'needs_verification'
+    ).length,
+    activeIntegrationsCount: 2,
+    overallComplianceAvg: 88.4,
   };
 
   return NextResponse.json(summary);

@@ -6,6 +6,7 @@ import {
   onboardingStep2Schema,
 } from '../lib/validation/auth';
 import { can } from '../lib/permissions/rbac';
+import { getWorkspaceNavigation } from '../lib/navigation/workspace-navigation';
 import { CivoraUser } from '../types';
 
 test('1. Registration Validation: strictly enforces required fields and specific error messages', () => {
@@ -227,3 +228,79 @@ test('10. RBAC Boundaries: Unauthenticated or null user is denied all access', (
   assert.strictEqual(can(null, 'projects:read'), false);
   assert.strictEqual(can(undefined, 'projects:manage'), false);
 });
+
+test('11. Workspace Navigation Role Isolation: project_engineer vs read_only_stakeholder', () => {
+  const engineer: CivoraUser = {
+    id: 'usr_eng_01',
+    name: 'Marcus Vance, PE',
+    email: 'engineer@civora.internal',
+    role: 'project_engineer',
+    title: 'Lead Project Engineer',
+    assignedProjects: ['prj_metro_01'],
+  };
+
+  const stakeholder: CivoraUser = {
+    id: 'usr_stakeholder_01',
+    name: 'Elena Rostova',
+    email: 'stakeholder@civora.internal',
+    role: 'read_only_stakeholder',
+    title: 'Oversight Director',
+    assignedProjects: ['*'],
+  };
+
+  const engineerNav = getWorkspaceNavigation(engineer);
+  const stakeholderNav = getWorkspaceNavigation(stakeholder);
+
+  // Engineer can see Reviews & Approvals, but CANNOT see Stakeholder Oversight
+  assert.strictEqual(engineerNav.some((s) => s.id === 'reviews'), true);
+  assert.strictEqual(engineerNav.some((s) => s.id === 'stakeholder'), false);
+
+  // Stakeholder can see Stakeholder Oversight, but CANNOT see Reviews & Approvals
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'stakeholder'), true);
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'reviews'), false);
+
+  // Both can see Overview with "All Projects"
+  const engineerOverview = engineerNav.find((s) => s.id === 'overview');
+  assert.ok(engineerOverview);
+  assert.strictEqual(engineerOverview.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
+
+  const stakeholderOverview = stakeholderNav.find((s) => s.id === 'overview');
+  assert.ok(stakeholderOverview);
+  assert.strictEqual(stakeholderOverview.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
+});
+
+test('12. Active Link Match Logic: prevents sibling prefix matching false-positives', () => {
+  const mockNavHrefs = [
+    '/dashboard/submissions',
+    '/dashboard/submissions/pending',
+    '/dashboard/submissions/profession',
+    '/dashboard/submissions/attachments',
+  ];
+
+  const computeIsActive = (currentPathname: string, targetHref: string) => {
+    const hasExactMatch = mockNavHrefs.some((h) => h === currentPathname);
+    if (hasExactMatch) {
+      return currentPathname === targetHref;
+    }
+    if (targetHref === '/dashboard') {
+      return currentPathname === '/dashboard';
+    }
+    return currentPathname.startsWith(targetHref + '/');
+  };
+
+  // Case A: User is on "/dashboard/submissions/attachments"
+  // ONLY attachments should be active; "/dashboard/submissions" must NOT be active
+  assert.strictEqual(computeIsActive('/dashboard/submissions/attachments', '/dashboard/submissions/attachments'), true);
+  assert.strictEqual(computeIsActive('/dashboard/submissions/attachments', '/dashboard/submissions'), false);
+  assert.strictEqual(computeIsActive('/dashboard/submissions/attachments', '/dashboard/submissions/pending'), false);
+
+  // Case B: User is on "/dashboard/submissions"
+  assert.strictEqual(computeIsActive('/dashboard/submissions', '/dashboard/submissions'), true);
+  assert.strictEqual(computeIsActive('/dashboard/submissions', '/dashboard/submissions/attachments'), false);
+
+  // Case C: User is on a nested detail route like "/dashboard/submissions/sub_999" (not explicitly in nav)
+  // Base parent "/dashboard/submissions" should activate
+  assert.strictEqual(computeIsActive('/dashboard/submissions/sub_999', '/dashboard/submissions'), true);
+  assert.strictEqual(computeIsActive('/dashboard/submissions/sub_999', '/dashboard/submissions/attachments'), false);
+});
+

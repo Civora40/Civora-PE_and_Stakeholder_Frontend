@@ -1,5 +1,5 @@
-import { CivoraUser, UserRole } from '@/types';
-import { DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { CivoraUser, UserRole } from '../../types';
+import { DEMO_USERS } from '../mock-data/fixtures';
 
 /**
  * Isolated Development-Only Mock Auth Adapter

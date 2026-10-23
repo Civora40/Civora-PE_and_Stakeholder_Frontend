@@ -1,6 +1,6 @@
 import React from 'react';
 import { getCurrentUser } from '@/lib/auth/session';
-import { CivoraDashboardView } from '@/components/dashboard/CivoraDashboardView';
+import { CivoraDashboard } from '@/features/dashboard/components/CivoraDashboard';
 import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 
 export const metadata = {
@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-  const user = (await getCurrentUser()) || DEMO_USERS.platform_admin;
+  const user = (await getCurrentUser()) || DEMO_USERS.project_engineer;
 
-  return <CivoraDashboardView user={user} />;
+  return <CivoraDashboard user={user} />;
 }

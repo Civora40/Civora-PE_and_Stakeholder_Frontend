@@ -34,6 +34,16 @@ export function middleware(request: NextRequest) {
     if (!user.onboardingCompletedAt) {
       return NextResponse.redirect(new URL('/onboarding', request.url));
     }
+
+    // Role isolation: Project Engineer cannot access Stakeholder section
+    if (user.role === 'project_engineer' && pathname.startsWith('/dashboard/stakeholder')) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+
+    // Role isolation: Stakeholder cannot access Project Engineer / Reviews section
+    if (user.role === 'read_only_stakeholder' && pathname.startsWith('/dashboard/reviews')) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
   }
 
   // Guard /onboarding route: must be authenticated

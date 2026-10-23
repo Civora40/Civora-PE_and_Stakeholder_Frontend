@@ -16,6 +16,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports:read',
     'reports:manage',
     'reports:release',
+    'personnel:read',
+    'personnel:manage',
+    'performance:read',
+    'performance:manage',
+    'integrations:manage',
+    'policies:manage',
     'users:manage',
     'settings:manage',
   ],
@@ -28,12 +34,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports:read',
     'reports:manage',
     'reports:release', // Explicit permission only
+    'personnel:read',
+    'personnel:manage', // In assigned scope (identity verification, task linking)
+    'performance:read',
+    'performance:manage', // In assigned scope (exception recording, review notes)
   ],
   read_only_stakeholder: [
     'dashboard:read',
     'projects:read',
     'submissions:read',
     'reports:read',
+    'performance:read', // Summary reports only
   ],
 };
 
@@ -101,6 +112,14 @@ export function can(
       if (user.role === 'read_only_stakeholder') return false;
       return true;
 
+    case 'personnel:manage':
+      if (user.role === 'read_only_stakeholder') return false;
+      return true;
+
+    case 'performance:manage':
+      if (user.role === 'read_only_stakeholder') return false;
+      return true;
+
     case 'reports:manage':
       if (user.role === 'read_only_stakeholder') return false;
       return true;
@@ -111,6 +130,8 @@ export function can(
       // Both platform_admin and project_engineer have authorized release credentials in Civora
       return true;
 
+    case 'integrations:manage':
+    case 'policies:manage':
     case 'users:manage':
     case 'settings:manage':
       return user.role === 'platform_admin';
@@ -123,7 +144,17 @@ export function can(
 export interface NavigationItem {
   name: string;
   href: string;
-  iconName: 'LayoutDashboard' | 'Briefcase' | 'Inbox' | 'FileText' | 'Settings';
+  iconName:
+    | 'LayoutDashboard'
+    | 'Briefcase'
+    | 'Inbox'
+    | 'FileText'
+    | 'Settings'
+    | 'Users2'
+    | 'Activity'
+    | 'TrendingUp'
+    | 'Layers'
+    | 'Sliders';
   permission: Permission;
   badge?: string;
 }
@@ -148,10 +179,40 @@ export const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
     permission: 'submissions:read',
   },
   {
+    name: 'Activity & Tasks',
+    href: '/dashboard/activity',
+    iconName: 'Activity',
+    permission: 'submissions:read',
+  },
+  {
+    name: 'Personnel',
+    href: '/dashboard/personnel',
+    iconName: 'Users2',
+    permission: 'personnel:read',
+  },
+  {
+    name: 'Performance',
+    href: '/dashboard/performance',
+    iconName: 'TrendingUp',
+    permission: 'performance:read',
+  },
+  {
     name: 'Reports',
     href: '/dashboard/reports',
     iconName: 'FileText',
     permission: 'reports:read',
+  },
+  {
+    name: 'Integrations',
+    href: '/dashboard/integrations',
+    iconName: 'Layers',
+    permission: 'integrations:manage',
+  },
+  {
+    name: 'Reporting Policies',
+    href: '/dashboard/reporting-policies',
+    iconName: 'Sliders',
+    permission: 'policies:manage',
   },
   {
     name: 'Settings',

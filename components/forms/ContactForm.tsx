@@ -24,7 +24,7 @@ const INQUIRY_OPTIONS: SelectOption[] = [
     label: 'Technical Compliance & Audit',
     description: 'Engineering review standards & immutable evidence verification',
     badge: 'Standards',
-    badgeColor: 'bg-amber-50 text-amber-700 border border-amber-200',
+    badgeColor: 'bg-teal-50 text-teal-700 border border-teal-200',
   },
   {
     value: 'api_integration',

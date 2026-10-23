@@ -98,7 +98,7 @@ const ROLE_OPTIONS = [
     id: 'Quantity Surveyor (NIQS)',
     title: 'Quantity Surveyor (NIQS)',
     desc: 'Bill of Quantities (BOQ), material take-offs, valuation sheets & price fluctuation claims',
-    icon: <Scale className="w-5 h-5 text-amber-600" />,
+    icon: <Scale className="w-5 h-5 text-[#4FAAA7]" />,
     badge: 'Commercial',
   },
   {

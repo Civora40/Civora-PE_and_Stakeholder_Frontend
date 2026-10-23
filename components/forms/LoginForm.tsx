@@ -204,11 +204,11 @@ export function LoginForm() {
 
           <button
             type="button"
-            onClick={() => fillDemoRole('platform_admin')}
+            onClick={() => fillDemoRole('read_only_stakeholder')}
             className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all shadow-2xs cursor-pointer"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-            <span>Admin Role</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-[#3B68DE]" />
+            <span>Stakeholder Role</span>
           </button>
         </div>
 

@@ -55,7 +55,7 @@ export default function GovernancePage() {
     {
       title: 'Head Office & Reporting Teams',
       role: 'reporting_team',
-      badgeVariant: 'amber' as const,
+      badgeVariant: 'teal' as const,
       icon: Users2,
       description:
         'Work from reports built through a traceable review process, with approval status clearly visible.',
@@ -171,8 +171,8 @@ export default function GovernancePage() {
               </p>
             </div>
 
-            <div className="rounded-3xl bg-[#f8fafc] border border-slate-200 p-8 space-y-4 hover:border-amber-400 transition-all">
-              <div className="w-12 h-12 rounded-2xl bg-[#001237] text-amber-400 flex items-center justify-center">
+            <div className="rounded-3xl bg-[#f8fafc] border border-slate-200 p-8 space-y-4 hover:border-[#4FAAA7] transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center">
                 <Eye className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">

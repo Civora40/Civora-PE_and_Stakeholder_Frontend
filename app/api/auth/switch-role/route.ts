@@ -6,8 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const { role } = (await request.json()) as { role: UserRole };
 
-    if (!role || !['platform_admin', 'project_engineer', 'read_only_stakeholder'].includes(role)) {
-      return NextResponse.json({ success: false, error: 'Invalid role specified.' }, { status: 400 });
+    if (!role || !['project_engineer', 'read_only_stakeholder'].includes(role)) {
+      return NextResponse.json({ success: false, error: 'Invalid role specified. Only project_engineer and read_only_stakeholder are supported.' }, { status: 400 });
     }
 
     const updatedUser = await switchDemoRole(role);

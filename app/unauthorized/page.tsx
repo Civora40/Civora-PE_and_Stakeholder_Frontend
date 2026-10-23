@@ -72,7 +72,7 @@ export default async function UnauthorizedPage() {
 
           <div className="pt-4 border-t border-slate-800 text-[11px] text-slate-400">
             Need elevated clearance? Contact your enterprise platform administrator or switch
-            personas via the role switcher in demo mode.
+            personas via the role switcher.
           </div>
         </div>
       </div>

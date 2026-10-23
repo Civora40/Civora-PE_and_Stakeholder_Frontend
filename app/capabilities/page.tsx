@@ -208,7 +208,7 @@ export default function CapabilitiesPage() {
                       Items received and awaiting reviewer triage
                     </li>
                     <li className="flex items-center gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                      <AlertCircle className="w-3.5 h-3.5 text-[#4FAAA7]" />
                       Marked for clarification: missing site photos or lab break data
                     </li>
                     <li className="flex items-center gap-2">
@@ -233,15 +233,15 @@ export default function CapabilitiesPage() {
             {/* Capability 3: AI-Assisted Checks */}
             <div
               id="assisted-checks"
-              className="rounded-3xl bg-[#f8fafc] border border-slate-200/90 p-8 sm:p-10 space-y-6 flex flex-col justify-between hover:border-amber-400 transition-all"
+              className="rounded-3xl bg-[#f8fafc] border border-slate-200/90 p-8 sm:p-10 space-y-6 flex flex-col justify-between hover:border-[#4FAAA7] transition-all"
             >
               <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#001237] text-amber-400 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
                   <span>CAPABILITY 03</span>
-                  <Badge variant="amber" size="sm">
+                  <Badge variant="teal" size="sm">
                     Human-in-the-Loop
                   </Badge>
                 </div>
@@ -257,7 +257,7 @@ export default function CapabilitiesPage() {
                   replace the reviewer’s judgement.
                 </p>
 
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2 text-xs text-slate-700">
+                <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/30 space-y-2 text-xs text-slate-700">
                   <div className="font-bold text-[#001237] uppercase tracking-wide font-['Encode_Sans_Condensed',sans-serif]">
                     Ethical Advisory Guardrails
                   </div>
@@ -271,7 +271,7 @@ export default function CapabilitiesPage() {
               <div className="pt-4 border-t border-slate-200">
                 <Link
                   href="/governance"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-[#001237] hover:text-amber-600 uppercase font-['Encode_Sans_Condensed',sans-serif] tracking-wider"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-[#001237] hover:text-[#4FAAA7] uppercase font-['Encode_Sans_Condensed',sans-serif] tracking-wider"
                 >
                   <span>Explore Assisted Checks</span>
                   <ArrowRight className="w-4 h-4" />

@@ -39,17 +39,17 @@ export function Button({
 }: ButtonProps) {
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
-      'bg-[#3B68DE] hover:bg-[#2e54b8] text-white shadow-lg shadow-[#3B68DE]/20 border border-[#3B68DE]/50',
+      'bg-[#3B68DE] hover:bg-[#2e54b8] text-white shadow-sm border border-[#3B68DE]',
     teal:
-      'bg-[#4FAAA7] hover:bg-[#3d918e] text-[#001237] font-semibold shadow-lg shadow-[#4FAAA7]/20 border border-[#4FAAA7]',
+      'bg-[#4FAAA7] hover:bg-[#3d918e] text-[#001237] font-semibold shadow-sm border border-[#4FAAA7]',
     secondary:
-      'bg-[#18243D] hover:bg-[#223354] text-slate-100 border border-slate-700/80',
+      'bg-[#18243D] hover:bg-[#223354] text-white border border-slate-700 shadow-sm',
     outline:
-      'bg-transparent hover:bg-slate-800/60 text-slate-200 border border-slate-700 hover:border-[#4FAAA7]/50',
+      'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-300 hover:border-slate-400 shadow-xs font-semibold',
     ghost:
-      'bg-transparent hover:bg-slate-800/60 text-slate-300 hover:text-white border-transparent',
+      'bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-transparent',
     destructive:
-      'bg-rose-600/90 hover:bg-rose-700 text-white border border-rose-500',
+      'bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 shadow-xs',
   };
 
   const sizeStyles: Record<ButtonSize, string> = {

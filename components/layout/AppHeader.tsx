@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { CivoraUser, UserRole } from '@/types';
 import { ROLE_LABELS } from '@/lib/permissions/rbac';
-import { DemoDataIndicator } from '@/components/ui/DemoDataIndicator';
 
 interface AppHeaderProps {
   user: CivoraUser;
@@ -55,13 +54,31 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
     router.refresh();
   };
 
-  // Generate clean breadcrumb labels matching reference "Overview / Dashboard"
+  // Generate clean breadcrumb labels matching active workspace section
   const getBreadcrumbs = () => {
-    if (pathname.includes('/projects')) return { parent: 'Clients', current: 'Projects Directory' };
-    if (pathname.includes('/submissions')) return { parent: 'Tickets', current: 'Submissions Inbox' };
-    if (pathname.includes('/reports')) return { parent: 'Analytics', current: 'Reports Management' };
-    if (pathname.includes('/settings')) return { parent: 'Support', current: 'Settings & Access' };
-    return { parent: 'Overview', current: 'Dashboard' };
+    if (pathname.includes('/overview/projects')) return { parent: 'Overview', current: 'All Projects' };
+    if (pathname.includes('/submissions/pending')) return { parent: 'Field Submissions', current: 'Pending Review' };
+    if (pathname.includes('/submissions/profession')) return { parent: 'Field Submissions', current: 'By Profession' };
+    if (pathname.includes('/submissions/attachments')) return { parent: 'Field Submissions', current: 'Evidence Attachments' };
+    if (pathname.includes('/submissions')) return { parent: 'Field Submissions', current: 'All Submissions' };
+    if (pathname.includes('/projects/tasks')) return { parent: 'Project Control', current: 'Tasks & Actions' };
+    if (pathname.includes('/projects/milestones')) return { parent: 'Project Control', current: 'Project Milestones' };
+    if (pathname.includes('/projects')) return { parent: 'Project Control', current: 'Projects Directory' };
+    if (pathname.includes('/reports/approvals')) return { parent: 'Quality & Reports', current: 'Approval Queue' };
+    if (pathname.includes('/reports/published')) return { parent: 'Quality & Reports', current: 'Published Reports' };
+    if (pathname.includes('/reports')) return { parent: 'Quality & Reports', current: 'All Reports' };
+    if (pathname.includes('/performance/compliance')) return { parent: 'People & Compliance', current: 'Reporting Compliance' };
+    if (pathname.includes('/performance')) return { parent: 'Overview', current: 'Key Metrics' };
+    if (pathname.includes('/personnel/departments')) return { parent: 'People & Compliance', current: 'Departments & Cadres' };
+    if (pathname.includes('/personnel')) return { parent: 'People & Compliance', current: 'Team Directory' };
+    if (pathname.includes('/reviews/submissions')) return { parent: 'Reviews & Approvals', current: 'Submission Reviews' };
+    if (pathname.includes('/reviews/reports')) return { parent: 'Reviews & Approvals', current: 'Report Approvals' };
+    if (pathname.includes('/stakeholder/projects')) return { parent: 'Stakeholder Oversight', current: 'Capital Projects Audit' };
+    if (pathname.includes('/stakeholder/compliance')) return { parent: 'Stakeholder Oversight', current: 'Statutory Compliance' };
+    if (pathname.includes('/stakeholder/reports')) return { parent: 'Stakeholder Oversight', current: 'Inspection Sign-Offs' };
+    if (pathname.includes('/stakeholder')) return { parent: 'Stakeholder Oversight', current: 'Executive Portfolio' };
+    if (pathname.includes('/activity')) return { parent: 'Overview', current: 'Project Activity' };
+    return { parent: 'Overview', current: 'Project Dashboard' };
   };
 
   const breadcrumbs = getBreadcrumbs();
@@ -90,20 +107,8 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
 
       {/* Right: Quick Role Switcher, Notifications & More Menu */}
       <div className="flex items-center gap-2.5">
-        {/* Live Role Switcher (Compact pill for fast switching across all 3 roles) */}
+        {/* Live Role Switcher (Compact pill for fast switching across Engineer and Stakeholder roles) */}
         <div className="hidden md:flex items-center bg-white p-0.5 rounded-xl border border-slate-200/90 shadow-2xs text-[11px]">
-          <button
-            type="button"
-            onClick={() => handleRoleSwitch('platform_admin')}
-            disabled={isSwitchingRole}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-              user.role === 'platform_admin'
-                ? 'bg-[#001237] text-white shadow-2xs'
-                : 'text-slate-500 hover:text-[#001237]'
-            }`}
-          >
-            Admin
-          </button>
           <button
             type="button"
             onClick={() => handleRoleSwitch('project_engineer')}
@@ -129,9 +134,6 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
             Stakeholder
           </button>
         </div>
-
-        {/* Demo indicator */}
-        <DemoDataIndicator className="hidden xl:inline-block" />
 
         {/* Notification Bell matching reference UI */}
         <button
@@ -176,7 +178,7 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
                   >
                     <Settings className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Settings & RBAC</span>
+                    <span>Account Settings</span>
                   </Link>
                   <Link
                     href="/dashboard/settings?tab=profile"

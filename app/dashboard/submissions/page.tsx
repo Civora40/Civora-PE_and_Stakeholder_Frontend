@@ -1,7 +1,7 @@
 import React from 'react';
 import { getCurrentUser } from '@/lib/auth/session';
 import { DEMO_SUBMISSIONS } from '@/lib/mock-data/fixtures';
-import { SubmissionsInbox } from '@/components/submissions/SubmissionsInbox';
+import { SubmissionsInbox } from '@/features/submissions/components/SubmissionsInbox';
 
 export const metadata = {
   title: 'Submissions Inbox | Civora Control Plane',

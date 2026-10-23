@@ -446,7 +446,7 @@ export default function LandingPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-2 border-l-2 border-amber-400 pl-4">
+                  <div className="space-y-2 border-l-2 border-[#4FAAA7] pl-4">
                     <h4 className="text-base font-bold text-white font-['Encode_Sans_Condensed',sans-serif] uppercase">
                       Keep approvals distinct
                     </h4>
@@ -540,8 +540,8 @@ export default function LandingPage() {
                       </p>
                     </div>
 
-                    <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-2 hover:border-amber-400 transition-all">
-                      <div className="w-10 h-10 rounded-xl bg-[#001237] text-amber-400 flex items-center justify-center mb-3">
+                    <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-2 hover:border-[#4FAAA7] transition-all">
+                      <div className="w-10 h-10 rounded-xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center mb-3">
                         <Sparkles className="w-5 h-5" />
                       </div>
                       <h3 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">
@@ -680,10 +680,10 @@ export default function LandingPage() {
                 <div className="rounded-3xl bg-white border border-slate-200 p-6 space-y-3 shadow-xs flex flex-col justify-between h-full">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-full bg-[#001237] text-amber-400 flex items-center justify-center font-bold text-xs font-mono">
+                      <div className="w-8 h-8 rounded-full bg-[#001237] text-[#4FAAA7] flex items-center justify-center font-bold text-xs font-mono">
                         03
                       </div>
-                      <Badge variant="amber" size="sm">
+                      <Badge variant="teal" size="sm">
                         Status: Ready for report review
                       </Badge>
                     </div>
@@ -878,12 +878,12 @@ export default function LandingPage() {
 
             {/* Audience 3: Head Office & Reporting Teams */}
             <ScrollReveal animation="fade-up" delay={300} className="h-full">
-              <div className="rounded-3xl bg-white border border-slate-200 p-6 space-y-4 flex flex-col justify-between shadow-xs hover:border-amber-400 transition-all h-full">
+              <div className="rounded-3xl bg-white border border-slate-200 p-6 space-y-4 flex flex-col justify-between shadow-xs hover:border-[#4FAAA7] transition-all h-full">
                 <div className="space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#001237] text-amber-400 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#001237] text-[#4FAAA7] flex items-center justify-center">
                     <Users2 className="w-5 h-5" />
                   </div>
-                  <Badge variant="amber" size="sm">
+                  <Badge variant="teal" size="sm">
                     Reporting Teams
                   </Badge>
                   <h3 className="text-lg font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">
@@ -896,7 +896,7 @@ export default function LandingPage() {
                 <div className="pt-3 border-t border-slate-100">
                   <Link
                     href="/register"
-                    className="text-xs font-bold text-amber-600 hover:underline inline-flex items-center gap-1 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider"
+                    className="text-xs font-bold text-[#4FAAA7] hover:underline inline-flex items-center gap-1 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider"
                   >
                     Join Reporting Team &rarr;
                   </Link>

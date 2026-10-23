@@ -1,7 +1,7 @@
 import React from 'react';
 import { getCurrentUser } from '@/lib/auth/session';
 import { DEMO_REPORTS } from '@/lib/mock-data/fixtures';
-import { ReportsManagement } from '@/components/reports/ReportsManagement';
+import { ReportsManagement } from '@/features/reports/components/ReportsManagement';
 
 export const metadata = {
   title: 'Reports Management | Civora Control Plane',

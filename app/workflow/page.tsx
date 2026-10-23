@@ -60,7 +60,7 @@ export default function WorkflowPage() {
       number: '03',
       title: 'Prepare',
       status: 'Ready for report review',
-      badgeVariant: 'amber' as const,
+      badgeVariant: 'teal' as const,
       icon: FileSpreadsheet,
       description:
         'Build a structured report from submissions that have passed the required review.',
@@ -278,8 +278,8 @@ export default function WorkflowPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 font-mono">
+            <div className="p-6 rounded-2xl bg-teal-50/60 border border-teal-200/80 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4FAAA7] font-mono">
                 Stage 3 State
               </span>
               <div className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase">
