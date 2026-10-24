@@ -24,6 +24,7 @@ export interface NavigationSection {
     | 'FolderArchive'
     | 'Sliders'
     | 'Shield'
+    | 'FileCheck2'
     | 'Activity';
   permission?: Permission; // If set, user must have permission to see section
   allowedRoles?: UserRole[]; // If set, user must have one of the allowed roles

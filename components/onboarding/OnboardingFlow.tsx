@@ -173,7 +173,13 @@ const STATUTORY_AGENCIES = [
   'Ogun State Ministry of Urban & Physical Planning — Abeokuta',
 ];
 
+import { StakeholderOnboarding } from './StakeholderOnboarding';
+
 export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
+  if (initialUser.role === 'read_only_stakeholder') {
+    return <StakeholderOnboarding initialUser={initialUser} />;
+  }
+
   const router = useRouter();
 
   const [currentStep, setCurrentStep] = useState<number>(
@@ -355,7 +361,12 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
           return;
         }
 
-        router.push(resData.redirectUrl || '/dashboard');
+        router.push(
+          resData.redirectUrl ||
+            (user.role === 'read_only_stakeholder'
+              ? '/dashboard/stakeholder'
+              : '/dashboard')
+        );
         router.refresh();
         return;
       }
@@ -546,7 +557,10 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                 {currentStep === 7 && 'Site Clarifications & Site Instructions (SI)'}
                 {currentStep === 8 && 'Progress Reporting & Interim Valuations (IPC)'}
                 {currentStep === 9 && 'Statutory Approvals & Environmental Permits'}
-                {currentStep === 10 && 'Final Clearance & Control Plane Activation'}
+                {currentStep === 10 &&
+                  (user.role === 'read_only_stakeholder'
+                    ? 'Final Clearance & Stakeholder Dashboard Activation'
+                    : 'Final Clearance & Control Plane Activation')}
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-2xl">
                 {currentStep === 1 &&
@@ -568,7 +582,9 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                 {currentStep === 9 &&
                   'Record statutory development planning clearances, LASBCA/FCDA stage notices, and Federal EIA permits.'}
                 {currentStep === 10 &&
-                  'Review your verified Nigerian construction profile and activate your Civora engineering control plane.'}
+                  (user.role === 'read_only_stakeholder'
+                    ? 'Review your executive stakeholder profile and activate your read-only oversight dashboard.'
+                    : 'Review your verified Nigerian construction profile and activate your Civora engineering control plane.')}
               </p>
             </div>
 
@@ -1223,10 +1239,15 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
 
                   <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/70 text-xs text-emerald-900 space-y-1">
                     <strong className="font-bold flex items-center gap-1.5 text-[#008751]">
-                      <Award className="w-4 h-4" /> Engineering Clearance Granted
+                      <Award className="w-4 h-4" />{' '}
+                      {user.role === 'read_only_stakeholder'
+                        ? 'Stakeholder Oversight Clearance Granted'
+                        : 'Engineering Clearance Granted'}
                     </strong>
                     <p className="text-[11px] text-slate-600 leading-relaxed">
-                      Your Civora account has been provisioned with certified compliance templates tailored to Nigerian civil infrastructure and COREN guidelines.
+                      {user.role === 'read_only_stakeholder'
+                        ? 'Your Civora account has been provisioned with executive oversight and read-only transparency monitoring across active Nigerian capital projects.'
+                        : 'Your Civora account has been provisioned with certified compliance templates tailored to Nigerian civil infrastructure and COREN guidelines.'}
                     </p>
                   </div>
                 </div>
@@ -1300,7 +1321,13 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>{currentStep === 10 ? 'Enter Civora Control Plane' : 'Continue'}</span>
+                    <span>
+                      {currentStep === 10
+                        ? user.role === 'read_only_stakeholder'
+                          ? 'Enter Stakeholder Dashboard'
+                          : 'Enter Civora Control Plane'
+                        : 'Continue'}
+                    </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}

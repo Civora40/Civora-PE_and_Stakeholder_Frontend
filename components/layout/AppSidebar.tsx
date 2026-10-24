@@ -13,6 +13,8 @@ import {
   Activity,
   FolderArchive,
   Shield,
+  FileCheck2,
+  Settings,
   ChevronDown,
   ChevronRight,
   LogOut,
@@ -47,6 +49,7 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   Activity,
   FolderArchive,
   Shield,
+  FileCheck2,
 };
 
 export function AppSidebar({
@@ -64,6 +67,7 @@ export function AppSidebar({
 
   // Check whether an item is currently active without false-positive prefix matching on siblings
   const hasExactMatchInNav = useMemo(() => {
+    if (pathname === '/dashboard/settings') return true;
     return sections.some((sec) => sec.items.some((it) => it.href === pathname));
   }, [sections, pathname]);
 
@@ -119,24 +123,6 @@ export function AppSidebar({
       ...prev,
       [sectionId]: !prev[sectionId],
     }));
-  };
-
-  const handleRoleSwitch = async (newRole: UserRole) => {
-    if (newRole === user.role) return;
-    setIsSwitchingRole(true);
-    try {
-      const res = await fetch('/api/auth/switch-role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (res.ok) {
-        setUserMenuOpen(false);
-        router.refresh();
-      }
-    } finally {
-      setIsSwitchingRole(false);
-    }
   };
 
   const handleSignOut = async () => {
@@ -205,9 +191,19 @@ export function AppSidebar({
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-700/60 shrink-0">
           <div className="flex items-center gap-2">
             {!isCollapsed ? (
-              <CivoraLogo size="sm" showTagline={false} href="/dashboard" theme="dark" />
+              <CivoraLogo
+                size="sm"
+                showTagline={false}
+                href={user.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard'}
+                theme="dark"
+              />
             ) : (
-              <CivoraLogo size="sm" variant="mark" href="/dashboard" theme="dark" />
+              <CivoraLogo
+                size="sm"
+                variant="mark"
+                href={user.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard'}
+                theme="dark"
+              />
             )}
           </div>
 
@@ -328,14 +324,33 @@ export function AppSidebar({
           })}
         </nav>
 
-        {/* User Footer Profile & Role Matrix */}
+        {/* Settings Navigation Action */}
+        <div className="px-3 py-1.5 border-t border-slate-700/60 shrink-0">
+          <Link
+            href="/dashboard/settings"
+            onClick={() => {
+              if (isOpen && onClose) onClose();
+            }}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+              pathname === '/dashboard/settings'
+                ? 'bg-[#3B68DE] text-white font-semibold shadow-xs'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            } ${isCollapsed ? 'justify-center px-2' : ''}`}
+            title={isCollapsed ? 'Settings' : undefined}
+          >
+            <Settings className={`w-4 h-4 shrink-0 ${pathname === '/dashboard/settings' ? 'text-white' : 'text-slate-400'}`} />
+            {!isCollapsed && <span>Settings</span>}
+          </Link>
+        </div>
+
+        {/* User Footer Profile */}
         <div className="p-3 border-t border-slate-700/60 bg-[#141E33] shrink-0">
           <div className="relative">
             <button
               type="button"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer text-left"
-              aria-label="User Profile and Role Switcher"
+              aria-label="User Profile Menu"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-[#001237] border border-slate-700 flex items-center justify-center text-xs font-bold text-[#4FAAA7] shrink-0">
@@ -362,53 +377,21 @@ export function AppSidebar({
                   aria-hidden="true"
                 />
                 <div className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-[#18243D] border border-slate-700 rounded-xl shadow-2xl p-2 text-xs text-slate-200 space-y-2 animate-in fade-in duration-150">
-                  <div className="px-2 py-1 border-b border-slate-700/80">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                      Switch Role Matrix
-                    </p>
+                  <div className="px-2.5 py-2 border-b border-slate-700/80">
+                    <p className="text-xs font-bold text-white truncate">{user.name}</p>
+                    <p className="text-[10px] text-[#4FAAA7] font-mono mt-0.5 truncate">{roleInfo.title}</p>
                   </div>
 
                   <div className="space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => handleRoleSwitch('project_engineer')}
-                      disabled={isSwitchingRole}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
-                        user.role === 'project_engineer'
-                          ? 'bg-[#001237] text-white border border-[#4FAAA7]/40'
-                          : 'hover:bg-white/5 text-slate-300'
-                      }`}
+                    <Link
+                      href="/dashboard/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium text-xs cursor-pointer"
                     >
-                      <div>
-                        <span className="font-bold text-xs block">Project Engineer</span>
-                        <span className="text-[10px] text-slate-400">Submittals, reviews & releases</span>
-                      </div>
-                      {user.role === 'project_engineer' && (
-                        <Check className="w-4 h-4 text-[#4FAAA7]" />
-                      )}
-                    </button>
+                      <Settings className="w-4 h-4 text-slate-400" />
+                      <span>{user.role === 'read_only_stakeholder' ? 'Stakeholder Settings' : 'Engineer Settings'}</span>
+                    </Link>
 
-                    <button
-                      type="button"
-                      onClick={() => handleRoleSwitch('read_only_stakeholder')}
-                      disabled={isSwitchingRole}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
-                        user.role === 'read_only_stakeholder'
-                          ? 'bg-[#001237] text-white border border-[#4FAAA7]/40'
-                          : 'hover:bg-white/5 text-slate-300'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-bold text-xs block">Read-only Stakeholder</span>
-                        <span className="text-[10px] text-slate-400">Auditing & project oversight</span>
-                      </div>
-                      {user.role === 'read_only_stakeholder' && (
-                        <Check className="w-4 h-4 text-[#4FAAA7]" />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-700/80">
                     <button
                       type="button"
                       onClick={handleSignOut}

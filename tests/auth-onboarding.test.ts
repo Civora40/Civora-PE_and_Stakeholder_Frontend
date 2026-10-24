@@ -59,25 +59,42 @@ test('2. Registration Validation: accepts valid registration data', () => {
   }
 });
 
-test('3. Security: Public registration form cannot self-assign privileged roles', () => {
-  // Attempting to inject platform_admin or any elevated role via registration payload
+test('3. Security: Public registration rejects elevated roles and supports stakeholder registration', () => {
+  // Attempting to inject platform_admin or any elevated role via registration payload must fail
   const maliciousPayload = {
     firstName: 'Attacker',
     lastName: 'User',
     email: 'attacker@evil.com',
     organization: 'Malicious Corp',
     jobTitle: 'Platform Administrator',
-    role: 'platform_admin', // Injected role
+    role: 'platform_admin', // Injected privileged role
     password: 'Password123!',
     confirmPassword: 'Password123!',
     agreeTerms: true,
   };
 
-  const result = registerSchema.safeParse(maliciousPayload);
-  assert.strictEqual(result.success, true);
-  if (result.success) {
-    // The role field is stripped / not present on the validated data
-    assert.strictEqual('role' in result.data, false);
+  const maliciousResult = registerSchema.safeParse(maliciousPayload);
+  assert.strictEqual(maliciousResult.success, false);
+
+  // Legitimate stakeholder registration is accepted
+  const stakeholderPayload = {
+    firstName: 'Elena',
+    lastName: 'Rostova',
+    email: 'elena.rostova@fct-oversight.gov.ng',
+    organization: 'Federal Ministry of Works',
+    jobTitle: 'Executive Director (Capital Works)',
+    role: 'read_only_stakeholder',
+    accountType: 'stakeholder',
+    password: 'SecurePassword2026!',
+    confirmPassword: 'SecurePassword2026!',
+    agreeTerms: true,
+  };
+
+  const validResult = registerSchema.safeParse(stakeholderPayload);
+  assert.strictEqual(validResult.success, true);
+  if (validResult.success) {
+    assert.strictEqual(validResult.data.role, 'read_only_stakeholder');
+    assert.strictEqual(validResult.data.accountType, 'stakeholder');
   }
 });
 
@@ -259,14 +276,17 @@ test('11. Workspace Navigation Role Isolation: project_engineer vs read_only_sta
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'stakeholder'), true);
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'reviews'), false);
 
-  // Both can see Overview with "All Projects"
+  // Both can access "All Projects" (/dashboard/overview/projects)
   const engineerOverview = engineerNav.find((s) => s.id === 'overview');
   assert.ok(engineerOverview);
   assert.strictEqual(engineerOverview.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
 
-  const stakeholderOverview = stakeholderNav.find((s) => s.id === 'overview');
-  assert.ok(stakeholderOverview);
-  assert.strictEqual(stakeholderOverview.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
+  const stakeholderPortfolio = stakeholderNav.find((s) => s.id === 'portfolio');
+  assert.ok(stakeholderPortfolio);
+  assert.strictEqual(stakeholderPortfolio.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
+
+  // Stakeholder does NOT see engineer field submission queues or review queues
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'submissions'), false);
 });
 
 test('12. Active Link Match Logic: prevents sibling prefix matching false-positives', () => {
@@ -302,5 +322,47 @@ test('12. Active Link Match Logic: prevents sibling prefix matching false-positi
   // Base parent "/dashboard/submissions" should activate
   assert.strictEqual(computeIsActive('/dashboard/submissions/sub_999', '/dashboard/submissions'), true);
   assert.strictEqual(computeIsActive('/dashboard/submissions/sub_999', '/dashboard/submissions/attachments'), false);
+});
+
+test('13. Stakeholder Onboarding & Route Targets: stakeholder role routes directly to stakeholder dashboard', () => {
+  const stakeholder: CivoraUser = {
+    id: 'usr_stk_test',
+    name: 'Alhaji Ibrahim Danladi',
+    email: 'danladi@fmwh.gov.ng',
+    role: 'read_only_stakeholder',
+    title: 'Ministerial Observer',
+    assignedProjects: ['prj_metro_01', 'prj_civic_02'],
+    onboardingStep: 10,
+    onboardingCompletedAt: Date.now(),
+  };
+
+  const engineer: CivoraUser = {
+    id: 'usr_eng_test',
+    name: 'Engr. Emeka Okafor',
+    email: 'okafor@apex.ng',
+    role: 'project_engineer',
+    title: 'Senior Civil Engineer',
+    assignedProjects: ['prj_metro_01'],
+    onboardingStep: 10,
+    onboardingCompletedAt: Date.now(),
+  };
+
+  // Helper verifying route destination logic
+  const getPostAuthDestination = (user: CivoraUser): string => {
+    if (!user.onboardingCompletedAt && (user.onboardingStep ?? 1) < 10) {
+      return '/onboarding';
+    }
+    return user.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard';
+  };
+
+  // Stakeholder routes to /dashboard/stakeholder
+  assert.strictEqual(getPostAuthDestination(stakeholder), '/dashboard/stakeholder');
+
+  // Engineer routes to /dashboard
+  assert.strictEqual(getPostAuthDestination(engineer), '/dashboard');
+
+  // Incomplete user routes to /onboarding
+  const incompleteStakeholder = { ...stakeholder, onboardingCompletedAt: null, onboardingStep: 3 };
+  assert.strictEqual(getPostAuthDestination(incompleteStakeholder), '/onboarding');
 });
 

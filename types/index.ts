@@ -83,6 +83,34 @@ export interface Project {
   lastActivity: string;
   budgetFormatted: string;
   specsReference: string;
+  // Extended Project Initiation Metadata
+  projectType?: string;
+  description?: string;
+  contractRef?: string;
+  priority?: 'low' | 'normal' | 'high' | 'critical';
+  country?: string;
+  state?: string;
+  city?: string;
+  siteAddress?: string;
+  coordinates?: string;
+  startDate?: string;
+  completionDate?: string;
+  scopeSummary?: string;
+  deliverables?: string[];
+  milestonesList?: { id: string; title: string; targetDate: string }[];
+  constraints?: string;
+  contractor?: string;
+  clientRep?: string;
+  stakeholders?: string[];
+  assignedTeam?: string[];
+  escalationContact?: string;
+  reportingCadence?: string;
+  submissionChannels?: string[];
+  reportingCategories?: string[];
+  stakeholderReviewRequired?: boolean;
+  requireLabBreakCert?: boolean;
+  requireGeotaggedPhotos?: boolean;
+  governanceNotes?: string;
 }
 
 export type SubmissionStatus =

@@ -82,6 +82,12 @@ export const WORKSPACE_NAVIGATION_SECTIONS: NavigationSection[] = [
         permission: 'projects:read',
       },
       {
+        id: 'new-project',
+        name: 'New Project',
+        href: '/dashboard/projects/new',
+        permission: 'projects:manage',
+      },
+      {
         id: 'tasks-actions',
         name: 'Tasks & Actions',
         href: '/dashboard/projects/tasks',
@@ -211,38 +217,126 @@ export const WORKSPACE_NAVIGATION_SECTIONS: NavigationSection[] = [
   },
 ];
 
+export const STAKEHOLDER_NAVIGATION_SECTIONS: NavigationSection[] = [
+  {
+    id: 'stakeholder',
+    name: 'Executive Oversight',
+    iconName: 'Shield',
+    permission: 'dashboard:read',
+    items: [
+      {
+        id: 'stakeholder-executive',
+        name: 'Executive Portfolio',
+        href: '/dashboard/stakeholder',
+        permission: 'dashboard:read',
+      },
+      {
+        id: 'stakeholder-capital-projects',
+        name: 'Capital Projects Audit',
+        href: '/dashboard/stakeholder/projects',
+        permission: 'projects:read',
+      },
+      {
+        id: 'stakeholder-compliance',
+        name: 'Statutory Compliance',
+        href: '/dashboard/stakeholder/compliance',
+        permission: 'performance:read',
+      },
+      {
+        id: 'stakeholder-reports',
+        name: 'Inspection Sign-Offs',
+        href: '/dashboard/stakeholder/reports',
+        permission: 'reports:read',
+      },
+    ],
+  },
+  {
+    id: 'portfolio',
+    name: 'Capital Portfolio',
+    iconName: 'Briefcase',
+    permission: 'projects:read',
+    items: [
+      {
+        id: 'all-projects',
+        name: 'All Projects',
+        href: '/dashboard/overview/projects',
+        permission: 'projects:read',
+      },
+      {
+        id: 'project-milestones',
+        name: 'Milestones',
+        href: '/dashboard/projects/milestones',
+        permission: 'projects:read',
+      },
+    ],
+  },
+  {
+    id: 'assurance',
+    name: 'Assurance & Governance',
+    iconName: 'FileCheck2',
+    permission: 'reports:read',
+    items: [
+      {
+        id: 'published-reports',
+        name: 'Published Reports',
+        href: '/dashboard/reports/published',
+        permission: 'reports:read',
+      },
+      {
+        id: 'team-directory',
+        name: 'Project Engineers & Staff',
+        href: '/dashboard/personnel',
+        permission: 'personnel:read',
+      },
+      {
+        id: 'reporting-compliance',
+        name: 'Reporting Compliance',
+        href: '/dashboard/performance/compliance',
+        permission: 'performance:read',
+      },
+    ],
+  },
+];
+
 /**
  * Filter sections and sub-items based on user's authorized role & permissions.
  */
 export function getWorkspaceNavigation(user: CivoraUser | null): NavigationSection[] {
   if (!user) return [];
 
-  return WORKSPACE_NAVIGATION_SECTIONS.map((section) => {
-    // If section restricts to specific roles and user does not have an allowed role, skip it
-    if (section.allowedRoles && !section.allowedRoles.includes(user.role)) {
-      return null;
-    }
+  const sourceSections =
+    user.role === 'read_only_stakeholder'
+      ? STAKEHOLDER_NAVIGATION_SECTIONS
+      : WORKSPACE_NAVIGATION_SECTIONS;
 
-    // If section requires permission user does not have, skip it
-    if (section.permission && !can(user, section.permission)) {
-      return null;
-    }
-
-    // Filter sub-items to only authorized links
-    const authorizedItems = section.items.filter((item) => {
-      if (item.allowedRoles && !item.allowedRoles.includes(user.role)) {
-        return false;
+  return sourceSections
+    .map((section) => {
+      // If section restricts to specific roles and user does not have an allowed role, skip it
+      if (section.allowedRoles && !section.allowedRoles.includes(user.role)) {
+        return null;
       }
-      return can(user, item.permission);
-    });
 
-    if (authorizedItems.length === 0) {
-      return null;
-    }
+      // If section requires permission user does not have, skip it
+      if (section.permission && !can(user, section.permission)) {
+        return null;
+      }
 
-    return {
-      ...section,
-      items: authorizedItems,
-    };
-  }).filter((section): section is NavigationSection => section !== null);
+      // Filter sub-items to only authorized links
+      const authorizedItems = section.items.filter((item) => {
+        if (item.allowedRoles && !item.allowedRoles.includes(user.role)) {
+          return false;
+        }
+        return can(user, item.permission);
+      });
+
+      if (authorizedItems.length === 0) {
+        return null;
+      }
+
+      return {
+        ...section,
+        items: authorizedItems,
+      };
+    })
+    .filter((section): section is NavigationSection => section !== null);
 }

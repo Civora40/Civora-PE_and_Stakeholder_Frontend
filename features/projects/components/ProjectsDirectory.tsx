@@ -25,14 +25,7 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in_review' | 'planning'>('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [projectsList, setProjectsList] = useState<Project[]>(initialProjects);
-
-  // New project form state
-  const [newCode, setNewCode] = useState('');
-  const [newName, setNewName] = useState('');
-  const [newClient, setNewClient] = useState('');
-  const [newBudget, setNewBudget] = useState('');
+  const [projectsList] = useState<Project[]>(initialProjects);
 
   const canManage = can(user, 'projects:manage');
 
@@ -50,35 +43,6 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
       return matchesSearch && matchesStatus;
     });
   }, [projectsList, searchQuery, statusFilter]);
-
-  const handleCreateProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCode || !newName || !newClient) return;
-
-    const created: Project = {
-      id: `prj_${Date.now()}`,
-      code: newCode.toUpperCase(),
-      name: newName,
-      client: newClient,
-      location: 'Authorized Field Site',
-      status: 'active',
-      leadEngineer: user.name,
-      progressPercent: 10,
-      submissionsCount: 0,
-      pendingReviewsCount: 0,
-      reportsCount: 0,
-      lastActivity: 'Just now',
-      budgetFormatted: newBudget ? `$${newBudget}M` : '$15.0M',
-      specsReference: 'MasterFormat Specification Schedule',
-    };
-
-    setProjectsList([created, ...projectsList]);
-    setIsCreateModalOpen(false);
-    setNewCode('');
-    setNewName('');
-    setNewClient('');
-    setNewBudget('');
-  };
 
   return (
     <div className="space-y-6">
@@ -98,12 +62,12 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
         <div>
           {canManage ? (
             <Button
-              onClick={() => setIsCreateModalOpen(true)}
+              href="/dashboard/projects/new"
               variant="teal"
               size="md"
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              Provision New Project
+              New Project
             </Button>
           ) : (
             <div
@@ -315,93 +279,6 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
                 Close
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Provision New Project Modal (Gated to Platform Admin & Engineer) */}
-      {isCreateModalOpen && canManage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="rounded-2xl bg-white border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-2xl relative">
-            <button
-              onClick={() => setIsCreateModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
-              aria-label="Close dialog"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase">
-                Provision New Project Scope
-              </h2>
-              <p className="text-xs text-slate-500">
-                Configure technical and governance metadata for a new infrastructure project.
-              </p>
-            </div>
-
-            <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Project Code (e.g. BRG-102)</label>
-                <input
-                  type="text"
-                  required
-                  value={newCode}
-                  onChange={(e) => setNewCode(e.target.value)}
-                  placeholder="e.g. METRO-L5"
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-slate-900 focus:bg-white focus:border-[#4FAAA7] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Project Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. South Bay Overpass Span Replacement"
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-slate-900 focus:bg-white focus:border-[#4FAAA7] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Client / Authority</label>
-                <input
-                  type="text"
-                  required
-                  value={newClient}
-                  onChange={(e) => setNewClient(e.target.value)}
-                  placeholder="e.g. State Department of Transportation"
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-slate-900 focus:bg-white focus:border-[#4FAAA7] focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Authorized Budget ($ Millions)</label>
-                <input
-                  type="number"
-                  value={newBudget}
-                  onChange={(e) => setNewBudget(e.target.value)}
-                  placeholder="e.g. 35.5"
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-slate-900 focus:bg-white focus:border-[#4FAAA7] focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  variant="outline"
-                  size="sm"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" variant="teal" size="sm">
-                  Confirm Provisioning
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
       )}

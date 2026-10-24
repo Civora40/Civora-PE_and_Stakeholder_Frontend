@@ -18,13 +18,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { firstName, lastName, email, organization, jobTitle, invitationCode } =
+    const { firstName, lastName, email, organization, jobTitle, invitationCode, role, accountType } =
       validation.data;
 
     // Invitation validation & Role assignment
     // Principle: Users must not be able to self-assign privileged roles (e.g. platform_admin).
     let assignedRole: UserRole = 'project_engineer';
     let assignedProjects: string[] = ['prj_metro_01'];
+
+    // Check requested role / accountType
+    if (
+      role === 'read_only_stakeholder' ||
+      accountType === 'stakeholder' ||
+      jobTitle?.toLowerCase().includes('stakeholder') ||
+      jobTitle?.toLowerCase().includes('oversight')
+    ) {
+      assignedRole = 'read_only_stakeholder';
+      assignedProjects = ['prj_metro_01', 'prj_civic_02', 'prj_datacenter_04'];
+    }
 
     if (invitationCode && invitationCode.trim()) {
       const code = invitationCode.trim().toUpperCase();
@@ -42,7 +53,7 @@ export async function POST(request: NextRequest) {
 
       if (code.includes('STAKE') || code.includes('AUDIT')) {
         assignedRole = 'read_only_stakeholder';
-        assignedProjects = ['prj_metro_01', 'prj_civic_02'];
+        assignedProjects = ['prj_metro_01', 'prj_civic_02', 'prj_datacenter_04'];
       } else {
         assignedRole = 'project_engineer';
         assignedProjects = ['prj_metro_01'];

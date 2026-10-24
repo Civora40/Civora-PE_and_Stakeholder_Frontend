@@ -47,6 +47,8 @@ export const registerSchema = z
       .min(2, 'Enter your organization or company name.')
       .max(100, 'Organization name is too long.'),
     jobTitle: z.string().trim().max(100).optional().default(''),
+    role: z.enum(['project_engineer', 'read_only_stakeholder']).optional(),
+    accountType: z.enum(['engineer', 'stakeholder']).optional(),
     password: z
       .string()
       .min(1, 'Enter a password.')

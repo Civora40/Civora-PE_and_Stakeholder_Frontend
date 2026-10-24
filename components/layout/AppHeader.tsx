@@ -24,28 +24,9 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
-
   const roleInfo = ROLE_LABELS[user.role] || {
     badge: 'Admin',
     title: 'Platform Administrator',
-  };
-
-  const handleRoleSwitch = async (newRole: UserRole) => {
-    if (newRole === user.role) return;
-    setIsSwitchingRole(true);
-    try {
-      const res = await fetch('/api/auth/switch-role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
-      });
-      if (res.ok) {
-        router.refresh();
-      }
-    } finally {
-      setIsSwitchingRole(false);
-    }
   };
 
   const handleSignOut = async () => {
@@ -61,6 +42,7 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
     if (pathname.includes('/submissions/profession')) return { parent: 'Field Submissions', current: 'By Profession' };
     if (pathname.includes('/submissions/attachments')) return { parent: 'Field Submissions', current: 'Evidence Attachments' };
     if (pathname.includes('/submissions')) return { parent: 'Field Submissions', current: 'All Submissions' };
+    if (pathname.includes('/projects/new')) return { parent: 'Project Control', current: 'New Project' };
     if (pathname.includes('/projects/tasks')) return { parent: 'Project Control', current: 'Tasks & Actions' };
     if (pathname.includes('/projects/milestones')) return { parent: 'Project Control', current: 'Project Milestones' };
     if (pathname.includes('/projects')) return { parent: 'Project Control', current: 'Projects Directory' };
@@ -77,6 +59,7 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
     if (pathname.includes('/stakeholder/compliance')) return { parent: 'Stakeholder Oversight', current: 'Statutory Compliance' };
     if (pathname.includes('/stakeholder/reports')) return { parent: 'Stakeholder Oversight', current: 'Inspection Sign-Offs' };
     if (pathname.includes('/stakeholder')) return { parent: 'Stakeholder Oversight', current: 'Executive Portfolio' };
+    if (pathname.includes('/settings')) return { parent: 'System', current: 'Engineer Settings' };
     if (pathname.includes('/activity')) return { parent: 'Overview', current: 'Project Activity' };
     return { parent: 'Overview', current: 'Project Dashboard' };
   };
@@ -105,34 +88,12 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
         </nav>
       </div>
 
-      {/* Right: Quick Role Switcher, Notifications & More Menu */}
+      {/* Right: Role Indicator, Notifications & User Menu */}
       <div className="flex items-center gap-2.5">
-        {/* Live Role Switcher (Compact pill for fast switching across Engineer and Stakeholder roles) */}
-        <div className="hidden md:flex items-center bg-white p-0.5 rounded-xl border border-slate-200/90 shadow-2xs text-[11px]">
-          <button
-            type="button"
-            onClick={() => handleRoleSwitch('project_engineer')}
-            disabled={isSwitchingRole}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-              user.role === 'project_engineer'
-                ? 'bg-[#001237] text-white shadow-2xs'
-                : 'text-slate-500 hover:text-[#001237]'
-            }`}
-          >
-            Engineer
-          </button>
-          <button
-            type="button"
-            onClick={() => handleRoleSwitch('read_only_stakeholder')}
-            disabled={isSwitchingRole}
-            className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
-              user.role === 'read_only_stakeholder'
-                ? 'bg-[#001237] text-white shadow-2xs'
-                : 'text-slate-500 hover:text-[#001237]'
-            }`}
-          >
-            Stakeholder
-          </button>
+        {/* Active Role Indicator */}
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] font-semibold text-slate-700">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4FAAA7]" />
+          <span>{roleInfo.title}</span>
         </div>
 
         {/* Notification Bell matching reference UI */}

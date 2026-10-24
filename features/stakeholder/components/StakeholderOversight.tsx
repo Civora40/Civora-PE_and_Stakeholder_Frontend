@@ -122,6 +122,37 @@ export function StakeholderOversight({
 
   return (
     <div className="space-y-6">
+      {/* Executive Welcome & Institutional Mandate Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#001237] via-[#18243D] to-[#001237] text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#4FAAA7]/20 text-[#4FAAA7] border border-[#4FAAA7]/30 uppercase">
+              Executive Stakeholder Control Plane
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              Fiduciary Mandate &bull; Multi-Project Capital Oversight
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide text-white">
+            Welcome, {user.name}
+          </h2>
+          <p className="text-xs text-slate-300">
+            {user.title || 'Stakeholder Representative'} &bull; {user.organization || 'Federal Ministry of Works & Housing'} &bull; Read-Only Audit Ledger
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-right">
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-mono">Monitored Programs</span>
+            <span className="text-sm font-bold text-white font-mono">{DEMO_PROJECTS.length} Capital Builds</span>
+          </div>
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-right">
+            <span className="text-[10px] text-[#4FAAA7] uppercase tracking-wider block font-mono">Verification Mode</span>
+            <span className="text-sm font-bold text-[#4FAAA7] font-mono">COREN Certified</span>
+          </div>
+        </div>
+      </div>
+
       {/* Header Bar matching standard App UI */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

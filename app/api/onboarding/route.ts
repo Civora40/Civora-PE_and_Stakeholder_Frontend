@@ -46,11 +46,21 @@ export async function POST(request: NextRequest) {
         accountStatus: 'active',
       });
 
+      if (!updatedUser) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to update session.' },
+          { status: 401 }
+        );
+      }
+
+      const targetDashboard =
+        updatedUser.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard';
+
       return NextResponse.json({
         success: true,
         user: updatedUser,
         completed: true,
-        redirectUrl: '/dashboard',
+        redirectUrl: targetDashboard,
       });
     }
 

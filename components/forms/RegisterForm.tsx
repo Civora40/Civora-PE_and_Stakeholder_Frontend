@@ -10,16 +10,27 @@ import {
   Briefcase,
   Ticket,
   ChevronDown,
+  HardHat,
+  ShieldCheck,
 } from 'lucide-react';
 
-const JOB_TITLE_PRESETS = [
+const ENGINEER_TITLE_PRESETS = [
   'Project Engineer',
   'Project Manager',
   'Site Engineer',
   'Reporting Officer',
-  'Client/Stakeholder',
   'Quality Assurance Inspector',
   'Civil Superintendent',
+  'Other',
+];
+
+const STAKEHOLDER_TITLE_PRESETS = [
+  'Capital Programs Oversight Director',
+  'Statutory Compliance Auditor',
+  'Client / Ministry Representative',
+  'Executive Board Member',
+  'Financial Sponsor Representative',
+  'Community Liaison Lead',
   'Other',
 ];
 
@@ -39,6 +50,7 @@ export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [accountType, setAccountType] = useState<'engineer' | 'stakeholder'>('engineer');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,6 +68,9 @@ export function RegisterForm() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const presetsList =
+    accountType === 'stakeholder' ? STAKEHOLDER_TITLE_PRESETS : ENGINEER_TITLE_PRESETS;
 
   const effectiveJobTitle =
     selectedJobTitle === 'Other' ? customJobTitle.trim() : selectedJobTitle;
@@ -119,6 +134,8 @@ export function RegisterForm() {
           email: email.trim().toLowerCase(),
           organization: organization.trim(),
           jobTitle: effectiveJobTitle,
+          role: accountType === 'stakeholder' ? 'read_only_stakeholder' : 'project_engineer',
+          accountType,
           password,
           confirmPassword,
           invitationCode: invitationCode.trim() || undefined,
@@ -178,6 +195,56 @@ export function RegisterForm() {
 
       {/* Registration Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+        {/* Account Role / Workspace Selection */}
+        <div className="space-y-1.5 pb-1">
+          <label className="block text-xs font-semibold text-slate-700">
+            Account Type & Workspace Role <span className="text-rose-500">*</span>
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setAccountType('engineer');
+                setSelectedJobTitle('Project Engineer');
+              }}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                accountType === 'engineer'
+                  ? 'bg-[#001237] text-white border-[#001237] shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <HardHat className={`w-4 h-4 ${accountType === 'engineer' ? 'text-[#4FAAA7]' : 'text-slate-500'}`} />
+                <span className="font-bold text-xs">Project Engineer</span>
+              </div>
+              <p className={`text-[11px] mt-1 ${accountType === 'engineer' ? 'text-slate-300' : 'text-slate-500'}`}>
+                Field submittals, QA review & technical approvals
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAccountType('stakeholder');
+                setSelectedJobTitle('Capital Programs Oversight Director');
+              }}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                accountType === 'stakeholder'
+                  ? 'bg-[#001237] text-white border-[#001237] shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <ShieldCheck className={`w-4 h-4 ${accountType === 'stakeholder' ? 'text-[#4FAAA7]' : 'text-slate-500'}`} />
+                <span className="font-bold text-xs">Stakeholder / Client</span>
+              </div>
+              <p className={`text-[11px] mt-1 ${accountType === 'stakeholder' ? 'text-slate-300' : 'text-slate-500'}`}>
+                Capital oversight, statutory compliance & audit reports
+              </p>
+            </button>
+          </div>
+        </div>
+
         {/* Row 1: First Name & Last Name */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
@@ -337,7 +404,7 @@ export function RegisterForm() {
                 onChange={(e) => setSelectedJobTitle(e.target.value)}
                 className="w-full appearance-none rounded-xl bg-white border border-slate-300 pl-3.5 pr-8 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
               >
-                {JOB_TITLE_PRESETS.map((t) => (
+                {presetsList.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -567,7 +634,7 @@ export function RegisterForm() {
               <span>Creating account…</span>
             </div>
           ) : (
-            <span>Create account</span>
+            <span>{accountType === 'stakeholder' ? 'Create Stakeholder Account' : 'Create Engineer Account'}</span>
           )}
         </button>
       </form>
