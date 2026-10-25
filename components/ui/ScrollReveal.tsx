@@ -23,15 +23,7 @@ export function ScrollReveal({
   rootMargin = '0px 0px -50px 0px',
   easing = 'cubic-bezier(0.16, 1, 0.3, 1)',
 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(() => {
-    if (typeof window !== 'undefined') {
-      if (!('IntersectionObserver' in window)) return true;
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return true;
-      }
-    }
-    return false;
-  });
+  const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,10 +31,12 @@ export function ScrollReveal({
     if (!element) return;
 
     if (!('IntersectionObserver' in window)) {
+      setIsVisible(true);
       return;
     }
 
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setIsVisible(true);
       return;
     }
 

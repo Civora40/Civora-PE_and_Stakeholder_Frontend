@@ -7,7 +7,7 @@ export interface NavigationSubItem {
   permission: Permission;
   badge?: string;
   badgeVariant?: 'teal' | 'blue' | 'rose' | 'emerald' | 'slate';
-  countKey?: 'pendingSubmissions' | 'unverifiedSenders' | 'pendingReports' | 'openTasks';
+  countKey?: 'pendingSubmissions' | 'unverifiedSenders' | 'pendingReports' | 'openTasks' | 'unreadAlerts';
   allowedRoles?: UserRole[];
 }
 

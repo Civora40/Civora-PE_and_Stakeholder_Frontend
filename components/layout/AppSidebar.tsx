@@ -23,6 +23,7 @@ import {
   Search,
   Check,
   ChevronsUpDown,
+  User,
 } from 'lucide-react';
 import { CivoraUser, UserRole } from '@/types';
 import { ROLE_LABELS } from '@/lib/permissions/rbac';
@@ -30,6 +31,7 @@ import { CivoraLogo } from '@/components/brand/CivoraLogo';
 import { getWorkspaceNavigation } from '@/lib/navigation/workspace-navigation';
 import { NavigationSection, NavigationSubItem } from '@/lib/navigation/types';
 import { DEMO_SUBMISSIONS, DEMO_REPORTS } from '@/lib/mock-data/fixtures';
+import { getNotificationsForRole } from '@/lib/mock-data/notifications';
 
 interface AppSidebarProps {
   user: CivoraUser;
@@ -116,7 +118,8 @@ export function AppSidebar({
       (s) => s.senderVerificationStatus === 'needs_verification'
     ).length,
     openTasks: 3,
-  }), []);
+    unreadAlerts: getNotificationsForRole(user.role).filter((n) => !n.isRead).length,
+  }), [user.role]);
 
   const toggleSection = (sectionId: string) => {
     setOpenSections((prev) => ({
@@ -171,22 +174,10 @@ export function AppSidebar({
 
       {/* Sidebar Container */}
       <aside
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         className={`fixed top-0 bottom-0 left-0 z-40 bg-[#18243D] border-r border-slate-700/70 flex flex-col transition-all duration-200 lg:translate-x-0 no-scrollbar sidebar-scroll ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
       >
-        <style dangerouslySetInnerHTML={{ __html: `
-          aside::-webkit-scrollbar,
-          nav::-webkit-scrollbar,
-          .no-scrollbar::-webkit-scrollbar,
-          .sidebar-scroll::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-        ` }} />
-
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-700/60 shrink-0">
           <div className="flex items-center gap-2">
@@ -194,14 +185,14 @@ export function AppSidebar({
               <CivoraLogo
                 size="sm"
                 showTagline={false}
-                href={user.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard'}
+                href="/dashboard"
                 theme="dark"
               />
             ) : (
               <CivoraLogo
                 size="sm"
                 variant="mark"
-                href={user.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard'}
+                href="/dashboard"
                 theme="dark"
               />
             )}
@@ -217,6 +208,18 @@ export function AppSidebar({
             {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
         </div>
+
+        {/* Workspace Label for Stakeholder per Spec Section 6 */}
+        {!isCollapsed && user.role === 'read_only_stakeholder' && (
+          <div className="px-4 py-2 border-b border-slate-700/50 bg-[#001237]/60 flex items-center justify-between">
+            <span className="text-[11px] font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-[#4FAAA7]">
+              Stakeholder Workspace
+            </span>
+            <span className="text-[9px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10 uppercase">
+              Read-Only
+            </span>
+          </div>
+        )}
 
         {/* Quick Filter Input */}
         {!isCollapsed && (
@@ -236,7 +239,6 @@ export function AppSidebar({
 
         {/* Navigation Section List */}
         <nav
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           className="flex-1 overflow-y-auto px-3 py-2 space-y-3 focus:outline-none no-scrollbar sidebar-scroll"
           aria-label="Main Navigation"
         >
@@ -384,13 +386,24 @@ export function AppSidebar({
 
                   <div className="space-y-1">
                     <Link
-                      href="/dashboard/settings"
+                      href="/dashboard/profile"
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-2 p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium text-xs cursor-pointer"
                     >
-                      <Settings className="w-4 h-4 text-slate-400" />
-                      <span>{user.role === 'read_only_stakeholder' ? 'Stakeholder Settings' : 'Engineer Settings'}</span>
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span>My Profile</span>
                     </Link>
+
+                    {user.role !== 'read_only_stakeholder' && (
+                      <Link
+                        href="/dashboard/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium text-xs cursor-pointer"
+                      >
+                        <Settings className="w-4 h-4 text-slate-400" />
+                        <span>Engineer Settings</span>
+                      </Link>
+                    )}
 
                     <button
                       type="button"

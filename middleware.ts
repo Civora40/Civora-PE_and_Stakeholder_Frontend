@@ -30,23 +30,27 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Authenticated users with incomplete onboarding must complete /onboarding first
+    // Authenticated users with incomplete onboarding must complete onboarding first
     if (!user.onboardingCompletedAt) {
-      return NextResponse.redirect(new URL('/onboarding', request.url));
+      const onboardingPath =
+        user.role === 'read_only_stakeholder' ? '/stakeholder/onboarding' : '/onboarding';
+      return NextResponse.redirect(new URL(onboardingPath, request.url));
     }
 
-    // Role routing: Stakeholder accessing /dashboard is directed to their executive dashboard
-    if (user.role === 'read_only_stakeholder' && pathname === '/dashboard') {
-      return NextResponse.redirect(new URL('/dashboard/stakeholder', request.url));
+    // Legacy route redirect: /dashboard/stakeholder -> /dashboard
+    if (user.role === 'read_only_stakeholder' && pathname.startsWith('/dashboard/stakeholder')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    // Role isolation: Project Engineer cannot access Stakeholder section
-    if (user.role === 'project_engineer' && pathname.startsWith('/dashboard/stakeholder')) {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    // Role isolation: Stakeholder cannot access Project Engineer / Reviews section
-    if (user.role === 'read_only_stakeholder' && (pathname.startsWith('/dashboard/reviews') || pathname.startsWith('/dashboard/projects/new'))) {
+    // Role isolation: Stakeholder cannot access engineering internal workflows
+    if (
+      user.role === 'read_only_stakeholder' &&
+      (pathname.startsWith('/dashboard/reviews') ||
+        pathname.startsWith('/dashboard/projects/new') ||
+        pathname.startsWith('/dashboard/submissions') ||
+        pathname.startsWith('/dashboard/personnel') ||
+        pathname.startsWith('/dashboard/reporting-policies'))
+    ) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }

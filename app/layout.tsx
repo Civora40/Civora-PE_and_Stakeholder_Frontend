@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className="h-full bg-white overflow-x-hidden">
+    <html lang="en" data-scroll-behavior="smooth" className="h-full bg-white overflow-x-hidden" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
         <link rel="shortcut icon" href="/favicon.ico" />
@@ -44,7 +44,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="min-h-full flex flex-col bg-white text-[#001237] antialiased overflow-x-hidden selection:bg-[#4FAAA7]/30 selection:text-[#001237]">
+      <body className="min-h-full flex flex-col bg-white text-[#001237] antialiased overflow-x-hidden selection:bg-[#4FAAA7]/30 selection:text-[#001237]" suppressHydrationWarning>
         {children}
       </body>
     </html>

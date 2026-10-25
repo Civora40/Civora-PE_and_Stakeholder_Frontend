@@ -272,18 +272,17 @@ test('11. Workspace Navigation Role Isolation: project_engineer vs read_only_sta
   assert.strictEqual(engineerNav.some((s) => s.id === 'reviews'), true);
   assert.strictEqual(engineerNav.some((s) => s.id === 'stakeholder'), false);
 
-  // Stakeholder can see Stakeholder Oversight, but CANNOT see Reviews & Approvals
+  // Stakeholder can see Stakeholder Workspace, but CANNOT see Reviews & Approvals
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'stakeholder'), true);
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'reviews'), false);
 
-  // Both can access "All Projects" (/dashboard/overview/projects)
-  const engineerOverview = engineerNav.find((s) => s.id === 'overview');
-  assert.ok(engineerOverview);
-  assert.strictEqual(engineerOverview.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
-
-  const stakeholderPortfolio = stakeholderNav.find((s) => s.id === 'portfolio');
-  assert.ok(stakeholderPortfolio);
-  assert.strictEqual(stakeholderPortfolio.items.some((it) => it.id === 'all-projects' && it.href === '/dashboard/overview/projects'), true);
+  // Stakeholder navigation strictly contains Section 6 items: Overview, My Projects, Released Reports, Notifications
+  const stakeholderSection = stakeholderNav.find((s) => s.id === 'stakeholder');
+  assert.ok(stakeholderSection);
+  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'overview' && it.href === '/dashboard'), true);
+  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'my-projects' && it.href === '/dashboard/projects'), true);
+  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'released-reports' && it.href === '/dashboard/reports'), true);
+  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'notifications' && it.href === '/dashboard/notifications'), true);
 
   // Stakeholder does NOT see engineer field submission queues or review queues
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'submissions'), false);

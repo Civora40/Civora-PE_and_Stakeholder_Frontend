@@ -21,6 +21,7 @@ import {
   Users,
   BookOpen,
   ChevronDown,
+  ChevronRight,
   Layout,
   Check,
   Award,
@@ -59,7 +60,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'High',
     assignedTo: {
       name: 'Engr. Marcus Vance, PE',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=80',
     },
     status: 'In Review',
     receivedDate: '2026-10-18',
@@ -73,7 +73,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'Medium',
     assignedTo: {
       name: 'Engr. Sarah Lee',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80',
     },
     status: 'Approved',
     receivedDate: '2026-10-19',
@@ -87,7 +86,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'Low',
     assignedTo: {
       name: 'Engr. John Doe',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&auto=format&fit=crop&q=80',
     },
     status: 'In Progress',
     receivedDate: '2026-10-19',
@@ -101,7 +99,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'Medium',
     assignedTo: {
       name: 'Engr. Michael Wong',
-      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=60&auto=format&fit=crop&q=80',
     },
     status: 'In Progress',
     receivedDate: '2026-10-20',
@@ -115,7 +112,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'High',
     assignedTo: {
       name: 'Engr. Marcus Vance, PE',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&auto=format&fit=crop&q=80',
     },
     status: 'In Review',
     receivedDate: '2026-10-20',
@@ -129,7 +125,6 @@ const INITIAL_SUBMITTALS: SubmittalItem[] = [
     priority: 'Low',
     assignedTo: {
       name: 'Engr. Sarah Lee',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&auto=format&fit=crop&q=80',
     },
     status: 'Approved',
     receivedDate: '2026-10-21',
@@ -287,11 +282,10 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                         setDateFilter(opt);
                         setDateDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between ${
-                        dateFilter === opt
-                          ? 'bg-slate-100 font-semibold text-[#001237]'
-                          : 'hover:bg-slate-50 text-slate-600'
-                      }`}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg transition-colors flex items-center justify-between ${dateFilter === opt
+                        ? 'bg-slate-100 font-semibold text-[#001237]'
+                        : 'hover:bg-slate-50 text-slate-600'
+                        }`}
                     >
                       <span>{opt}</span>
                       {dateFilter === opt && <Check className="w-3 h-3 text-[#4FAAA7]" />}
@@ -532,19 +526,17 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                     <div className="w-full max-w-[42px] bg-slate-100 rounded-t-lg h-full flex items-end">
                       <div
                         style={{ height: `${bar.height}%` }}
-                        className={`w-full rounded-t-lg transition-all duration-200 ${
-                          isSelected
-                            ? 'bg-[#001237] shadow-sm'
-                            : 'bg-slate-200/80 group-hover:bg-[#4FAAA7]/50'
-                        }`}
+                        className={`w-full rounded-t-lg transition-all duration-200 ${isSelected
+                          ? 'bg-[#001237] shadow-sm'
+                          : 'bg-slate-200/80 group-hover:bg-[#4FAAA7]/50'
+                          }`}
                       />
                     </div>
 
                     {/* Day Label below bar */}
                     <span
-                      className={`text-xs mt-3 select-none ${
-                        isSelected ? 'font-bold text-[#001237]' : 'text-slate-400'
-                      }`}
+                      className={`text-xs mt-3 select-none ${isSelected ? 'font-bold text-[#001237]' : 'text-slate-400'
+                        }`}
                     >
                       {bar.day}
                     </span>
@@ -571,33 +563,30 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
               <button
                 type="button"
                 onClick={() => setActivityFilter('today')}
-                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${
-                  activityFilter === 'today'
-                    ? 'bg-[#001237] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-[#001237]'
-                }`}
+                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${activityFilter === 'today'
+                  ? 'bg-[#001237] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-[#001237]'
+                  }`}
               >
                 Today
               </button>
               <button
                 type="button"
                 onClick={() => setActivityFilter('yesterday')}
-                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${
-                  activityFilter === 'yesterday'
-                    ? 'bg-[#001237] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-[#001237]'
-                }`}
+                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${activityFilter === 'yesterday'
+                  ? 'bg-[#001237] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-[#001237]'
+                  }`}
               >
                 Yesterday
               </button>
               <button
                 type="button"
                 onClick={() => setActivityFilter('week')}
-                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${
-                  activityFilter === 'week'
-                    ? 'bg-[#001237] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-[#001237]'
-                }`}
+                className={`py-1.5 text-xs rounded-lg font-bold uppercase tracking-wider transition-all ${activityFilter === 'week'
+                  ? 'bg-[#001237] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-[#001237]'
+                  }`}
               >
                 This week
               </button>
@@ -727,6 +716,18 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                 </div>
                 <span className="text-[10px] text-slate-400 shrink-0 font-medium">10:15 AM</span>
               </div>
+            </div>
+
+            {/* Link to Full Notifications Center */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Have active submittal alerts?</span>
+              <Link
+                href="/dashboard/notifications"
+                className="inline-flex items-center gap-1 font-semibold text-[#3B68DE] hover:text-[#001237] hover:underline"
+              >
+                <span>All Alerts & Notifications</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#4FAAA7]" />
+              </Link>
             </div>
           </div>
         </div>
@@ -863,9 +864,8 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                 return (
                   <tr
                     key={row.id}
-                    className={`transition-colors hover:bg-slate-50/80 ${
-                      isChecked ? 'bg-slate-50/60' : ''
-                    }`}
+                    className={`transition-colors hover:bg-slate-50/80 ${isChecked ? 'bg-slate-50/60' : ''
+                      }`}
                   >
                     <td className="py-3 px-3">
                       <input
@@ -906,20 +906,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                       )}
                     </td>
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        {row.assignedTo.avatar ? (
-                          <img
-                            src={row.assignedTo.avatar}
-                            alt={row.assignedTo.name}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-700">
-                            {row.assignedTo.name[0]}
-                          </div>
-                        )}
-                        <span className="text-slate-800 font-medium">{row.assignedTo.name}</span>
-                      </div>
+                      <span className="text-slate-800 font-medium">{row.assignedTo.name}</span>
                     </td>
                     <td className="py-3 px-3">
                       {row.status === 'In Review' ? (

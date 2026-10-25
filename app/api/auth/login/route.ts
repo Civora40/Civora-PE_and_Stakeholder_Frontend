@@ -33,9 +33,9 @@ export async function POST(request: NextRequest) {
     await createSession(result.user);
 
     const redirectUrl = result.user.onboardingCompletedAt
-      ? result.user.role === 'read_only_stakeholder'
-        ? '/dashboard/stakeholder'
-        : '/dashboard'
+      ? '/dashboard'
+      : result.user.role === 'read_only_stakeholder'
+      ? '/stakeholder/onboarding'
       : '/onboarding';
 
     return NextResponse.json({

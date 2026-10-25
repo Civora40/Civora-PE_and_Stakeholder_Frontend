@@ -1,608 +1,794 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Shield,
-  TrendingUp,
-  Building2,
-  FileCheck2,
-  CheckCircle2,
-  AlertTriangle,
-  Download,
-  Filter,
-  Search,
-  ExternalLink,
-  Calendar,
-  DollarSign,
-  Award,
-  Layers,
+  Briefcase,
   FileText,
+  CheckCircle2,
   Clock,
-  Building,
+  ExternalLink,
+  Download,
+  Search,
+  Filter,
+  ArrowRight,
+  Shield,
+  Award,
+  Bell,
+  User,
+  Calendar,
+  Layers,
+  MapPin,
+  ChevronRight,
+  Check,
+  AlertCircle,
+  FileCheck2,
+  X,
+  Eye,
 } from 'lucide-react';
-import { CivoraUser } from '@/types';
-import { DEMO_PROJECTS, DEMO_REPORTS } from '@/lib/mock-data/fixtures';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { CivoraUser, Project } from '@/types';
+import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import {
+  STAKEHOLDER_MILESTONES,
+  STAKEHOLDER_UPDATES,
+  STAKEHOLDER_RELEASED_REPORTS,
+  StakeholderProjectMilestone,
+  StakeholderReleasedReport,
+} from '@/lib/mock-data/stakeholder';
 
 interface StakeholderOversightProps {
   user: CivoraUser;
-  initialTab?: 'executive' | 'projects' | 'compliance' | 'reports';
+  initialTab?: string;
 }
 
-const STATUTORY_COMPLIANCE_ITEMS = [
-  {
-    id: 'comp_01',
-    authority: 'Federal Ministry of Environment (FMEnv)',
-    permitCode: 'EIA-FMENV-2024-8841',
-    title: 'Environmental Impact Assessment (EIA) Certification',
-    project: 'Lagos Rail Mass Transit (Blue Line)',
-    issueDate: '15 Jan 2026',
-    expiryDate: '15 Jan 2028',
-    status: 'compliant',
-    verificationHash: '0x8f2a...c391',
-    auditFrequency: 'Quarterly',
-  },
-  {
-    id: 'comp_02',
-    authority: 'Lagos State Building Control Agency (LASBCA)',
-    permitCode: 'LASBCA-VI-REV-094',
-    title: 'Coastal Revetment & Foundation Stability Authorization',
-    project: 'Eko Atlantic Coastal Revetment',
-    issueDate: '02 Feb 2026',
-    expiryDate: '02 Feb 2027',
-    status: 'compliant',
-    verificationHash: '0x3d7b...e102',
-    auditFrequency: 'Bi-Monthly',
-  },
-  {
-    id: 'comp_03',
-    authority: 'Nigerian Ports Authority (NPA) Hydrographic Dept',
-    permitCode: 'NPA-HYD-QW-2026',
-    title: 'Quay Wall Bathymetric Dredging & Berth Clearance',
-    project: 'Lekki Deep Sea Port',
-    issueDate: '10 Jan 2026',
-    expiryDate: '10 Jan 2028',
-    status: 'compliant',
-    verificationHash: '0x99a1...ff45',
-    auditFrequency: 'Monthly',
-  },
-  {
-    id: 'comp_04',
-    authority: 'Federal Capital Development Authority (FCDA Abuja)',
-    permitCode: 'FCDA-ENG-CBD-04',
-    title: 'Interchange Structural Loading & Right-of-Way Permit',
-    project: 'Abuja CBD Outer Northern Expressway Interchange',
-    issueDate: '28 Feb 2026',
-    expiryDate: '28 Feb 2029',
-    status: 'compliant',
-    verificationHash: '0x5c4e...88bc',
-    auditFrequency: 'Semi-Annual',
-  },
-];
+export function StakeholderOversight({ user, initialTab }: StakeholderOversightProps) {
+  // 1. Resolve authorized assigned projects (Section 3.2: Project-level membership)
+  const assignedProjects = useMemo(() => {
+    if (!user.assignedProjects || user.assignedProjects.length === 0) {
+      return [];
+    }
+    if (user.assignedProjects.includes('*')) {
+      return DEMO_PROJECTS;
+    }
+    return DEMO_PROJECTS.filter((p) => user.assignedProjects.includes(p.id));
+  }, [user.assignedProjects]);
 
-export function StakeholderOversight({
-  user,
-  initialTab = 'executive',
-}: StakeholderOversightProps) {
-  const [activeTab, setActiveTab] = useState<'executive' | 'projects' | 'compliance' | 'reports'>(
-    initialTab
-  );
-  const [searchQuery, setSearchQuery] = useState('');
-  const [exportNotice, setExportNotice] = useState<string | null>(null);
-
-  // Financial and completion totals
-  const totalPortfolioBudget = '₦226.9B';
-  const certifiedCapitalDisbursed = '₦146.8B';
-  const averageCompletion = Math.round(
-    DEMO_PROJECTS.reduce((acc, p) => acc + p.progressPercent, 0) / DEMO_PROJECTS.length
+  const assignedProjectIds = useMemo(
+    () => new Set(assignedProjects.map((p) => p.id)),
+    [assignedProjects]
   );
 
-  const filteredProjects = DEMO_PROJECTS.filter((p) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.code.toLowerCase().includes(q) ||
-      p.client.toLowerCase().includes(q)
-    );
-  });
+  // Filter milestones, updates, and reports strictly to assigned projects
+  const authorizedMilestones = useMemo(() => {
+    return STAKEHOLDER_MILESTONES.filter((m) => assignedProjectIds.has(m.projectId));
+  }, [assignedProjectIds]);
 
-  const publishedReports = DEMO_REPORTS.filter(
-    (r) => r.status === 'released' || r.status === 'approved'
-  );
+  const authorizedUpdates = useMemo(() => {
+    return STAKEHOLDER_UPDATES.filter((u) => assignedProjectIds.has(u.projectId));
+  }, [assignedProjectIds]);
 
-  const handleExportSummary = (format: string) => {
-    setExportNotice(`Exporting executive ${format.toUpperCase()} dossier...`);
+  const authorizedReports = useMemo(() => {
+    return STAKEHOLDER_RELEASED_REPORTS.filter((r) => assignedProjectIds.has(r.projectId));
+  }, [assignedProjectIds]);
+
+  // Section 7.1: Summary Cards Metrics
+  const activeProjectsCount = useMemo(() => {
+    return assignedProjects.filter((p) => p.status === 'active').length;
+  }, [assignedProjects]);
+
+  const releasedReportsCount = authorizedReports.length;
+
+  const completedMilestones = useMemo(() => {
+    return authorizedMilestones.filter((m) => m.status === 'completed');
+  }, [authorizedMilestones]);
+
+  const milestoneCompletedPercent = useMemo(() => {
+    if (authorizedMilestones.length === 0) return 0;
+    return Math.round((completedMilestones.length / authorizedMilestones.length) * 100);
+  }, [completedMilestones, authorizedMilestones]);
+
+  const latestUpdateTimestamp = useMemo(() => {
+    if (authorizedUpdates.length === 0) return 'No updates yet';
+    return authorizedUpdates[0].timestamp;
+  }, [authorizedUpdates]);
+
+  // Project filtering state
+  const [projectSearch, setProjectSearch] = useState('');
+  const [projectStatusFilter, setProjectStatusFilter] = useState<string>('all');
+
+  const filteredProjects = useMemo(() => {
+    return assignedProjects.filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(projectSearch.toLowerCase()) ||
+        p.code.toLowerCase().includes(projectSearch.toLowerCase()) ||
+        p.location.toLowerCase().includes(projectSearch.toLowerCase());
+      const matchesStatus =
+        projectStatusFilter === 'all' || p.status === projectStatusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [assignedProjects, projectSearch, projectStatusFilter]);
+
+  // Report Modal / Toast state
+  const [selectedReport, setSelectedReport] = useState<StakeholderReleasedReport | null>(null);
+  const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
+
+  const handleDownload = (report: StakeholderReleasedReport) => {
+    setDownloadNotice(`Downloading ${report.reportNumber} (${report.fileSize})...`);
     setTimeout(() => {
-      setExportNotice(null);
-    }, 3000);
+      setDownloadNotice(null);
+    }, 3500);
   };
 
+  const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : null);
+
   return (
-    <div className="space-y-6">
-      {/* Executive Welcome & Institutional Mandate Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#001237] via-[#18243D] to-[#001237] text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#4FAAA7]/20 text-[#4FAAA7] border border-[#4FAAA7]/30 uppercase">
-              Executive Stakeholder Control Plane
-            </span>
-            <span className="text-[11px] text-slate-400 font-mono">
-              Fiduciary Mandate &bull; Multi-Project Capital Oversight
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide text-white">
-            Welcome, {user.name}
-          </h2>
-          <p className="text-xs text-slate-300">
-            {user.title || 'Stakeholder Representative'} &bull; {user.organization || 'Federal Ministry of Works & Housing'} &bull; Read-Only Audit Ledger
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-right">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-mono">Monitored Programs</span>
-            <span className="text-sm font-bold text-white font-mono">{DEMO_PROJECTS.length} Capital Builds</span>
-          </div>
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-right">
-            <span className="text-[10px] text-[#4FAAA7] uppercase tracking-wider block font-mono">Verification Mode</span>
-            <span className="text-sm font-bold text-[#4FAAA7] font-mono">COREN Certified</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Header Bar matching standard App UI */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
-              Executive Capital Portfolio Governance
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#001237] text-[#4FAAA7]">
-              COREN Audited
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Read-only fiduciary oversight, statutory environmental permits, and certified milestone deliverables.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download className="w-4 h-4" />}
-            onClick={() => handleExportSummary('pdf')}
-            className="text-xs"
-          >
-            Export Dossier (PDF)
-          </Button>
-          <Button
-            variant="teal"
-            size="sm"
-            leftIcon={<Award className="w-4 h-4" />}
-            onClick={() => handleExportSummary('csv')}
-            className="text-xs"
-          >
-            Audit Package (CSV)
-          </Button>
-        </div>
-      </div>
-
-      {exportNotice && (
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{exportNotice}</span>
+    <div className="space-y-8 font-['Inter',sans-serif]">
+      {/* Download / Notice Toast */}
+      {downloadNotice && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-[#001237] text-white px-4 py-3 rounded-xl shadow-2xl border border-[#4FAAA7]/50 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
+          <Download className="w-4 h-4 text-[#4FAAA7] animate-bounce" />
+          <span>{downloadNotice}</span>
         </div>
       )}
 
-      {/* Primary KPI Ribbon (Clean White Cards) */}
+      {/* Page Title & Greeting (Section 7) */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
+        <div>
+          {/* Eyebrow Label */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider bg-[#001237] text-[#4FAAA7]">
+              Stakeholder Workspace
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              Authorized Read-Only Project Access
+            </span>
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] tracking-tight">
+            Stakeholder overview
+          </h1>
+
+          {/* Subheading & Greeting */}
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            {firstName ? `Welcome back, ${firstName}. ` : ''}
+            A clear view of your assigned projects, recent updates, and released reports.
+          </p>
+        </div>
+
+        {/* Quick Read-Only Header Actions (Section 7.6) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/projects"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-colors"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-slate-500" />
+            <span>My Projects</span>
+          </Link>
+          <Link
+            href="/dashboard/reports"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5 text-slate-500" />
+            <span>Released Reports</span>
+          </Link>
+          <Link
+            href="/dashboard/notifications"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-colors"
+          >
+            <Bell className="w-3.5 h-3.5 text-[#3B68DE]" />
+            <span>Notifications</span>
+          </Link>
+          <Link
+            href="/dashboard/profile"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-colors"
+          >
+            <User className="w-3.5 h-3.5 text-slate-500" />
+            <span>My Profile</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* 7.1 Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Portfolio Valuation</span>
-            <DollarSign className="w-4 h-4 text-[#4FAAA7]" />
+        {/* Card 1: Active Projects */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-slate-500">
+              Active Projects
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[#001237]">
+              <Briefcase className="w-4 h-4 text-[#4FAAA7]" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 font-mono">{totalPortfolioBudget}</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-            <span className="text-[#001237] font-semibold">4 Active Programs</span>
-            <span>across transport & maritime</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#001237] font-mono">
+              {assignedProjects.length > 0 ? activeProjectsCount : '—'}
+            </span>
+            <span className="text-xs text-slate-500">
+              of {assignedProjects.length} assigned
+            </span>
           </div>
+          <p className="text-[11px] text-slate-400">
+            Projects with active status and membership.
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Certified Disbursed</span>
-            <TrendingUp className="w-4 h-4 text-[#3B68DE]" />
+        {/* Card 2: Released Reports */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-slate-500">
+              Released Reports
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <FileCheck2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 font-mono">{certifiedCapitalDisbursed}</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-            <span className="text-[#3B68DE] font-semibold">64.7% of Commitment</span>
-            <span>milestones verified</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#001237] font-mono">
+              {releasedReportsCount > 0 ? releasedReportsCount : '—'}
+            </span>
+            <span className="text-xs text-emerald-700 font-semibold">
+              Verified Released
+            </span>
           </div>
+          <p className="text-[11px] text-slate-400">
+            Approved and published reports available to view.
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Physical Completion</span>
-            <Building2 className="w-4 h-4 text-[#4FAAA7]" />
+        {/* Card 3: Milestones Completed */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-slate-500">
+              Milestones Completed
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3B68DE]">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 font-mono">{averageCompletion}%</div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-[#4FAAA7] h-full rounded-full transition-all duration-500"
-              style={{ width: `${averageCompletion}%` }}
-            />
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#001237] font-mono">
+              {authorizedMilestones.length > 0
+                ? `${completedMilestones.length} of ${authorizedMilestones.length}`
+                : '—'}
+            </span>
+            <span className="text-xs text-[#3B68DE] font-semibold">
+              ({milestoneCompletedPercent}%)
+            </span>
           </div>
+          <p className="text-[11px] text-slate-400">
+            Visible project milestones verified under project rules.
+          </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Statutory Audit Health</span>
-            <Shield className="w-4 h-4 text-emerald-600" />
+        {/* Card 4: Latest Update */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-slate-500">
+              Latest Update
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+              <Clock className="w-4 h-4 text-slate-500" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-emerald-700 font-mono">100%</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-            <span className="text-emerald-700 font-semibold">4 / 4 Agencies</span>
-            <span>permits in active compliance</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold text-[#001237] font-mono truncate">
+              {latestUpdateTimestamp}
+            </span>
           </div>
+          <p className="text-[11px] text-slate-400 truncate">
+            {authorizedUpdates[0]?.title || 'No updates yet recorded'}
+          </p>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex border-b border-slate-200 gap-2 overflow-x-auto no-scrollbar">
-        {[
-          { id: 'executive', label: 'Executive Portfolio', icon: TrendingUp },
-          { id: 'projects', label: 'Capital Projects Audit', icon: Building2 },
-          { id: 'compliance', label: 'Statutory Compliance', icon: Shield },
-          { id: 'reports', label: 'Inspection Sign-Offs', icon: FileCheck2 },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
-                isActive
-                  ? 'border-[#001237] text-[#001237]'
-                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Main Grid: My Projects (7.2) & Upcoming Milestones (7.5) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 7.2 My Projects (2 Columns on large screens) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+              <h2 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
+                My projects
+              </h2>
+              <p className="text-xs text-slate-500">
+                Open a project to review its current status and available reports.
+              </p>
+            </div>
 
-      {/* Tab 1: Executive Portfolio */}
-      {activeTab === 'executive' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Major Project Allocation Breakdown */}
-            <div className="lg:col-span-2 rounded-2xl bg-white border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
-                    Capital Projects Disbursement Matrix
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Sponsor financial allocations versus independent site engineer verification
-                  </p>
-                </div>
-                <Badge variant="blue" size="sm">
-                  FY 2026 Active
-                </Badge>
+            {/* Filter controls */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-48">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Filter projects..."
+                  value={projectSearch}
+                  onChange={(e) => setProjectSearch(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#4FAAA7]"
+                />
               </div>
 
-              <div className="space-y-3">
-                {DEMO_PROJECTS.map((project) => (
+              <select
+                value={projectStatusFilter}
+                onChange={(e) => setProjectStatusFilter(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#4FAAA7] cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="in_review">In Review</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Project List / Empty State */}
+          {filteredProjects.length === 0 ? (
+            <div className="p-10 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <Briefcase className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">No projects assigned yet</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                When a project administrator grants your account access, the project will appear here. If you believe you should already have access, contact the person who invited you.
+              </p>
+              <Link
+                href="/access-pending"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition-colors"
+              >
+                <span>View access status</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredProjects.map((proj) => {
+                // Find next visible milestone for this project
+                const nextMilestone = authorizedMilestones.find(
+                  (m) => m.projectId === proj.id && m.status !== 'completed'
+                );
+
+                return (
                   <div
-                    key={project.id}
-                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors space-y-2.5"
+                    key={proj.id}
+                    className="p-4 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50 transition-all space-y-3"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
-                      <div>
-                        <span className="font-mono text-[#001237] font-bold mr-2">
-                          {project.code}
-                        </span>
-                        <span className="font-semibold text-slate-900">{project.name}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-[#001237] leading-snug">
+                            {proj.name}
+                          </h4>
+                          <span className="font-mono text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            {proj.code}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{proj.location}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-mono text-slate-900 font-bold">
-                          {project.budgetFormatted}
-                        </span>
-                        <Badge
-                          variant={project.status === 'active' ? 'teal' : 'slate'}
-                          size="sm"
+
+                      {/* Status Badge */}
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            proj.status === 'active'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : proj.status === 'planning'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : proj.status === 'in_review'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
                         >
-                          {project.status.toUpperCase()}
-                        </Badge>
+                          {proj.status.replace('_', ' ')}
+                        </span>
                       </div>
                     </div>
 
+                    {/* Progress Bar & Approved Progress Percentage */}
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-slate-500">
-                        <span>Physical Progress: {project.progressPercent}%</span>
-                        <span>Client: {project.client.split('/')[0]}</span>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-medium">Approved Overall Progress</span>
+                        <span className="font-bold text-[#001237] font-mono">
+                          {proj.progressPercent}%
+                        </span>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-[#3B68DE] to-[#4FAAA7] h-full rounded-full"
-                          style={{ width: `${project.progressPercent}%` }}
+                          className="h-full bg-gradient-to-r from-[#001237] via-[#3B68DE] to-[#4FAAA7] rounded-full transition-all duration-300"
+                          style={{ width: `${proj.progressPercent}%` }}
                         />
                       </div>
                     </div>
+
+                    {/* Metadata & Actions row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-3 text-[11px]">
+                        {nextMilestone && (
+                          <span className="flex items-center gap-1 text-slate-600">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span>Next: <strong>{nextMilestone.name}</strong> ({nextMilestone.targetDate})</span>
+                          </span>
+                        )}
+                        <span>Updated: {proj.lastActivity}</span>
+                      </div>
+
+                      <Link
+                        href={`/dashboard/projects/${proj.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#3B68DE] hover:text-[#001237] transition-colors self-end sm:self-auto cursor-pointer"
+                      >
+                        <span>View project</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                      </Link>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-
-            {/* Quality & Assurance Scorecard */}
-            <div className="rounded-2xl bg-white border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
-                  COREN QA Governance Scorecard
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Compliance rating across technical engineering cadres
-                </p>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-slate-700">Concrete Strength Validation</span>
-                    <span className="text-emerald-700 font-mono font-bold">99.2%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    384 cube break tests passed FMWH C35/45 criteria
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-slate-700">Rebar Tensile Integrity</span>
-                    <span className="text-emerald-700 font-mono font-bold">98.8%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    ASTM A615 Grade 60 mill test certs authenticated
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-slate-700">Slump & Workability Logs</span>
-                    <span className="text-teal-700 font-mono font-bold">96.5%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    Zero unverified batch deliveries recorded
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-slate-700">Environmental & Drainage Audit</span>
-                    <span className="text-emerald-700 font-mono font-bold">100%</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    Zero siltation infractions or coastal perimeter leaks
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Tab 2: Capital Projects Audit */}
-      {activeTab === 'projects' && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search audited capital projects..."
-                className="w-full bg-white text-xs text-slate-900 placeholder-slate-400 pl-9 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-[#4FAAA7]"
-              />
-            </div>
-            <div className="text-xs text-slate-500">
-              Showing {filteredProjects.length} audited programs
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="rounded-2xl bg-white border border-slate-200/80 p-6 shadow-xs space-y-4 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="font-mono text-xs text-[#001237] font-bold">
-                        {project.code}
-                      </span>
-                      <h4 className="text-base font-bold text-slate-900 mt-0.5 leading-snug">
-                        {project.name}
-                      </h4>
-                    </div>
-                    <Badge
-                      variant={project.status === 'active' ? 'teal' : 'slate'}
-                      size="sm"
-                    >
-                      {project.status.toUpperCase()}
-                    </Badge>
-                  </div>
-
-                  <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{project.location}</span>
-                  </p>
-
-                  <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">Sponsoring Client</span>
-                      <span className="text-slate-800 font-medium truncate block">
-                        {project.client}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">Lead Project Engineer</span>
-                      <span className="text-slate-800 font-medium truncate block">
-                        {project.leadEngineer}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">Authorized Capital</span>
-                      <span className="text-slate-900 font-mono font-bold block">
-                        {project.budgetFormatted}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px]">Field Submissions</span>
-                      <span className="text-slate-900 font-mono font-bold block">
-                        {project.submissionsCount} submittals
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Milestone Progress</span>
-                    <span className="text-slate-900 font-mono font-bold">
-                      {project.progressPercent}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-[#3B68DE] to-[#4FAAA7] h-full rounded-full"
-                      style={{ width: `${project.progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 3: Statutory Compliance */}
-      {activeTab === 'compliance' && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="rounded-2xl bg-white border border-slate-200/80 p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
-              Statutory Authorities & Environmental Permits Register
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Active operating clearances and independent verification hashes across regulatory bodies.
+        {/* 7.5 Upcoming Milestones (1 Column on large screens) */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+          <div className="pb-3 border-b border-slate-100">
+            <h2 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
+              Upcoming milestones
+            </h2>
+            <p className="text-xs text-slate-500">
+              Key dates currently recorded for your assigned projects.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {STATUTORY_COMPLIANCE_ITEMS.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl bg-white border border-slate-200/80 p-5 shadow-xs space-y-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[11px] font-mono text-slate-500">{item.authority}</span>
-                    <h4 className="text-sm font-bold text-slate-900 mt-0.5">{item.title}</h4>
-                    <p className="text-xs text-[#001237] font-semibold mt-0.5">{item.project}</p>
-                  </div>
-                  <Badge variant="teal" size="sm">
-                    {item.status.toUpperCase()}
-                  </Badge>
-                </div>
+          {authorizedMilestones.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400">
+              No milestones recorded for your assigned projects.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {authorizedMilestones.map((m) => {
+                const isCompleted = m.status === 'completed';
+                const isOverdue = m.status === 'past_target_date';
 
-                <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Permit Reference</span>
-                    <span className="text-slate-900 font-mono font-semibold block">{item.permitCode}</span>
+                return (
+                  <div
+                    key={m.id}
+                    className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#001237] leading-tight">
+                          {m.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                          {m.projectName}
+                        </p>
+                      </div>
+
+                      {/* Status Tag */}
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                          isCompleted
+                            ? 'bg-emerald-100/70 text-emerald-800 border border-emerald-200'
+                            : isOverdue
+                            ? 'bg-amber-100/70 text-amber-800 border border-amber-200'
+                            : 'bg-blue-100/70 text-[#001237] border border-blue-200'
+                        }`}
+                      >
+                        {isCompleted
+                          ? 'Completed'
+                          : isOverdue
+                          ? 'Past target date'
+                          : 'On schedule'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/50">
+                      <span className="text-slate-500 font-mono">
+                        {isCompleted
+                          ? `Completed: ${m.completionDate || m.targetDate}`
+                          : `Target Date: ${m.targetDate}`}
+                      </span>
+
+                      <Link
+                        href="/dashboard/projects"
+                        className="text-[11px] font-semibold text-[#3B68DE] hover:underline"
+                      >
+                        Project Details
+                      </Link>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Audit Cadence</span>
-                    <span className="text-slate-800 block">{item.auditFrequency}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Valid Period</span>
-                    <span className="text-slate-800 block">
-                      {item.issueDate} – {item.expiryDate}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Proof Ledger Hash</span>
-                    <span className="text-slate-600 font-mono block">{item.verificationHash}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Tab 4: Inspection Sign-Offs */}
-      {activeTab === 'reports' && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="rounded-2xl bg-white border border-slate-200/80 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Main Grid 2: Recently Released Reports (7.4) & Recent Project Updates (7.3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 7.4 Recently released reports (2 Columns on large screens) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
-                Certified Engineering Inspection Releases ({publishedReports.length})
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Formally approved inspection reports signed off by registered COREN Project Engineers.
+              <h2 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
+                Recently released reports
+              </h2>
+              <p className="text-xs text-slate-500">
+                Reports that have completed the required approval process and are available to you.
               </p>
             </div>
-            <Badge variant="blue" size="sm">
-              Read-Only Certified Releases
-            </Badge>
+
+            <Link
+              href="/dashboard/reports"
+              className="text-xs font-semibold text-[#3B68DE] hover:text-[#001237] inline-flex items-center gap-1 self-start sm:self-auto"
+            >
+              <span>All Released Reports</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
-          <div className="space-y-3">
-            {publishedReports.map((report) => (
-              <div
-                key={report.id}
-                className="rounded-2xl bg-white border border-slate-200/80 p-4 shadow-xs hover:border-slate-300 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          {authorizedReports.length === 0 ? (
+            <div className="p-10 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <FileText className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">No reports released yet</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                When an authorized project team releases a report for your project, it will appear here.
+              </p>
+              <Link
+                href="/dashboard/projects"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition-colors"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-[#001237] font-bold">
-                      {report.reportNumber}
-                    </span>
-                    <Badge variant="teal" size="sm">
-                      CERTIFIED RELEASE
-                    </Badge>
-                    <span className="text-[11px] text-slate-400">
-                      Approved: {report.releasedAt || report.period}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-900">{report.title}</h4>
-                  <p className="text-xs text-slate-500">
-                    Project: <span className="text-slate-800 font-medium">{report.projectName}</span> • Lead: {report.approvedBy || report.generatedBy}
-                  </p>
-                </div>
+                <span>View my projects</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {authorizedReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-slate-50/50 rounded-xl px-2.5 transition-colors"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-[#001237]">
+                        {report.reportNumber}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Released
+                      </span>
+                      <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                        {report.version}
+                      </span>
+                    </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    leftIcon={<Download className="w-3.5 h-3.5" />}
-                    onClick={() => handleExportSummary(report.reportNumber)}
-                    className="text-xs"
-                  >
-                    Download Dossier
-                  </Button>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                      {report.title}
+                    </h4>
+
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+                      <span>Project: <strong>{report.projectName}</strong></span>
+                      <span>Period: {report.period}</span>
+                      <span>Released: {report.releaseDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions: Open report and Download PDF */}
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReport(report)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Open report</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(report)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                      <span>Download PDF</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 7.3 Recent project updates (1 Column on large screens) */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+          <div className="pb-3 border-b border-slate-100">
+            <h2 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wide">
+              Recent project updates
+            </h2>
+            <p className="text-xs text-slate-500">
+              The latest information released to your stakeholder workspace.
+            </p>
+          </div>
+
+          {authorizedUpdates.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">
+              There are no new project updates to show. New updates will appear here when they are released to you.
+            </p>
+          ) : (
+            <div className="space-y-3.5">
+              {authorizedUpdates.map((upd) => (
+                <div key={upd.id} className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0 mt-0.5">
+                    {upd.type === 'report_released' ? (
+                      <FileText className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                    ) : upd.type === 'milestone_updated' ? (
+                      <Award className="w-3.5 h-3.5 text-[#3B68DE]" />
+                    ) : (
+                      <Shield className="w-3.5 h-3.5 text-slate-500" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-xs font-bold text-[#001237] leading-tight">
+                        {upd.title}
+                      </p>
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                        {upd.timestamp}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                      {upd.summary}
+                    </p>
+
+                    <div className="pt-0.5 flex items-center justify-between text-[10px]">
+                      <span className="text-slate-400 font-medium truncate">
+                        {upd.projectName}
+                      </span>
+                      <Link
+                        href={upd.linkUrl}
+                        className="font-semibold text-[#3B68DE] hover:underline shrink-0"
+                      >
+                        {upd.linkLabel} &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 7.6 Quick Actions Panel (Read-Only) */}
+      <div className="bg-slate-100/70 border border-slate-200/80 rounded-2xl p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xs font-bold font-['Encode_Sans_Condensed',sans-serif] uppercase tracking-wider text-[#001237]">
+              Stakeholder Quick Actions
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Read-only navigation shortcuts for your assigned construction workspaces.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard/projects"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors shadow-2xs"
+            >
+              View My Projects
+            </Link>
+            <Link
+              href="/dashboard/reports"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors shadow-2xs"
+            >
+              Browse Released Reports
+            </Link>
+            <Link
+              href="/dashboard/notifications"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-800 transition-colors shadow-2xs"
+            >
+              Review Notifications
+            </Link>
+            <Link
+              href="/dashboard/profile"
+              className="px-3 py-1.5 rounded-xl bg-[#001237] text-white hover:bg-[#18243D] text-xs font-bold transition-all shadow-2xs"
+            >
+              Update Profile
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Details Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="w-5 h-5 text-emerald-600" />
+                <div>
+                  <h3 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif]">
+                    {selectedReport.reportNumber}
+                  </h3>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {selectedReport.version} &bull; Released Snapshot
+                  </span>
                 </div>
               </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => setSelectedReport(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm">
+                  {selectedReport.title}
+                </h4>
+                <p className="text-slate-500 mt-0.5">
+                  Project: <strong>{selectedReport.projectName}</strong>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 font-mono text-[11px]">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Reporting Period:</span>
+                  <span className="font-bold text-[#001237]">{selectedReport.period}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Release Date:</span>
+                  <span className="font-bold text-[#001237]">{selectedReport.releaseDate}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="font-bold text-slate-700 block text-xs">
+                  Approved Executive Summary:
+                </span>
+                <p className="text-slate-600 leading-relaxed bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+                  {selectedReport.executiveSummary}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <Link
+                href={`/dashboard/reports/${selectedReport.id}`}
+                className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors inline-flex items-center gap-1"
+              >
+                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                <span>Full Details</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSelectedReport(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDownload(selectedReport);
+                  setSelectedReport(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                <span>Download PDF ({selectedReport.fileSize})</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
