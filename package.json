@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "jiti tests/auth-onboarding.test.ts && jiti tests/messaging-ingestion-performance.test.ts && jiti tests/project-creation.test.ts"
+    "test": "jiti tests/auth-onboarding.test.ts && jiti tests/messaging-ingestion-performance.test.ts && jiti tests/project-creation.test.ts && jiti tests/stakeholder-specification.test.ts"
+
   },
   "dependencies": {
     "lucide-react": "^1.59.0",

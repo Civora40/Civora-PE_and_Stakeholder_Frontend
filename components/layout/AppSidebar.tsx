@@ -24,6 +24,10 @@ import {
   Check,
   ChevronsUpDown,
   User,
+  FolderKanban,
+  Megaphone,
+  UserRound,
+  Bell,
 } from 'lucide-react';
 import { CivoraUser, UserRole } from '@/types';
 import { ROLE_LABELS } from '@/lib/permissions/rbac';
@@ -52,6 +56,10 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   FolderArchive,
   Shield,
   FileCheck2,
+  FolderKanban,
+  Megaphone,
+  UserRound,
+  Bell,
 };
 
 export function AppSidebar({
@@ -69,7 +77,8 @@ export function AppSidebar({
 
   // Check whether an item is currently active without false-positive prefix matching on siblings
   const hasExactMatchInNav = useMemo(() => {
-    if (pathname === '/dashboard/settings') return true;
+    if (pathname === '/dashboard/settings' || pathname === '/stakeholder/account/settings') return true;
+    if (pathname === '/stakeholder' || pathname === '/dashboard') return true;
     return sections.some((sec) => sec.items.some((it) => it.href === pathname));
   }, [sections, pathname]);
 
@@ -77,8 +86,8 @@ export function AppSidebar({
     if (hasExactMatchInNav) {
       return pathname === itemHref;
     }
-    if (itemHref === '/dashboard') {
-      return pathname === '/dashboard';
+    if (itemHref === '/dashboard' || itemHref === '/stakeholder') {
+      return pathname === itemHref;
     }
     return pathname.startsWith(itemHref + '/');
   };
@@ -185,14 +194,14 @@ export function AppSidebar({
               <CivoraLogo
                 size="sm"
                 showTagline={false}
-                href="/dashboard"
+                href={user.role === 'read_only_stakeholder' ? '/stakeholder' : '/dashboard'}
                 theme="dark"
               />
             ) : (
               <CivoraLogo
                 size="sm"
                 variant="mark"
-                href="/dashboard"
+                href={user.role === 'read_only_stakeholder' ? '/stakeholder' : '/dashboard'}
                 theme="dark"
               />
             )}
@@ -242,6 +251,26 @@ export function AppSidebar({
           className="flex-1 overflow-y-auto px-3 py-2 space-y-3 focus:outline-none no-scrollbar sidebar-scroll"
           aria-label="Main Navigation"
         >
+          {user.role === 'read_only_stakeholder' && (
+            <div className="pb-1">
+              <Link
+                href="/stakeholder"
+                onClick={() => {
+                  if (isOpen && onClose) onClose();
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  pathname === '/stakeholder'
+                    ? 'bg-[#3B68DE] text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                } ${isCollapsed ? 'justify-center px-2' : ''}`}
+                title={isCollapsed ? 'Overview' : undefined}
+              >
+                <LayoutDashboard className={`w-4 h-4 shrink-0 ${pathname === '/stakeholder' ? 'text-white' : 'text-[#4FAAA7]'}`} />
+                {!isCollapsed && <span>Overview</span>}
+              </Link>
+            </div>
+          )}
+
           {filteredSections.map((section: NavigationSection) => {
             const Icon = SECTION_ICONS[section.iconName] || LayoutDashboard;
             const isSectionOpen = openSections[section.id] ?? true;
@@ -329,18 +358,18 @@ export function AppSidebar({
         {/* Settings Navigation Action */}
         <div className="px-3 py-1.5 border-t border-slate-700/60 shrink-0">
           <Link
-            href="/dashboard/settings"
+            href={user.role === 'read_only_stakeholder' ? '/stakeholder/account/settings' : '/dashboard/settings'}
             onClick={() => {
               if (isOpen && onClose) onClose();
             }}
             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-              pathname === '/dashboard/settings'
+              (user.role === 'read_only_stakeholder' ? pathname === '/stakeholder/account/settings' : pathname === '/dashboard/settings')
                 ? 'bg-[#3B68DE] text-white font-semibold shadow-xs'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             } ${isCollapsed ? 'justify-center px-2' : ''}`}
             title={isCollapsed ? 'Settings' : undefined}
           >
-            <Settings className={`w-4 h-4 shrink-0 ${pathname === '/dashboard/settings' ? 'text-white' : 'text-slate-400'}`} />
+            <Settings className={`w-4 h-4 shrink-0 ${(user.role === 'read_only_stakeholder' ? pathname === '/stakeholder/account/settings' : pathname === '/dashboard/settings') ? 'text-white' : 'text-slate-400'}`} />
             {!isCollapsed && <span>Settings</span>}
           </Link>
         </div>
@@ -386,7 +415,7 @@ export function AppSidebar({
 
                   <div className="space-y-1">
                     <Link
-                      href="/dashboard/profile"
+                      href={user.role === 'read_only_stakeholder' ? '/stakeholder/profile' : '/dashboard/profile'}
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full flex items-center gap-2 p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium text-xs cursor-pointer"
                     >

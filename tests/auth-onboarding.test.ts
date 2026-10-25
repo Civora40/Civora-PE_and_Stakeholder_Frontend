@@ -268,24 +268,26 @@ test('11. Workspace Navigation Role Isolation: project_engineer vs read_only_sta
   const engineerNav = getWorkspaceNavigation(engineer);
   const stakeholderNav = getWorkspaceNavigation(stakeholder);
 
-  // Engineer can see Reviews & Approvals, but CANNOT see Stakeholder Oversight
+  // Engineer can see Reviews & Approvals, but CANNOT see Stakeholder Workspace groups
   assert.strictEqual(engineerNav.some((s) => s.id === 'reviews'), true);
-  assert.strictEqual(engineerNav.some((s) => s.id === 'stakeholder'), false);
+  assert.strictEqual(engineerNav.some((s) => s.id === 'reports-documents'), false);
 
-  // Stakeholder can see Stakeholder Workspace, but CANNOT see Reviews & Approvals
-  assert.strictEqual(stakeholderNav.some((s) => s.id === 'stakeholder'), true);
+  // Stakeholder can see all 5 Stakeholder Workspace groups, but CANNOT see Reviews & Approvals
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'projects'), true);
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'reports-documents'), true);
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'progress-delivery'), true);
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'communications'), true);
+  assert.strictEqual(stakeholderNav.some((s) => s.id === 'account-support'), true);
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'reviews'), false);
-
-  // Stakeholder navigation strictly contains Section 6 items: Overview, My Projects, Released Reports, Notifications
-  const stakeholderSection = stakeholderNav.find((s) => s.id === 'stakeholder');
-  assert.ok(stakeholderSection);
-  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'overview' && it.href === '/dashboard'), true);
-  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'my-projects' && it.href === '/dashboard/projects'), true);
-  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'released-reports' && it.href === '/dashboard/reports'), true);
-  assert.strictEqual(stakeholderSection.items.some((it) => it.id === 'notifications' && it.href === '/dashboard/notifications'), true);
-
-  // Stakeholder does NOT see engineer field submission queues or review queues
   assert.strictEqual(stakeholderNav.some((s) => s.id === 'submissions'), false);
+
+  // Every stakeholder group strictly contains at least 4 items with valid routes
+  for (const group of stakeholderNav) {
+    assert.ok(group.items.length >= 4, `Group ${group.id} must have at least 4 items`);
+    for (const item of group.items) {
+      assert.ok(item.href.startsWith('/stakeholder'), `Item ${item.id} href must start with /stakeholder`);
+    }
+  }
 });
 
 test('12. Active Link Match Logic: prevents sibling prefix matching false-positives', () => {

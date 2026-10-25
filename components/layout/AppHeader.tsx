@@ -204,7 +204,7 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
                 {/* Footer link to full Notifications Page */}
                 <div className="pt-2 border-t border-slate-100">
                   <Link
-                    href="/dashboard/notifications"
+                    href={user.role === 'read_only_stakeholder' ? '/stakeholder/notifications' : '/dashboard/notifications'}
                     onClick={() => setNotificationsOpen(false)}
                     className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all shadow-2xs"
                   >
@@ -245,7 +245,7 @@ export function AppHeader({ user, onOpenMobileSidebar }: AppHeaderProps) {
                 <div className="py-1">
                   {user.role === 'read_only_stakeholder' ? (
                     <Link
-                      href="/dashboard/profile"
+                      href="/stakeholder/profile"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
                     >

@@ -25,7 +25,14 @@ export interface NavigationSection {
     | 'Sliders'
     | 'Shield'
     | 'FileCheck2'
-    | 'Activity';
+    | 'Activity'
+    | 'FolderKanban'
+    | 'CalendarRange'
+    | 'Bell'
+    | 'Megaphone'
+    | 'UserRound'
+    | 'HelpCircle'
+    | 'LifeBuoy';
   permission?: Permission; // If set, user must have permission to see section
   allowedRoles?: UserRole[]; // If set, user must have one of the allowed roles
   items: NavigationSubItem[]; // Max 4-5 items per section
