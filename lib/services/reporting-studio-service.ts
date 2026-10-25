@@ -7,13 +7,14 @@ import {
   AIAnalysisRun,
   AIAnalysisFinding,
   ReportingWorkflowStatus,
-} from '@/lib/types/reporting-studio';
+} from '../types/reporting-studio';
 import {
   INITIAL_STUDIO_REPORTS,
   STARTER_REPORT_TEMPLATES,
   INITIAL_AI_ANALYSIS_RUNS,
-} from '@/lib/mock-data/reporting-studio';
-import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+} from '../mock-data/reporting-studio';
+import { DEMO_PROJECTS } from '../mock-data/fixtures';
+
 
 // Memory store for interactive session mutations
 let reportsStore: StudioReport[] = [...INITIAL_STUDIO_REPORTS];
