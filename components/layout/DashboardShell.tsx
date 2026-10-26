@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { CivoraUser } from '@/types';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';

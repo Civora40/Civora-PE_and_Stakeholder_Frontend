@@ -20,6 +20,7 @@ import {
 import { CivoraUser, Project } from '@/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
+import { CoverPreset } from '@/lib/types/reporting-studio';
 import {
   getStudioTemplates,
   createStudioReportDraft,
@@ -44,6 +45,8 @@ export function ReportingStudioCreateReport({ user, projects }: ReportingStudioC
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
     preselectedTemplateId || 'tmpl_weekly_progress'
   );
+  const [selectedCoverPreset, setSelectedCoverPreset] = useState<CoverPreset>('architectural_dark');
+  const [periodYearDisplay, setPeriodYearDisplay] = useState<string>('2025/26');
   const [title, setTitle] = useState<string>('');
   const [reference, setReference] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('2026-10-15');
@@ -105,6 +108,8 @@ export function ReportingStudioCreateReport({ user, projects }: ReportingStudioC
         reference: reference.trim() || undefined,
         objective: objective.trim() || undefined,
         selectedEvidenceCount: (includeSubmissions ? 6 : 0) + (includeMilestones ? 2 : 0) + (includeInspections ? 2 : 0),
+        coverPreset: selectedCoverPreset,
+        periodYearDisplay: periodYearDisplay.trim() || '2025/26',
       });
 
       router.push(`/engineer/reports/${draft.id}/edit`);
@@ -209,11 +214,107 @@ export function ReportingStudioCreateReport({ user, projects }: ReportingStudioC
           )}
         </div>
 
-        {/* Step 2: Report Metadata & Period */}
+        {/* Step 2: Cover Page Design Standard */}
+        <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-5">
+          <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 font-condensed tracking-tight">
+                2. Cover Page Template & Branding
+              </h2>
+              <p className="text-xs text-slate-500">
+                Choose the visual style for the primary report cover page. Every template automatically embeds the Civora brand logo and document watermark.
+              </p>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold self-start">
+              Civora Logo & Watermark Included
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              {
+                id: 'architectural_dark',
+                name: 'Architectural Dark Split',
+                badge: 'Featured',
+                desc: 'Deep midnight navy top with bold typography, dark architectural glass facade bottom, and large year indicator.',
+                previewTheme: 'bg-[#0B132B] text-white',
+              },
+              {
+                id: 'civora_standard',
+                name: 'Civora Standard Dossier',
+                badge: 'Institutional',
+                desc: 'Clean corporate white presentation with Midnight Navy header bar, Civora logo, and statutory sign-off matrix.',
+                previewTheme: 'bg-white text-slate-900 border border-slate-200',
+              },
+              {
+                id: 'project_image',
+                name: 'Project Hero Full Bleed',
+                badge: 'Aerial / Facade',
+                desc: 'Full-bleed high-resolution site photo background with dark cinematic glass overlay and gold/teal badge.',
+                previewTheme: 'bg-slate-800 text-white',
+              },
+              {
+                id: 'technical_report',
+                name: 'Technical Engineering & COREN',
+                badge: 'Statutory',
+                desc: 'Engineering coordinate grid border, institutional title block, and COREN verification stamp.',
+                previewTheme: 'bg-slate-50 text-slate-900 border-2 border-slate-900',
+              },
+              {
+                id: 'executive_brief',
+                name: 'Executive Brief & Board Summary',
+                badge: 'Executive',
+                desc: 'Minimalist editorial format with vertical teal accent line and key progress indicator highlights.',
+                previewTheme: 'bg-white text-slate-900 border-l-4 border-[#001237]',
+              },
+            ].map((tmpl) => (
+              <div
+                key={tmpl.id}
+                onClick={() => setSelectedCoverPreset(tmpl.id as CoverPreset)}
+                className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedCoverPreset === tmpl.id
+                    ? 'border-[#001237] bg-slate-50/80 shadow-sm ring-2 ring-[#001237]/10'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <span className="font-bold text-xs text-slate-900">{tmpl.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-semibold">
+                      {tmpl.badge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">{tmpl.desc}</p>
+                </div>
+
+                <div className={`mt-3 p-2 rounded-lg text-[10px] font-mono flex items-center justify-between ${tmpl.previewTheme}`}>
+                  <span className="font-bold">CIVORA</span>
+                  <span>{periodYearDisplay || '2025/26'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div className="space-y-0.5">
+              <label className="font-semibold text-slate-700 block">Cover Period / Year Display</label>
+              <span className="text-[11px] text-slate-500">Prominently printed on cover page (e.g. 2025/26 or 2026)</span>
+            </div>
+            <input
+              type="text"
+              value={periodYearDisplay}
+              onChange={(e) => setPeriodYearDisplay(e.target.value)}
+              placeholder="2025/26"
+              className="w-36 py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-mono font-bold text-slate-800"
+            />
+          </div>
+        </div>
+
+        {/* Step 3: Report Metadata & Period */}
         <div className="p-6 md:p-8 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-5">
           <div className="border-b border-slate-100 pb-3">
             <h2 className="text-base font-bold text-slate-900 font-condensed tracking-tight">
-              2. Title & Reporting Cadence
+              3. Title & Reporting Cadence
             </h2>
             <p className="text-xs text-slate-500">
               Provide formal report title and reporting period window.

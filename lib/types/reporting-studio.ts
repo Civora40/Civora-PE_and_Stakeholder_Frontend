@@ -57,6 +57,126 @@ export interface ReportReviewComment {
   resolvedAt?: string;
 }
 
+export type PaperSize = 'A4' | 'A3' | 'LETTER' | 'LEGAL' | 'A5';
+export type PageOrientation = 'PORTRAIT' | 'LANDSCAPE';
+export type MarginPreset = 'standard' | 'narrow' | 'wide' | 'custom';
+export type CoverPreset = 'architectural_dark' | 'civora_standard' | 'project_image' | 'technical_report' | 'executive_brief';
+
+export interface PageMargins {
+  preset: MarginPreset;
+  top: number; // in mm
+  right: number; // in mm
+  bottom: number; // in mm
+  left: number; // in mm
+}
+
+export interface DocumentTypography {
+  fontFamily: 'Inter' | 'Encode Sans Condensed' | 'Roboto' | 'Courier';
+  fontSizePt: number;
+  lineSpacing: number;
+  paragraphSpacingPt: number;
+}
+
+export interface CoverPageConfig {
+  enabled: boolean;
+  preset: CoverPreset;
+  showLogo: boolean;
+  showClientLogo: boolean;
+  showLocation: boolean;
+  showConfidentiality: boolean;
+  confidentialityLabel: string;
+  showReviewers: boolean;
+  showProjectImage: boolean;
+  projectImageUrl?: string;
+  customTagline?: string;
+  periodYearDisplay?: string; // e.g. "2025/26" or "2026"
+  headlinePrimary?: string; // e.g. "ANNUAL REPORT" or "CONSTRUCTION PROGRESS REPORT"
+  headlineSecondary?: string; // e.g. "Construction Progress & Performance"
+}
+
+export interface WatermarkConfig {
+  enabled: boolean;
+  type: 'civora_official' | 'draft_confidential' | 'custom';
+  customText?: string;
+  opacity: number; // e.g. 0.04
+  showOnCover: boolean;
+}
+
+export interface TableOfContentsConfig {
+  enabled: boolean;
+  title: string;
+  maxHeadingLevel: 1 | 2 | 3;
+  showPageNumbers: boolean;
+  showLeaders: boolean;
+  showListOfFigures: boolean;
+  showListOfTables: boolean;
+}
+
+export interface HeaderFooterConfig {
+  headerType: 'none' | 'title' | 'project' | 'reference' | 'custom';
+  headerCustomText?: string;
+  footerType: 'none' | 'confidential' | 'reference' | 'date_version' | 'custom';
+  footerCustomText?: string;
+  pageNumberStyle: 'arabic' | 'page_of_total' | 'roman';
+  pageNumberPosition: 'left' | 'center' | 'right';
+  hideOnCover: boolean;
+  startPageNumber: number;
+}
+
+export interface ReportLayoutSettings {
+  paperSize: PaperSize;
+  orientation: PageOrientation;
+  margins: PageMargins;
+  typography: DocumentTypography;
+  coverPage: CoverPageConfig;
+  watermark?: WatermarkConfig;
+  tableOfContents: TableOfContentsConfig;
+  headerFooter: HeaderFooterConfig;
+  themeVersion: string;
+}
+
+export interface ReportFigure {
+  id: string;
+  figureNumber: number;
+  title: string;
+  caption: string;
+  imageUrl?: string;
+  sourceRef?: string;
+  altText: string;
+  pageNumber?: number;
+}
+
+export interface ReportTableBlock {
+  id: string;
+  tableNumber: number;
+  title: string;
+  caption?: string;
+  headers: string[];
+  rows: string[][];
+  pageNumber?: number;
+}
+
+export interface ReportAppendix {
+  id: string;
+  letter: string;
+  title: string;
+  content: string;
+  fileRef?: string;
+}
+
+export interface DocumentControl {
+  docRef: string;
+  version: string;
+  status: string;
+  preparedBy: string;
+  preparedDate: string;
+  reviewedBy?: string;
+  reviewedDate?: string;
+  approvedBy?: string;
+  approvedDate?: string;
+  revisionSummary?: string;
+}
+
 export interface ReportVersion {
   id: string;
   reportId: string;
@@ -67,6 +187,7 @@ export interface ReportVersion {
   changeSummary?: string;
   createdAt: string;
   createdByName: string;
+  layoutSettings?: ReportLayoutSettings;
   isSubmittedSnapshot?: boolean;
   isReleasedSnapshot?: boolean;
 }
@@ -97,6 +218,11 @@ export interface StudioReport {
   sourceSubmissionsCount: number;
   linkedEvidenceCount: number;
   lastSavedAt: string;
+  layoutSettings?: ReportLayoutSettings;
+  figures?: ReportFigure[];
+  tables?: ReportTableBlock[];
+  appendices?: ReportAppendix[];
+  documentControl?: DocumentControl;
   releasedAt?: string;
   releasedByName?: string;
   complianceScore?: number;

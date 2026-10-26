@@ -9,12 +9,20 @@ import {
   Download,
   Search,
   ArrowRight,
+  MessageSquare,
+  ShieldCheck,
+  FileText,
+  Clock,
 } from 'lucide-react';
 import { CivoraUser } from '@/types';
 import {
   STAKEHOLDER_RELEASED_REPORTS,
   StakeholderReleasedReport,
 } from '@/lib/mock-data/stakeholder';
+import {
+  getStakeholderApproval,
+  getStakeholderFeedbacks,
+} from '@/lib/services/stakeholder-report-service';
 
 interface StakeholderReportsManagementProps {
   user: CivoraUser;
@@ -64,7 +72,7 @@ export function StakeholderReportsManagement({ user }: StakeholderReportsManagem
             Released Reports
           </h1>
           <p className="text-xs text-slate-500">
-            Access reports that have been approved and released for your projects.
+            Preview reports on the platform, submit feedbacks, write comments, approve documents, and share links with stakeholders.
           </p>
         </div>
 
@@ -76,7 +84,7 @@ export function StakeholderReportsManagement({ user }: StakeholderReportsManagem
         )}
       </div>
 
-      {/* Stakeholder Released Reports View (Section 9) */}
+      {/* Stakeholder Released Reports View */}
       <div className="space-y-6">
         {/* Search bar */}
         <div className="rounded-2xl bg-white border border-slate-200/80 p-4 shadow-xs flex items-center justify-between gap-4">
@@ -96,7 +104,7 @@ export function StakeholderReportsManagement({ user }: StakeholderReportsManagem
           </span>
         </div>
 
-        {/* Empty state (Section 7.4 of Spec) */}
+        {/* Empty state */}
         {filteredStakeholderReports.length === 0 ? (
           <div className="rounded-2xl bg-white border border-slate-200/80 p-12 text-center space-y-4 shadow-xs">
             <FileCheck2 className="w-12 h-12 text-slate-400 mx-auto" />
@@ -118,66 +126,100 @@ export function StakeholderReportsManagement({ user }: StakeholderReportsManagem
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredStakeholderReports.map((rep) => (
-              <div
-                key={rep.id}
-                className="rounded-2xl bg-white border border-slate-200/80 p-6 space-y-4 hover:border-[#4FAAA7]/50 hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs font-bold text-[#001237]">
-                          {rep.reportNumber}
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          {rep.version} &bull; Released
-                        </span>
+            {filteredStakeholderReports.map((rep) => {
+              const approval = getStakeholderApproval(rep.id);
+              const feedbacks = getStakeholderFeedbacks(rep.id);
+
+              return (
+                <div
+                  key={rep.id}
+                  className="rounded-2xl bg-white border border-slate-200/80 p-6 space-y-4 hover:border-[#4FAAA7]/50 hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-[#001237]">
+                            {rep.reportNumber}
+                          </span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {rep.version} &bull; Released
+                          </span>
+                          {approval ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                              <span>Approved</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              <span>Pending Sign-Off</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-base font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase">
+                          {rep.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Project: {rep.projectName}</p>
                       </div>
-                      <h3 className="text-base font-bold text-slate-900 font-['Encode_Sans_Condensed',sans-serif] uppercase">
-                        {rep.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Project: {rep.projectName}</p>
+
+                      {feedbacks.length > 0 && (
+                        <span className="bg-blue-50 text-[#3B68DE] border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1">
+                          <MessageSquare className="w-3 h-3" />
+                          <span>{feedbacks.length} Feedbacks</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 line-clamp-3">
+                      {rep.executiveSummary}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[11px]">
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[10px] text-slate-400 block font-sans">Reporting Period</span>
+                        <span className="font-bold text-slate-800">{rep.period}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[10px] text-slate-400 block font-sans">Release Date</span>
+                        <span className="font-bold text-[#001237]">{rep.releaseDate}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 line-clamp-3">
-                    {rep.executiveSummary}
-                  </div>
+                  {/* Bottom Card Actions */}
+                  <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/stakeholder/reports/${rep.id}`}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                        <span>Platform Editor & Feedback</span>
+                      </Link>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs font-mono text-[11px]">
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <span className="text-[10px] text-slate-400 block font-sans">Reporting Period</span>
-                      <span className="font-bold text-slate-800">{rep.period}</span>
+                      <Link
+                        href={`/stakeholder/reports/${rep.id}/preview`}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Preview</span>
+                      </Link>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <span className="text-[10px] text-slate-400 block font-sans">Release Date</span>
-                      <span className="font-bold text-[#001237]">{rep.releaseDate}</span>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(rep)}
+                      className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                      title="Download PDF"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-600" />
+                    </button>
                   </div>
                 </div>
-
-                {/* Bottom Card Actions (Section 7.4 & 9) */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <Link
-                    href={`/stakeholder/reports/${rep.id}`}
-                    className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Open report</span>
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(rep)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-[#4FAAA7]" />
-                    <span>Download PDF</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

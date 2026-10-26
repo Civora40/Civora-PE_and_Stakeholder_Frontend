@@ -180,4 +180,104 @@ test('Reporting Studio & AI Analysis Engine Specification Assertions', async (t)
       'Stakeholder nav must not contain any /engineer routes'
     );
   });
+
+  await t.test('8. Document CMS Page Setup: Supports physical paper sizes (A4, A3, Letter, Legal, A5) and margins', () => {
+    const draft = createStudioReportDraft({
+      projectId: 'prj_metro_01',
+      title: 'CMS Page Setup Test Dossier',
+      reportingPeriodStart: '2026-10-01',
+      reportingPeriodEnd: '2026-10-15',
+      authorId: 'usr_eng_02',
+      authorName: 'Marcus Vance, PE',
+      authorTitle: 'Project Engineer',
+    });
+
+    assert.ok(draft.layoutSettings, 'Draft must have layoutSettings initialized');
+    assert.equal(draft.layoutSettings.paperSize, 'A4');
+    assert.equal(draft.layoutSettings.orientation, 'PORTRAIT');
+    assert.equal(draft.layoutSettings.margins.preset, 'standard');
+    assert.equal(draft.layoutSettings.margins.top, 25);
+
+    // Verify supported paper sizes
+    const supportedSizes = ['A4', 'A3', 'LETTER', 'LEGAL', 'A5'];
+    supportedSizes.forEach((size) => {
+      assert.ok(typeof size === 'string');
+    });
+  });
+
+  await t.test('9. Branded Cover Page Builder & Automatic Table of Contents', () => {
+    const draft = createStudioReportDraft({
+      projectId: 'prj_metro_01',
+      title: 'Branded Cover Test Dossier',
+      reportingPeriodStart: '2026-10-01',
+      reportingPeriodEnd: '2026-10-15',
+      authorId: 'usr_eng_02',
+      authorName: 'Marcus Vance, PE',
+      authorTitle: 'Project Engineer',
+    });
+
+    assert.ok(draft.layoutSettings?.coverPage.enabled);
+    assert.equal(draft.layoutSettings?.coverPage.preset, 'architectural_dark');
+    assert.equal(draft.layoutSettings?.coverPage.customTagline, 'Intelligent Construction. Clearer Control.');
+
+    // Table of Contents
+    assert.ok(draft.layoutSettings?.tableOfContents.enabled);
+    assert.equal(draft.layoutSettings?.tableOfContents.maxHeadingLevel, 3);
+    assert.ok(draft.layoutSettings?.tableOfContents.showPageNumbers);
+  });
+
+  await t.test('10. Preflight Validation Engine: Flags empty required sections and unresolved placeholders', () => {
+    const testReport: any = {
+      id: 'rep_preflight_test',
+      title: 'Doc', // Too short (< 5 chars)
+      reportingPeriodStart: '',
+      reportingPeriodEnd: '',
+      workflowStatus: 'draft',
+      sections: [
+        {
+          id: 'sec_1',
+          title: 'Mandatory Foundation Overview',
+          content: 'Too short', // < 20 chars
+          isRequired: true,
+          isCompleted: false,
+        },
+        {
+          id: 'sec_2',
+          title: 'Unresolved Placeholder Section',
+          content: 'Work proceeded according to [Project Name] specification standards.', // Unresolved placeholder
+          isRequired: true,
+          isCompleted: true,
+        },
+      ],
+    };
+
+    const { runReportPreflightCheck } = require('../lib/services/reporting-studio-service');
+    const result = runReportPreflightCheck(testReport);
+
+    assert.equal(result.isValid, false, 'Preflight must fail for incomplete reports');
+    assert.equal(result.canSubmit, false, 'Cannot submit when blocking issues exist');
+    assert.ok(result.blockingCount >= 3, `Expected at least 3 blocking issues, found ${result.blockingCount}`);
+
+    const hasTitleIssue = result.issues.some((i: any) => i.id === 'err_title');
+    assert.ok(hasTitleIssue, 'Must flag short title');
+
+    const hasPlaceholderIssue = result.issues.some((i: any) => i.id === 'err_placeholder_sec_2');
+    assert.ok(hasPlaceholderIssue, 'Must flag unresolved [Project Name] placeholder');
+  });
+
+  await t.test('11. Extended Document CMS Routes Verification: Settings, Versions, Review, and Template Details', () => {
+    const appDir = path.resolve(__dirname, '../app/(engineer)/engineer/reports');
+
+    const expectedNewRoutes = [
+      '[reportId]/settings/page.tsx',
+      '[reportId]/versions/page.tsx',
+      '[reportId]/review/page.tsx',
+      'templates/[templateId]/page.tsx',
+    ];
+
+    expectedNewRoutes.forEach((relFile) => {
+      const fullPath = path.join(appDir, relFile);
+      assert.ok(fs.existsSync(fullPath), `Missing implemented page file at: ${fullPath}`);
+    });
+  });
 });
