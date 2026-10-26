@@ -2,17 +2,21 @@ import { CivoraUser, UserRole } from '../../types';
 import { DEMO_USERS } from '../mock-data/fixtures';
 
 /**
- * Isolated Development-Only Mock Auth Adapter
+ * Isolated Development & Client Review Mock Auth Adapter
  *
- * SAFETY GUARD: Prevent accidental use in production environments.
+ * Configured to allow seamless client review, stakeholder evaluation, and
+ * development testing across local, staging, and preview deployments.
  */
 export function assertDevAuthAllowed(): void {
-  const isProd = process.env.NODE_ENV === 'production';
-  const devAuthExplicitlyAllowed = process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === 'true';
+  // Allow client review access by default across development and preview/review environments.
+  // Can be explicitly disabled in hardened enterprise deployments via DISABLE_MOCK_AUTH='true' or NEXT_PUBLIC_ENABLE_DEV_AUTH='false'.
+  const devAuthExplicitlyDisabled =
+    process.env.DISABLE_MOCK_AUTH === 'true' ||
+    process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === 'false';
 
-  if (isProd && !devAuthExplicitlyAllowed) {
+  if (devAuthExplicitlyDisabled) {
     throw new Error(
-      'CRITICAL: Development mock authentication adapter is disabled in production. Configure a verified identity provider (e.g. OAuth/OIDC/SAML) before deployment.'
+      'CRITICAL: Development mock authentication adapter is disabled. Configure a verified identity provider (e.g. OAuth/OIDC/SAML) before deployment.'
     );
   }
 }

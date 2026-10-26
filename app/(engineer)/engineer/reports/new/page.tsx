@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { DEMO_USERS, DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
@@ -20,5 +20,17 @@ export default async function ReportingStudioCreateReportPage() {
     redirect('/stakeholder/reports');
   }
 
-  return <ReportingStudioCreateReport user={user} projects={DEMO_PROJECTS} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-pulse text-xs text-slate-400 font-mono">
+            Loading Report Studio Builder...
+          </div>
+        </div>
+      }
+    >
+      <ReportingStudioCreateReport user={user} projects={DEMO_PROJECTS} />
+    </Suspense>
+  );
 }
