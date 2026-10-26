@@ -261,3 +261,80 @@ nav::-webkit-scrollbar {
   }
 }
 
+/* ========================================================================= */
+/* CIVORA STATUTORY REPORT PRINT SPECIFICATION (HIGH-ASSURANCE A4 EXPORT)    */
+/* ========================================================================= */
+@page {
+  size: A4 portrait;
+  margin: 0mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force background colors and watermark images to render */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset all screen scale transforms and scroll clipping */
+  .civora-print-canvas,
+  [data-print-container],
+  .print-reset-container {
+    transform: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  /* Physical A4 Sheet Formatting */
+  .civora-print-sheet {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  /* Prevent extra trailing blank page */
+  .civora-print-sheet:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Hide screen-only interactive elements */
+  .print-hidden,
+  .print\:hidden {
+    display: none !important;
+  }
+}

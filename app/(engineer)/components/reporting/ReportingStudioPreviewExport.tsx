@@ -130,7 +130,7 @@ export function ReportingStudioPreviewExport({
   const totalPagesEstimate = (layout.coverPage.enabled ? 1 : 0) + (layout.tableOfContents.enabled ? 1 : 0) + Math.max(2, Math.ceil(report.sections.length / 2));
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto print:max-w-none print:m-0 print:p-0 print:space-y-0 print:w-full">
       {/* Top Command Bar (Hidden during print) */}
       <div className="print:hidden bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-20">
         <div>
@@ -206,14 +206,14 @@ export function ReportingStudioPreviewExport({
       </div>
 
       {/* Main Preview Container with Zoom scaling */}
-      <div className="flex justify-center overflow-x-auto overflow-y-auto no-scrollbar h-[calc(100vh-220px)] p-4 sm:p-6 bg-slate-200/60 rounded-2xl print:bg-transparent print:p-0 print:h-auto">
+      <div className="flex justify-center overflow-x-auto overflow-y-auto no-scrollbar h-[calc(100vh-220px)] p-4 sm:p-6 bg-slate-200/60 rounded-2xl print:bg-transparent print:p-0 print:m-0 print:h-auto print:max-h-none print:overflow-visible print:block">
         <div
           style={{
             transform: `scale(${zoomScale / 100})`,
             transformOrigin: 'top center',
             transition: 'transform 0.2s ease',
           }}
-          className="space-y-8 print:space-y-0 print:transform-none"
+          className="space-y-8 print:space-y-0 civora-print-canvas"
         >
           {/* ========================================================= */}
           {/* PAGE 1: BRANDED COVER PAGE (Multi-Template Supported)     */}
@@ -228,7 +228,7 @@ export function ReportingStudioPreviewExport({
                     minHeight: `${sheetHeightMm}mm`,
                     height: `${sheetHeightMm}mm`,
                   }}
-                  className="bg-[#1e2433] text-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen print:h-screen overflow-hidden"
+                  className="civora-print-sheet bg-[#1e2433] text-white shadow-xl relative flex flex-col justify-between overflow-hidden"
                 >
                   {/* Top Portion (approx 57% of A4 page): Digital Cybernetic Grid Background with massive bold typography */}
                   <div
@@ -313,7 +313,7 @@ export function ReportingStudioPreviewExport({
                     minHeight: `${sheetHeightMm}mm`,
                     padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
                   }}
-                  className="bg-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen"
+                  className="civora-print-sheet bg-white shadow-xl relative flex flex-col justify-between overflow-hidden"
                 >
                   <div className="space-y-6 relative z-10">
                     {layout.coverPage.showLogo && (
@@ -439,7 +439,7 @@ export function ReportingStudioPreviewExport({
                     minHeight: `${sheetHeightMm}mm`,
                     padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
                   }}
-                  className="bg-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen border-8 border-slate-900"
+                  className="civora-print-sheet bg-white shadow-xl relative flex flex-col justify-between overflow-hidden border-8 border-slate-900"
                 >
                   <div className="relative z-10 space-y-6">
                     <div className="flex items-center justify-between border-b-4 border-slate-900 pb-4">
@@ -486,7 +486,7 @@ export function ReportingStudioPreviewExport({
                     minHeight: `${sheetHeightMm}mm`,
                     padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
                   }}
-                  className="bg-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen border-l-[16px] border-[#001237]"
+                  className="civora-print-sheet bg-white shadow-xl relative flex flex-col justify-between overflow-hidden border-l-[16px] border-[#001237]"
                 >
                   <div className="space-y-8 relative z-10 pl-6">
                     <CivoraLogo size="md" theme="light" variant="full" showTagline={false} />
@@ -526,7 +526,7 @@ export function ReportingStudioPreviewExport({
                 minHeight: `${sheetHeightMm}mm`,
                 padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
               }}
-              className="bg-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen overflow-hidden"
+              className="civora-print-sheet bg-white shadow-xl relative flex flex-col justify-between overflow-hidden"
             >
               <CivoraWatermark
                 isReleased={isReleased}
@@ -635,33 +635,34 @@ export function ReportingStudioPreviewExport({
           )}
 
           {/* ========================================================= */}
-          {/* PAGE 3+: REPORT SECTIONS & EVIDENCE CONTENT               */}
+          {/* PAGE 3+: REPORT SECTIONS & EVIDENCE CONTENT (MULTI-SHEET) */}
           {/* ========================================================= */}
-          <div
-            style={{
-              width: `${sheetWidthMm}mm`,
-              minHeight: `${sheetHeightMm}mm`,
-              padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
-            }}
-            className="bg-white shadow-xl relative flex flex-col justify-between print:shadow-none print:w-full print:min-h-screen overflow-hidden"
-          >
-            <CivoraWatermark
-              isReleased={isReleased}
-              workflowStatus={report.workflowStatus}
-              customText={layout.watermark?.customText}
-              theme="light"
-            />
+          {report.sections.map((sec, idx) => (
+            <div
+              key={sec.id}
+              style={{
+                width: `${sheetWidthMm}mm`,
+                minHeight: `${sheetHeightMm}mm`,
+                padding: `${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm`,
+              }}
+              className="civora-print-sheet bg-white text-slate-900 shadow-xl relative overflow-hidden flex flex-col justify-between"
+            >
+              <CivoraWatermark
+                isReleased={isReleased}
+                workflowStatus={report.workflowStatus}
+                customText={layout.watermark?.customText}
+                theme="light"
+              />
 
-            {/* Running Header */}
-            <div className="border-b border-slate-200 pb-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
-              <span className="truncate max-w-sm">{report.title}</span>
-              <span>{report.reportNumber}</span>
-            </div>
+              {/* Running Header */}
+              <div className="border-b border-slate-200 pb-2 flex items-center justify-between text-[10px] font-mono text-slate-400 relative z-10">
+                <span className="truncate max-w-sm font-semibold text-slate-600">{report.title}</span>
+                <span>{report.reportNumber}</span>
+              </div>
 
-            {/* Content Sections */}
-            <div className="py-6 space-y-8 flex-1">
-              {report.sections.map((sec, idx) => (
-                <div key={sec.id} className="space-y-3">
+              {/* Content Section Body */}
+              <div className="py-6 space-y-6 flex-1 relative z-10">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
                     <span className="font-mono text-xs font-bold text-[#3B68DE]">{idx + 1}.0</span>
                     <h3 className="text-base font-bold font-['Encode_Sans_Condensed',sans-serif] text-slate-900 tracking-tight">
@@ -669,7 +670,7 @@ export function ReportingStudioPreviewExport({
                     </h3>
                   </div>
 
-                  <div className="text-xs text-slate-700 leading-relaxed font-sans whitespace-pre-line">
+                  <div className="text-xs text-slate-700 leading-relaxed font-sans whitespace-pre-line text-justify">
                     {sec.content || (
                       <span className="text-slate-400 italic">No content recorded for this section.</span>
                     )}
@@ -690,81 +691,83 @@ export function ReportingStudioPreviewExport({
                     </div>
                   )}
                 </div>
-              ))}
 
-              {/* Sample Technical Cube Break Table */}
-              {report.tables && report.tables.length > 0 && (
-                <div className="pt-4 space-y-2">
-                  <div className="text-xs font-bold text-slate-800">
-                    Table 1: {report.tables[0].title}
-                  </div>
-                  <div className="overflow-x-auto border border-slate-300 rounded-lg">
-                    <table className="w-full text-[10px] text-left">
-                      <thead className="bg-[#001237] text-white">
-                        <tr>
-                          {report.tables[0].headers.map((h, i) => (
-                            <th key={i} className="p-2 font-semibold">
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200 font-mono">
-                        {report.tables[0].rows.map((row, rIdx) => (
-                          <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                            {row.map((cell, cIdx) => (
-                              <td key={cIdx} className="p-2 text-slate-700">
-                                {cell === 'PASSED' ? (
-                                  <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                                    PASSED
-                                  </span>
-                                ) : (
-                                  cell
-                                )}
-                              </td>
+                {/* Sample Technical Cube Break Table on final page */}
+                {idx === report.sections.length - 1 && report.tables && report.tables.length > 0 && (
+                  <div className="pt-2 space-y-2">
+                    <div className="text-xs font-bold text-slate-800">
+                      Table 1: {report.tables[0].title}
+                    </div>
+                    <div className="overflow-x-auto border border-slate-300 rounded-lg">
+                      <table className="w-full text-[10px] text-left">
+                        <thead className="bg-[#001237] text-white">
+                          <tr>
+                            {report.tables[0].headers.map((h, i) => (
+                              <th key={i} className="p-1.5 font-semibold">
+                                {h}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 font-mono">
+                          {report.tables[0].rows.map((row, rIdx) => (
+                            <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                              {row.map((cell, cIdx) => (
+                                <td key={cIdx} className="p-1.5 text-slate-700">
+                                  {cell === 'PASSED' ? (
+                                    <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                                      PASSED
+                                    </span>
+                                  ) : (
+                                    cell
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Statutory Sign-off Seal Box */}
-              <div className="mt-12 pt-6 border-t-2 border-[#001237] grid grid-cols-2 gap-6 text-xs">
-                <div className="space-y-3">
-                  <span className="font-bold text-slate-900 uppercase block font-condensed">
-                    Authorizing Project Engineer
-                  </span>
-                  <div className="h-12 border-b border-dashed border-slate-400 flex items-end pb-1 font-mono text-[11px] text-slate-700">
-                    {report.createdByName}
-                  </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    COREN Registered Engineer • Stamp #CR-89412
-                  </div>
-                </div>
+                {/* Statutory Sign-off Seal Box on final page */}
+                {idx === report.sections.length - 1 && (
+                  <div className="mt-6 pt-4 border-t-2 border-[#001237] grid grid-cols-2 gap-6 text-xs">
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-900 uppercase block font-condensed">
+                        Authorizing Project Engineer
+                      </span>
+                      <div className="h-10 border-b border-dashed border-slate-400 flex items-end pb-1 font-mono text-[11px] text-slate-700">
+                        {report.createdByName}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        COREN Registered Engineer • Stamp #CR-89412
+                      </div>
+                    </div>
 
-                <div className="space-y-3">
-                  <span className="font-bold text-slate-900 uppercase block font-condensed">
-                    Supervising Technical Reviewer
-                  </span>
-                  <div className="h-12 border-b border-dashed border-slate-400 flex items-end pb-1 font-mono text-[11px] text-slate-700">
-                    {isReleased ? report.releasedByName : 'Formal Sign-Off on Final Release'}
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-900 uppercase block font-condensed">
+                        Supervising Technical Reviewer
+                      </span>
+                      <div className="h-10 border-b border-dashed border-slate-400 flex items-end pb-1 font-mono text-[11px] text-slate-700">
+                        {isReleased ? report.releasedByName : 'Formal Sign-Off on Final Release'}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        Ministry of Works & Infrastructure Stamped Verification
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    Ministry of Works & Infrastructure Stamped Verification
-                  </div>
-                </div>
+                )}
+              </div>
+
+              {/* Running Footer */}
+              <div className="border-t border-slate-200 pt-2 flex items-center justify-between text-[10px] font-mono text-slate-400 relative z-10">
+                <span>{layout.headerFooter.footerType === 'confidential' ? 'CIVORA STATUTORY DOSSIER' : report.reportNumber}</span>
+                <span>Page {idx + 3} of {report.sections.length + 2}</span>
               </div>
             </div>
-
-            {/* Running Footer */}
-            <div className="border-t border-slate-200 pt-2 flex items-center justify-between text-[10px] font-mono text-slate-400">
-              <span>{layout.headerFooter.footerType === 'confidential' ? 'CIVORA STATUTORY DOSSIER' : report.reportNumber}</span>
-              <span>Page 3 of {totalPagesEstimate}</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

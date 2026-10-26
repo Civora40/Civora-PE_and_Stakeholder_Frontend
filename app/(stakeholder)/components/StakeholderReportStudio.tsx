@@ -328,15 +328,29 @@ export function StakeholderReportStudio({
 
   // Handle print
   const handlePrint = () => {
-    window.print();
+    if (viewMode !== 'preview') {
+      setViewMode('preview');
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    } else {
+      window.print();
+    }
   };
 
   // Handle PDF download
   const handleDownloadPdf = () => {
-    showToast(`Downloading signed statutory PDF for ${report.reportNumber}...`);
-    setTimeout(() => {
-      window.print();
-    }, 500);
+    showToast(`Preparing signed statutory PDF for ${report.reportNumber}...`);
+    if (viewMode !== 'preview') {
+      setViewMode('preview');
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    } else {
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
   };
 
   // Paper dimensions for A4 preview
@@ -357,7 +371,7 @@ export function StakeholderReportStudio({
   const sheetHeightMm = isLandscape ? 210 : 297;
 
   return (
-    <div className="space-y-4 font-['Inter',sans-serif]">
+    <div className="space-y-4 font-['Inter',sans-serif] print:space-y-0 print:m-0 print:p-0">
       {/* Toast Notice */}
       {toastNotice && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-[#001237] text-white px-4 py-3 rounded-xl shadow-2xl border border-[#4FAAA7]/50 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
@@ -510,7 +524,7 @@ export function StakeholderReportStudio({
       {/* MODE 1: PLATFORM-BASED EDITOR & COLLABORATION REVIEW (3 REGIONS)          */}
       {/* ========================================================================= */}
       {viewMode === 'editor' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:h-[calc(100vh-210px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start lg:h-[calc(100vh-210px)] print:hidden">
           {/* ----------------------------------------------------------------------- */}
           {/* LEFT REGION: Report Outline & Navigation (3 cols)                       */}
           {/* ----------------------------------------------------------------------- */}
@@ -1338,8 +1352,7 @@ export function StakeholderReportStudio({
       {/* ========================================================================= */}
       {/* MODE 2: FULL A4 PRINT PREVIEW (MATCHING REPORTING STUDIO EXPORT)           */}
       {/* ========================================================================= */}
-      {viewMode === 'preview' && (
-        <div className="space-y-4 max-w-5xl mx-auto">
+      <div className={viewMode === 'preview' ? 'space-y-4 max-w-5xl mx-auto print:max-w-none print:m-0 print:p-0 print:space-y-0 print:block' : 'hidden print:block print:max-w-none print:m-0 print:p-0 print:space-y-0'}>
           {/* Zoom & Print Toolbar (Sticky) */}
           <div className="print:hidden sticky top-0 z-10 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1386,15 +1399,15 @@ export function StakeholderReportStudio({
             </div>
           </div>
 
-          {/* Main A4 Document Sheets (Internal Scroll, No Scrollbar) */}
-          <div className="flex justify-center overflow-x-auto overflow-y-auto no-scrollbar h-[calc(100vh-230px)] p-4 sm:p-6 bg-slate-200/60 rounded-2xl print:bg-transparent print:p-0 print:h-auto">
+          {/* Main A4 Document Sheets (Internal Scroll, No Scrollbar on screen, clean layout in print) */}
+          <div className="flex justify-center overflow-x-auto overflow-y-auto no-scrollbar h-[calc(100vh-230px)] p-4 sm:p-6 bg-slate-200/60 rounded-2xl print:bg-transparent print:p-0 print:m-0 print:h-auto print:max-h-none print:overflow-visible print:block">
             <div
               style={{
                 transform: `scale(${zoomScale / 100})`,
                 transformOrigin: 'top center',
                 transition: 'transform 0.2s ease',
               }}
-              className="space-y-8 print:space-y-0 print:transform-none"
+              className="space-y-8 print:space-y-0 civora-print-canvas"
             >
               {/* PAGE 1: COVER PAGE */}
               <div
@@ -1403,7 +1416,7 @@ export function StakeholderReportStudio({
                   minHeight: `${sheetHeightMm}mm`,
                   height: `${sheetHeightMm}mm`,
                 }}
-                className="bg-[#1e2433] text-white shadow-xl relative flex flex-col justify-between print:shadow-none print:break-after-page print:w-full print:min-h-screen print:h-screen overflow-hidden"
+                className="civora-print-sheet bg-[#1e2433] text-white shadow-xl relative flex flex-col justify-between overflow-hidden"
               >
                 <CivoraWatermark theme="dark" />
 
@@ -1486,7 +1499,7 @@ export function StakeholderReportStudio({
                   minHeight: `${sheetHeightMm}mm`,
                   padding: '25mm',
                 }}
-                className="bg-white text-slate-900 shadow-xl relative print:shadow-none print:break-after-page print:w-full print:min-h-screen overflow-hidden flex flex-col justify-between"
+                className="civora-print-sheet bg-white text-slate-900 shadow-xl relative overflow-hidden flex flex-col justify-between"
               >
                 <CivoraWatermark theme="light" />
 
@@ -1543,7 +1556,7 @@ export function StakeholderReportStudio({
                     minHeight: `${sheetHeightMm}mm`,
                     padding: '25mm',
                   }}
-                  className="bg-white text-slate-900 shadow-xl relative print:shadow-none print:break-after-page print:w-full print:min-h-screen overflow-hidden flex flex-col justify-between"
+                  className="civora-print-sheet bg-white text-slate-900 shadow-xl relative overflow-hidden flex flex-col justify-between"
                 >
                   <CivoraWatermark theme="light" />
 
@@ -1621,15 +1634,14 @@ export function StakeholderReportStudio({
                 </div>
               ))}
             </div>
-          </div>
         </div>
-      )}
+      </div>
 
       {/* ========================================================================= */}
       {/* MODE 3: COMPLIANCE DOSSIER & AUDIT TRAIL OVERVIEW                         */}
       {/* ========================================================================= */}
       {viewMode === 'dossier' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-210px)] items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[calc(100vh-210px)] items-start print:hidden">
           <div className="lg:col-span-2 space-y-6 lg:h-full lg:overflow-y-auto no-scrollbar">
             <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
               <div className="flex items-center gap-2">
