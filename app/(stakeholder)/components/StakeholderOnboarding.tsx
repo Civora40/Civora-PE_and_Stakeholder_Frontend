@@ -36,20 +36,22 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(initialStep);
 
-  // Profile fields state (Step 2)
+  // Profile fields state (Step 2) - clean manual entry without seed defaults
   const [fullName, setFullName] = useState(user.name || '');
-  const [organization, setOrganization] = useState(user.organization || 'Aegis Capital & Infrastructure Partners');
-  const [jobTitle, setJobTitle] = useState(user.title || 'Managing Partner / Project Sponsor');
-  const [phone, setPhone] = useState('+44 20 7946 0912');
-  const [timezone, setTimezone] = useState('Europe/London (GMT+0 / UTC+1)');
+  const [organization, setOrganization] = useState(
+    user.organization && user.organization !== 'Civora Infrastructure Ltd' ? user.organization : ''
+  );
+  const [jobTitle, setJobTitle] = useState(user.jobTitle || '');
+  const [phone, setPhone] = useState(user.phone || '');
+  const [timezone, setTimezone] = useState(user.timeZone || '');
   const [profileErrors, setProfileErrors] = useState<{ fullName?: string }>({});
 
-  // Notification Preferences state (Step 4)
-  const [notifyReleasedReports, setNotifyReleasedReports] = useState(true);
-  const [notifyMilestones, setNotifyMilestones] = useState(true);
-  const [notifyAnnouncements, setNotifyAnnouncements] = useState(true);
-  const [channelEmail, setChannelEmail] = useState(true);
-  const [channelInApp, setChannelInApp] = useState(true);
+  // Notification Preferences state (Step 4) - unchecked by default for manual selection
+  const [notifyReleasedReports, setNotifyReleasedReports] = useState(false);
+  const [notifyMilestones, setNotifyMilestones] = useState(false);
+  const [notifyAnnouncements, setNotifyAnnouncements] = useState(false);
+  const [channelEmail, setChannelEmail] = useState(false);
+  const [channelInApp, setChannelInApp] = useState(false);
 
   // Saving / Submitting state
   const [isSubmitting, setIsSubmitting] = useState(false);

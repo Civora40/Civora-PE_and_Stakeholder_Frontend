@@ -194,23 +194,18 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
 
-  // Questionnaire Form States across the 10 steps
+  // Questionnaire Form States across the 10 steps (clean manual entry; no auto-filled seed values)
   // Step 1: Personal & COREN
-  const [firstName, setFirstName] = useState(user.firstName || user.name?.split(' ')[0] || 'Marcus');
-  const [lastName, setLastName] = useState(
-    user.lastName || user.name?.split(' ').slice(1).join(' ') || 'Vance'
-  );
+  const [firstName, setFirstName] = useState(user.firstName || '');
+  const [lastName, setLastName] = useState(user.lastName || '');
   const [displayName, setDisplayName] = useState(
-    user.displayName || `Engr. ${firstName} ${lastName}, MNSE`
+    user.displayName && user.displayName !== user.name ? user.displayName : ''
   );
   const [corenCategory, setCorenCategory] = useState(
-    (user as CivoraUser & { corenCategory?: string }).corenCategory ||
-      (user.corenStatus && !['verified', 'pending', 'unregistered'].includes(user.corenStatus)
-        ? user.corenStatus
-        : 'Registered Engineer (COREN Reg.)')
+    (user as CivoraUser & { corenCategory?: string }).corenCategory || ''
   );
-  const [corenNumber, setCorenNumber] = useState(user.corenNumber || 'COREN/R.58492');
-  const [phone, setPhone] = useState(user.phone || '+234 803 456 7890');
+  const [corenNumber, setCorenNumber] = useState(user.corenNumber || '');
+  const [phone, setPhone] = useState(user.phone || '');
 
   // Hydrate onboarding progress from backend on mount
   React.useEffect(() => {
@@ -226,11 +221,13 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
         }
         if (u.firstName) setFirstName(String(u.firstName));
         if (u.lastName) setLastName(String(u.lastName));
-        if (u.displayName) setDisplayName(String(u.displayName));
+        if (u.displayName && u.displayName !== u.name) setDisplayName(String(u.displayName));
         if (u.corenCategory) setCorenCategory(String(u.corenCategory));
         if (u.corenNumber) setCorenNumber(String(u.corenNumber));
         if (u.phone) setPhone(String(u.phone));
-        if (u.organization) setOrganization(String(u.organization));
+        if (u.organization && u.organization !== 'Civora Infrastructure Ltd') {
+          setOrganization(String(u.organization));
+        }
         if (u.cacNumber) setCacNumber(String(u.cacNumber));
         if (u.officeState) setOfficeState(String(u.officeState));
         if (u.contractorTier) setContractorTier(String(u.contractorTier));
@@ -240,10 +237,23 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
         if (Array.isArray(u.standardsBaseline) && u.standardsBaseline.length > 0) {
           setSelectedCodes(u.standardsBaseline as string[]);
         }
+        if (u.rebarYield) setRebarYield(String(u.rebarYield));
+        if (u.concreteClass) setConcreteClass(String(u.concreteClass));
         if (u.testingLab) setTestingLab(String(u.testingLab));
+        if (Array.isArray(u.testingProtocols) && u.testingProtocols.length > 0) {
+          setTestingProtocols(u.testingProtocols as string[]);
+        }
         if (typeof u.reviewSlaDays === 'number') setReviewSlaDays(u.reviewSlaDays);
+        if (u.siApprovalPathway) setSiApprovalPathway(String(u.siApprovalPathway));
+        if (u.rfiEscalationTier) setVoThreshold(String(u.rfiEscalationTier));
+        if (typeof u.mandatoryGps === 'boolean') setMandatoryGps(u.mandatoryGps);
         if (u.reportingCadence) setReportingCadence(String(u.reportingCadence));
+        if (u.primaryAudience) setPrimaryAudience(String(u.primaryAudience));
+        if (u.statutoryAgency) setStatutoryAgency(String(u.statutoryAgency));
         if (u.lasbcaPermitNumber) setLasbcaPermitNumber(String(u.lasbcaPermitNumber));
+        if (Array.isArray(u.statutoryPermits) && u.statutoryPermits.length > 0) {
+          setStatutoryPermits(u.statutoryPermits as string[]);
+        }
       })
       .catch(() => {});
     return () => {
@@ -252,72 +262,43 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
   }, []);
 
   // Step 2: Corporate & CAC
-  const [organization, setOrganization] = useState(user.organization || 'Apex Infrastructure Nigeria Ltd');
-  const [cacNumber, setCacNumber] = useState(user.cacNumber || 'RC 1849204');
-  const [officeState, setOfficeState] = useState(user.officeState || 'Lagos State (South West)');
-  const [contractorTier, setContractorTier] = useState(CONTRACTOR_TIERS[1]);
+  const [organization, setOrganization] = useState(
+    user.organization && user.organization !== 'Civora Infrastructure Ltd' ? user.organization : ''
+  );
+  const [cacNumber, setCacNumber] = useState(user.cacNumber || '');
+  const [officeState, setOfficeState] = useState(user.officeState || '');
+  const [contractorTier, setContractorTier] = useState('');
 
   // Step 3: Operational Role
-  const [operationalRole, setOperationalRole] = useState(
-    user.primaryResponsibility || 'Resident Site Engineer'
-  );
+  const [operationalRole, setOperationalRole] = useState(user.primaryResponsibility || '');
 
   // Step 4: Operating Zones & Terrain
-  const [operatingZone, setOperatingZone] = useState(user.geopoliticalZone || 'South West');
-  const [projectCategory, setProjectCategory] = useState(
-    user.projectCategory || 'Federal Highways & Viaduct Bridges'
-  );
+  const [operatingZone, setOperatingZone] = useState(user.geopoliticalZone || '');
+  const [projectCategory, setProjectCategory] = useState(user.projectCategory || '');
 
   // Step 5: Engineering Codes
-  const [selectedCodes, setSelectedCodes] = useState<string[]>(
-    user.standardsBaseline || [
-      'Nigerian National Building Code (NBC)',
-      'FMWH Highway Manual Vol. 1 & 2',
-      'BS 8110 / BS EN 1992 (Eurocode 2 - Concrete)',
-      'ASTM A615 Grade 60 Rebar Standard',
-    ]
-  );
-  const [rebarYield, setRebarYield] = useState('500 N/mm² (High-Yield Deformed Bars - BS 4449 Grade 500B)');
-  const [concreteClass, setConcreteClass] = useState('C30/37 (Structural Beams, Columns & Slabs)');
+  const [selectedCodes, setSelectedCodes] = useState<string[]>(user.standardsBaseline || []);
+  const [rebarYield, setRebarYield] = useState('');
+  const [concreteClass, setConcreteClass] = useState('');
 
   // Step 6: Material Testing
-  const [testingLab, setTestingLab] = useState(
-    user.testingLab || ACCREDITED_LABS[0]
-  );
-  const [testingProtocols, setTestingProtocols] = useState<string[]>([
-    'Concrete Cube Crushing Tests (3 cubes @ 7 days, 3 cubes @ 28 days)',
-    'Steel Rebar Tensile Yield & Cold Bend Tests (per 20-ton batch)',
-    'Sand Sieve Analysis & Silt Content Inspection (< 4% for sharp sand)',
-    'Subgrade & Subbase Compaction (CBR / Proctor Testing)',
-  ]);
+  const [testingLab, setTestingLab] = useState(user.testingLab || '');
+  const [testingProtocols, setTestingProtocols] = useState<string[]>([]);
   const [reviewSlaDays, setReviewSlaDays] = useState(user.reviewSlaDays || 3);
 
   // Step 7: Site RFIs & SIs
-  const [siApprovalPathway, setSiApprovalPathway] = useState(
-    'Resident Engineer & Supervising Consultant Dual Authorization'
-  );
-  const [voThreshold, setVoThreshold] = useState('₦2,500,000 — ₦10,000,000 (Requires Lead Consultant Sign-Off)');
-  const [mandatoryGps, setMandatoryGps] = useState(true);
+  const [siApprovalPathway, setSiApprovalPathway] = useState('');
+  const [voThreshold, setVoThreshold] = useState('');
+  const [mandatoryGps, setMandatoryGps] = useState(false);
 
   // Step 8: Progress Cadence & IPC
-  const [reportingCadence, setReportingCadence] = useState(
-    user.reportingCadence || 'Weekly Site Progress Brief & Monthly IPC Valuation Dossier'
-  );
-  const [primaryAudience, setPrimaryAudience] = useState(
-    'Bank Project Monitoring Engineer (PME) & Client Delivery Directorate'
-  );
+  const [reportingCadence, setReportingCadence] = useState(user.reportingCadence || '');
+  const [primaryAudience, setPrimaryAudience] = useState('');
 
   // Step 9: Statutory Permits
-  const [statutoryAgency, setStatutoryAgency] = useState(STATUTORY_AGENCIES[0]);
-  const [lasbcaPermitNumber, setLasbcaPermitNumber] = useState(
-    user.lasbcaPermitNumber || 'LASBCA/DEV/2026/0842'
-  );
-  const [statutoryPermits, setStatutoryPermits] = useState<string[]>([
-    'Building Development Planning Permit (Approved Architectural/Structural Sheets)',
-    'Certified Geotechnical Subsoil Boring Investigation Report',
-    'Federal Ministry of Environment EIA / Environmental Management Plan',
-    'Stage 1 Setting-Out & Excavation Statutory Notice',
-  ]);
+  const [statutoryAgency, setStatutoryAgency] = useState('');
+  const [lasbcaPermitNumber, setLasbcaPermitNumber] = useState(user.lasbcaPermitNumber || '');
+  const [statutoryPermits, setStatutoryPermits] = useState<string[]>([]);
 
   // Helper toggle
   const toggleArrayItem = (list: string[], item: string, setter: (val: string[]) => void) => {
@@ -780,6 +761,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                         onChange={(e) => setCorenCategory(e.target.value)}
                         className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                       >
+                        <option value="">Select COREN / Professional Category...</option>
                         {COREN_CATEGORIES.map((c) => (
                           <option key={c.id} value={c.label}>
                             {c.label}
@@ -861,6 +843,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                         onChange={(e) => setOfficeState(e.target.value)}
                         className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                       >
+                        <option value="">Select Primary Office State...</option>
                         {NIGERIAN_STATES.map((st) => (
                           <option key={st} value={st}>
                             {st}
@@ -879,6 +862,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setContractorTier(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Contractor Scale & Classification...</option>
                       {CONTRACTOR_TIERS.map((tier) => (
                         <option key={tier} value={tier}>
                           {tier}
@@ -961,6 +945,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setProjectCategory(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Primary Project Portfolio Category...</option>
                       <option>Federal Highways, Dual-Carriageways & Bridges (FMWH)</option>
                       <option>High-Rise Commercial & Residential Towers (Lagos / Abuja)</option>
                       <option>Coastal Defense, Marine Revetments & Ports (Lekki / Eko Atlantic)</option>
@@ -1016,6 +1001,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                         onChange={(e) => setRebarYield(e.target.value)}
                         className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
                       >
+                        <option value="">Select Rebar Yield Strength...</option>
                         <option>500 N/mm² (High-Yield Deformed Bars - BS 4449 Grade 500B)</option>
                         <option>460 N/mm² (High-Yield Ribbed Bars - BS 4449 Grade 460)</option>
                         <option>250 N/mm² (Mild Steel Round Bars)</option>
@@ -1031,6 +1017,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                         onChange={(e) => setConcreteClass(e.target.value)}
                         className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
                       >
+                        <option value="">Select Concrete Strength Class...</option>
                         <option>C30/37 (Structural Beams, Columns & Slabs)</option>
                         <option>C25/30 (Reinforced Pad Foundations & Retaining Walls)</option>
                         <option>C40/50 (Prestressed Marine Girders & Deep Piles)</option>
@@ -1053,6 +1040,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setTestingLab(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Accredited Testing Laboratory...</option>
                       {ACCREDITED_LABS.map((lab) => (
                         <option key={lab} value={lab}>
                           {lab}
@@ -1123,6 +1111,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setSiApprovalPathway(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Site Instruction Approval Pathway...</option>
                       <option>Resident Engineer & Supervising Consultant Dual Authorization</option>
                       <option>Project Director Exclusive Sign-Off</option>
                       <option>Client Representative Counter-Signature Required</option>
@@ -1138,6 +1127,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setVoThreshold(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Variation Order Escalation Threshold...</option>
                       <option>Under ₦2,500,000 (Field level approval by Resident Engineer)</option>
                       <option>₦2,500,000 — ₦10,000,000 (Requires Lead Consultant Sign-Off)</option>
                       <option>Above ₦10,000,000 (Client Executive & Capital Committee approval)</option>
@@ -1172,6 +1162,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setReportingCadence(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Technical Reporting Cadence...</option>
                       <option>Weekly Site Progress Brief & Monthly IPC Valuation Dossier</option>
                       <option>Bi-Weekly Submittal Reconciliation & Monthly Milestone Review</option>
                       <option>Monthly Comprehensive Technical Governance Pack</option>
@@ -1187,6 +1178,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                       onChange={(e) => setPrimaryAudience(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none shadow-xs"
                     >
+                      <option value="">Select Valuation Review Audience...</option>
                       <option>Bank Project Monitoring Engineer (PME) & Client Delivery Directorate</option>
                       <option>Federal / State Ministry of Works Project Monitoring Taskforce</option>
                       <option>Internal Corporate Executive Board & Shareholder Audit</option>
@@ -1208,6 +1200,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                         onChange={(e) => setStatutoryAgency(e.target.value)}
                         className="w-full rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
                       >
+                        <option value="">Select Statutory Planning Authority...</option>
                         {STATUTORY_AGENCIES.map((ag) => (
                           <option key={ag} value={ag}>
                             {ag}
@@ -1279,23 +1272,35 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
                         <span className="text-slate-400 block text-[11px]">Professional Identity</span>
-                        <strong className="text-slate-900 font-semibold">{displayName}</strong>
-                        <span className="block text-[11px] text-[#4FAAA7] font-mono">{corenNumber}</span>
+                        <strong className="text-slate-900 font-semibold">
+                          {displayName || `${firstName} ${lastName}`.trim() || 'Not specified'}
+                        </strong>
+                        <span className="block text-[11px] text-[#4FAAA7] font-mono">
+                          {corenNumber || 'Pending COREN No.'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[11px]">Contracting Enterprise & CAC</span>
-                        <strong className="text-slate-900 font-semibold">{organization}</strong>
-                        <span className="block text-[11px] text-slate-500 font-mono">{cacNumber} &bull; {officeState.split(' ')[0]}</span>
+                        <strong className="text-slate-900 font-semibold">{organization || 'Not specified'}</strong>
+                        <span className="block text-[11px] text-slate-500 font-mono">
+                          {cacNumber || 'Pending CAC'} &bull; {(officeState || 'Nigeria').split(' ')[0]}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[11px]">Operational Focus & Zone</span>
-                        <strong className="text-slate-900 font-semibold">{operationalRole}</strong>
-                        <span className="block text-[11px] text-slate-500">{operatingZone} &bull; {projectCategory.split(' ')[0]}</span>
+                        <strong className="text-slate-900 font-semibold">{operationalRole || 'Not specified'}</strong>
+                        <span className="block text-[11px] text-slate-500">
+                          {operatingZone || 'National'} &bull; {(projectCategory || 'Infrastructure').split(' ')[0]}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[11px]">Testing & Planning Registry</span>
-                        <strong className="text-slate-900 font-semibold">{testingLab.split('—')[0]}</strong>
-                        <span className="block text-[11px] text-slate-500 font-mono">{lasbcaPermitNumber}</span>
+                        <strong className="text-slate-900 font-semibold">
+                          {(testingLab || 'Pending Lab Selection').split('—')[0]}
+                        </strong>
+                        <span className="block text-[11px] text-slate-500 font-mono">
+                          {lasbcaPermitNumber || 'Pending Statutory Permit'}
+                        </span>
                       </div>
                     </div>
                   </div>
