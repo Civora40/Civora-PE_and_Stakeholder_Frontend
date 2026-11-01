@@ -204,10 +204,52 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
     user.displayName || `Engr. ${firstName} ${lastName}, MNSE`
   );
   const [corenCategory, setCorenCategory] = useState(
-    user.corenStatus || 'Registered Engineer (COREN Reg.)'
+    (user as CivoraUser & { corenCategory?: string }).corenCategory ||
+      (user.corenStatus && !['verified', 'pending', 'unregistered'].includes(user.corenStatus)
+        ? user.corenStatus
+        : 'Registered Engineer (COREN Reg.)')
   );
   const [corenNumber, setCorenNumber] = useState(user.corenNumber || 'COREN/R.58492');
   const [phone, setPhone] = useState(user.phone || '+234 803 456 7890');
+
+  // Hydrate onboarding progress from backend on mount
+  React.useEffect(() => {
+    let active = true;
+    fetch('/api/onboarding')
+      .then((res) => res.json())
+      .then((resData) => {
+        if (!active || !resData?.success || !resData.user) return;
+        const u = resData.user as CivoraUser & Record<string, unknown>;
+        setUser(u);
+        if (typeof resData.currentStep === 'number' && resData.currentStep >= 1 && resData.currentStep <= 10) {
+          setCurrentStep(resData.currentStep);
+        }
+        if (u.firstName) setFirstName(String(u.firstName));
+        if (u.lastName) setLastName(String(u.lastName));
+        if (u.displayName) setDisplayName(String(u.displayName));
+        if (u.corenCategory) setCorenCategory(String(u.corenCategory));
+        if (u.corenNumber) setCorenNumber(String(u.corenNumber));
+        if (u.phone) setPhone(String(u.phone));
+        if (u.organization) setOrganization(String(u.organization));
+        if (u.cacNumber) setCacNumber(String(u.cacNumber));
+        if (u.officeState) setOfficeState(String(u.officeState));
+        if (u.contractorTier) setContractorTier(String(u.contractorTier));
+        if (u.primaryResponsibility) setOperationalRole(String(u.primaryResponsibility));
+        if (u.geopoliticalZone) setOperatingZone(String(u.geopoliticalZone));
+        if (u.projectCategory) setProjectCategory(String(u.projectCategory));
+        if (Array.isArray(u.standardsBaseline) && u.standardsBaseline.length > 0) {
+          setSelectedCodes(u.standardsBaseline as string[]);
+        }
+        if (u.testingLab) setTestingLab(String(u.testingLab));
+        if (typeof u.reviewSlaDays === 'number') setReviewSlaDays(u.reviewSlaDays);
+        if (u.reportingCadence) setReportingCadence(String(u.reportingCadence));
+        if (u.lasbcaPermitNumber) setLasbcaPermitNumber(String(u.lasbcaPermitNumber));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Step 2: Corporate & CAC
   const [organization, setOrganization] = useState(user.organization || 'Apex Infrastructure Nigeria Ltd');
@@ -313,15 +355,23 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
 
     try {
       const stepDataMap: Record<number, Record<string, unknown>> = {
-        1: { firstName, lastName, displayName, corenStatus: corenCategory, corenNumber, phone },
-        2: { organization, cacNumber, officeState },
+        1: {
+          firstName,
+          lastName,
+          displayName,
+          corenStatus: corenCategory,
+          corenCategory,
+          corenNumber,
+          phone,
+        },
+        2: { organization, cacNumber, officeState, contractorTier },
         3: { primaryResponsibility: operationalRole },
         4: { geopoliticalZone: operatingZone, projectCategory },
-        5: { standardsBaseline: selectedCodes },
-        6: { testingLab, reviewSlaDays },
-        7: { rfiEscalationTier: voThreshold },
-        8: { reportingCadence },
-        9: { lasbcaPermitNumber },
+        5: { standardsBaseline: selectedCodes, rebarYield, concreteClass },
+        6: { testingLab, testingProtocols, reviewSlaDays },
+        7: { rfiEscalationTier: voThreshold, siApprovalPathway, mandatoryGps },
+        8: { reportingCadence, primaryAudience },
+        9: { statutoryAgency, lasbcaPermitNumber, statutoryPermits },
       };
 
       const payloadData = stepDataMap[currentStep] || {};
@@ -338,18 +388,31 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
               firstName,
               lastName,
               displayName,
+              phone,
               corenNumber,
               corenStatus: corenCategory,
+              corenCategory,
+              organization,
               cacNumber,
               officeState,
+              contractorTier,
+              primaryResponsibility: operationalRole,
               geopoliticalZone: operatingZone,
               projectCategory,
               standardsBaseline: selectedCodes,
+              rebarYield,
+              concreteClass,
               testingLab,
+              testingProtocols,
               reviewSlaDays,
               rfiEscalationTier: voThreshold,
+              siApprovalPathway,
+              mandatoryGps,
               reportingCadence,
+              primaryAudience,
+              statutoryAgency,
               lasbcaPermitNumber,
+              statutoryPermits,
             },
           }),
         });
@@ -364,7 +427,7 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
         router.push(
           resData.redirectUrl ||
             (user.role === 'read_only_stakeholder'
-              ? '/dashboard/stakeholder'
+              ? '/stakeholder'
               : '/dashboard')
         );
         router.refresh();

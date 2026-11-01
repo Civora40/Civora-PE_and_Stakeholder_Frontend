@@ -26,6 +26,9 @@ export async function GET() {
     });
 
     if (backendRes.ok && backendRes.data) {
+      if (backendRes.data.user) {
+        await updateSessionUser(backendRes.data.user);
+      }
       return NextResponse.json({
         success: true,
         ...backendRes.data,
@@ -126,7 +129,7 @@ export async function POST(request: NextRequest) {
       }
 
       const targetDashboard =
-        updatedUser.role === 'read_only_stakeholder' ? '/dashboard/stakeholder' : '/dashboard';
+        updatedUser.role === 'read_only_stakeholder' ? '/stakeholder' : '/dashboard';
 
       return NextResponse.json({
         success: true,

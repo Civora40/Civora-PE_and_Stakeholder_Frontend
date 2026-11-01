@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StakeholderOnboardingPage() {
-  const user = (await getCurrentUser()) || DEMO_USERS.read_only_stakeholder;
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect('/login?redirect=/stakeholder/onboarding');

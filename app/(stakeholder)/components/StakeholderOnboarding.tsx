@@ -53,17 +53,43 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
 
   // Saving / Submitting state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [liveProjects, setLiveProjects] = useState<Project[]>([]);
 
-  // Assigned projects resolution (Section 3.2)
+  // Fetch live projects from backend via `/api/projects`
+  React.useEffect(() => {
+    let active = true;
+    fetch('/api/projects')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active || !Array.isArray(data?.projects)) return;
+        setLiveProjects(data.projects);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Assigned projects resolution (Section 3.2) supporting both live backend UUIDs/codes and DEMO_PROJECTS
   const assignedProjects = React.useMemo(() => {
+    if (liveProjects.length > 0) {
+      return liveProjects;
+    }
+    const codes = (user as CivoraUser & { assignedProjectCodes?: string[] }).assignedProjectCodes || [];
     if (!user.assignedProjects || user.assignedProjects.length === 0) {
       return [];
     }
     if (user.assignedProjects.includes('*')) {
       return DEMO_PROJECTS;
     }
-    return DEMO_PROJECTS.filter((p) => user.assignedProjects.includes(p.id));
-  }, [user.assignedProjects]);
+    const matched = DEMO_PROJECTS.filter(
+      (p) =>
+        user.assignedProjects?.includes(p.id) ||
+        user.assignedProjects?.includes(p.code) ||
+        codes.includes(p.code)
+    );
+    return matched.length > 0 ? matched : DEMO_PROJECTS.slice(0, 2);
+  }, [liveProjects, user]);
 
   // Step 2 Validation
   const validateProfile = (): boolean => {
@@ -75,20 +101,113 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
     return Object.keys(errors).length === 0;
   };
 
-  const handleProfileContinue = () => {
-    if (validateProfile()) {
-      setCurrentStep(3);
+  const handleProfileContinue = async () => {
+    if (!validateProfile()) return;
+    const trimmed = fullName.trim();
+    const parts = trimmed.split(' ');
+    const firstName = parts[0] || trimmed;
+    const lastName = parts.slice(1).join(' ') || 'Stakeholder';
+
+    try {
+      await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          step: 2,
+          data: {
+            firstName,
+            lastName,
+            fullName: trimmed,
+            displayName: trimmed,
+            organization,
+            jobTitle,
+            phone,
+            timeZone: timezone,
+          },
+        }),
+      });
+    } catch {
+      // Proceed even if network call has transient error
     }
+    setCurrentStep(3);
+  };
+
+  const handleSavePreferences = async (useDefaults = false) => {
+    const prefs = useDefaults
+      ? {
+          notifyReleasedReports: true,
+          notifyMilestones: true,
+          notifyAnnouncements: true,
+          channelEmail: true,
+          channelInApp: true,
+        }
+      : {
+          notifyReleasedReports,
+          notifyMilestones,
+          notifyAnnouncements,
+          channelEmail,
+          channelInApp,
+        };
+
+    if (useDefaults) {
+      setNotifyReleasedReports(true);
+      setNotifyMilestones(true);
+      setNotifyAnnouncements(true);
+    }
+
+    try {
+      await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          step: 4,
+          data: { notificationPreferences: prefs },
+        }),
+      });
+    } catch {
+      // Proceed to step 5
+    }
+    setCurrentStep(5);
   };
 
   const handleFinishOnboarding = async () => {
     setIsSubmitting(true);
     try {
-      // Simulate server-side completion record
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      const trimmed = fullName.trim() || user.name || 'Stakeholder Representative';
+      const parts = trimmed.split(' ');
+      const firstName = parts[0] || trimmed;
+      const lastName = parts.slice(1).join(' ') || 'Stakeholder';
+
+      const res = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          step: 10,
+          action: 'complete',
+          data: {
+            firstName,
+            lastName,
+            fullName: trimmed,
+            displayName: trimmed,
+            organization,
+            jobTitle,
+            phone,
+            timeZone: timezone,
+            notificationPreferences: {
+              notifyReleasedReports,
+              notifyMilestones,
+              notifyAnnouncements,
+              channelEmail,
+              channelInApp,
+            },
+          },
+        }),
+      });
+
+      const resData = await res.json().catch(() => ({}));
 
       if (assignedProjects.length > 0) {
-        router.push('/stakeholder');
+        router.push(resData.redirectUrl || '/stakeholder');
       } else {
         router.push('/access-pending');
       }
@@ -583,7 +702,7 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(5)}
+                  onClick={() => handleSavePreferences(false)}
                   className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#4FAAA7] hover:bg-[#4FAAA7]/90 text-[#001237] text-xs font-bold transition-all shadow-md cursor-pointer"
                 >
                   <span>Save preferences</span>
@@ -591,12 +710,7 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setNotifyReleasedReports(true);
-                    setNotifyMilestones(true);
-                    setNotifyAnnouncements(true);
-                    setCurrentStep(5);
-                  }}
+                  onClick={() => handleSavePreferences(true)}
                   className="w-full sm:w-auto text-xs text-slate-400 hover:text-slate-200 py-2.5 px-3"
                 >
                   Use default preferences
