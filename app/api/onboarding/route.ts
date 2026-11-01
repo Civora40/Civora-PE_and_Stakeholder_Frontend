@@ -1,15 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser, updateSessionUser } from '@/lib/auth/session';
+import { fetchBackend } from '@/lib/api/backend-client';
+import { getCurrentUser, getSessionData, updateSessionUser } from '@/lib/auth/session';
 import { onboardingStep1Schema, onboardingStep2Schema } from '@/lib/validation/auth';
+import { CivoraUser } from '@/types';
 
 export async function GET() {
-  const user = await getCurrentUser();
+  const session = await getSessionData();
+  const user = session?.user;
 
   if (!user) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized. Please sign in.' },
       { status: 401 }
     );
+  }
+
+  if (session?.accessToken) {
+    const backendRes = await fetchBackend<{
+      user: CivoraUser;
+      completed: boolean;
+      currentStep: number;
+    }>('/users/onboarding/', {
+      method: 'GET',
+      accessToken: session.accessToken,
+    });
+
+    if (backendRes.ok && backendRes.data) {
+      return NextResponse.json({
+        success: true,
+        ...backendRes.data,
+        source: 'civora_backend',
+      });
+    }
   }
 
   const completed = Boolean(user.onboardingCompletedAt);
@@ -24,7 +46,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getCurrentUser();
+  const session = await getSessionData();
+  const user = session?.user;
 
   if (!user) {
     return NextResponse.json(
@@ -37,7 +60,56 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { step, action, data } = body;
 
-    // Finalize / Complete 10-step Onboarding
+    if (step === 1) {
+      const validation = onboardingStep1Schema.safeParse(data);
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: validation.error.issues[0]?.message || 'Invalid profile information.',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (step === 2) {
+      const validation = onboardingStep2Schema.safeParse(data);
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: validation.error.issues[0]?.message || 'Invalid work context details.',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Sync with live Django Backend (`/api/v1/users/onboarding/`) when authenticated with JWT
+    if (session?.accessToken) {
+      const backendRes = await fetchBackend<{
+        user: CivoraUser;
+        completed?: boolean;
+        nextStep?: number;
+        redirectUrl?: string;
+      }>('/users/onboarding/', {
+        method: 'POST',
+        accessToken: session.accessToken,
+        body: { step, action, data },
+      });
+
+      if (backendRes.ok && backendRes.data?.user) {
+        await updateSessionUser(backendRes.data.user);
+        return NextResponse.json({
+          success: true,
+          ...backendRes.data,
+          source: 'civora_backend',
+        });
+      }
+    }
+
+    // Finalize / Complete 10-step Onboarding (local session fallback)
     if (action === 'complete' || step === 10) {
       const updatedUser = await updateSessionUser({
         ...(data || {}),
@@ -66,18 +138,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Professional Identity & COREN Registration
     if (step === 1) {
-      const validation = onboardingStep1Schema.safeParse(data);
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: validation.error.issues[0]?.message || 'Invalid profile information.',
-          },
-          { status: 400 }
-        );
-      }
-
-      const { firstName, lastName, displayName, jobTitle, phone, timeZone } = validation.data;
+      const { firstName, lastName, displayName, jobTitle, phone, timeZone } = data;
       const fullName = `${firstName} ${lastName}`.trim();
 
       const updatedUser = await updateSessionUser({
@@ -103,17 +164,6 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Organization & CAC Registration Context
     if (step === 2) {
-      const validation = onboardingStep2Schema.safeParse(data);
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: validation.error.issues[0]?.message || 'Invalid work context details.',
-          },
-          { status: 400 }
-        );
-      }
-
       const updatedUser = await updateSessionUser({
         organization: data.organization || user.organization,
         cacNumber: data.cacNumber || user.cacNumber,

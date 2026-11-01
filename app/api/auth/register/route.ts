@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchBackend } from '@/lib/api/backend-client';
 import { createSession } from '@/lib/auth/session';
 import { registerSchema } from '@/lib/validation/auth';
 import { CivoraUser, UserRole } from '@/types';
@@ -18,15 +19,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { firstName, lastName, email, organization, jobTitle, invitationCode, role, accountType } =
+    const { firstName, lastName, email, password, organization, jobTitle, invitationCode, role, accountType } =
       validation.data;
 
-    // Invitation validation & Role assignment
-    // Principle: Users must not be able to self-assign privileged roles (e.g. platform_admin).
+    // 1. Attempt registration against the live Django Backend (`/api/v1/auth/register/`)
+    const backendRes = await fetchBackend<{
+      access: string;
+      refresh: string;
+      user: CivoraUser;
+      nextUrl?: string;
+    }>('/auth/register/', {
+      method: 'POST',
+      body: {
+        firstName,
+        lastName,
+        email,
+        password,
+        organization,
+        jobTitle,
+        invitationCode,
+        role,
+        accountType,
+      },
+    });
+
+    if (backendRes.ok && backendRes.data?.user) {
+      await createSession(backendRes.data.user, {
+        accessToken: backendRes.data.access,
+        refreshToken: backendRes.data.refresh,
+      });
+
+      return NextResponse.json({
+        success: true,
+        user: backendRes.data.user,
+        nextUrl: backendRes.data.nextUrl || '/onboarding',
+        source: 'civora_backend',
+      });
+    }
+
+    if (!backendRes.unreachable && backendRes.status === 400) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: backendRes.error?.message || 'Registration validation failed.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // 2. Offline fallback if backend is unreachable
     let assignedRole: UserRole = 'project_engineer';
     let assignedProjects: string[] = ['prj_metro_01'];
 
-    // Check requested role / accountType
     if (
       role === 'read_only_stakeholder' ||
       accountType === 'stakeholder' ||
@@ -39,8 +83,7 @@ export async function POST(request: NextRequest) {
 
     if (invitationCode && invitationCode.trim()) {
       const code = invitationCode.trim().toUpperCase();
-      
-      // Check for simulated expired or revoked invitations
+
       if (code.includes('EXPIRED') || code.includes('REVOKED') || code.includes('INVALID') || code.length < 4) {
         return NextResponse.json(
           {
@@ -69,13 +112,13 @@ export async function POST(request: NextRequest) {
       lastName,
       displayName: fullName,
       email,
-      role: assignedRole, // Trusted server-assigned role; never self-assigned platform_admin
+      role: assignedRole,
       title: jobTitle || (assignedRole === 'project_engineer' ? 'Project Engineer' : 'Stakeholder Representative'),
       jobTitle: jobTitle || '',
       organization,
       assignedProjects,
-      onboardingCompletedAt: null, // Incomplete onboarding by default
-      onboardingStep: 1, // Start at step 1
+      onboardingCompletedAt: null,
+      onboardingStep: 1,
       accountStatus: 'active',
       invitationCode: invitationCode || undefined,
     };
@@ -86,6 +129,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: newUser,
       nextUrl: '/onboarding',
+      source: 'mock_fallback',
     });
   } catch (error) {
     return NextResponse.json(

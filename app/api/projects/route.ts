@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
+import { fetchBackend } from '@/lib/api/backend-client';
+import { getSessionData, updateSessionUser } from '@/lib/auth/session';
 import { DEMO_PROJECTS, DEMO_ACTIVITIES } from '@/lib/mock-data/fixtures';
 import { can } from '@/lib/permissions/rbac';
 import { Project, ActivityRecord } from '@/types';
 
 export async function GET() {
-  const user = await getCurrentUser();
+  const session = await getSessionData();
+  const user = session?.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (session?.accessToken) {
+    const backendRes = await fetchBackend<Project[]>('/projects/', {
+      method: 'GET',
+      accessToken: session.accessToken,
+    });
+    if (backendRes.ok && Array.isArray(backendRes.data) && backendRes.data.length > 0) {
+      return NextResponse.json({
+        projects: backendRes.data,
+        source: 'civora_backend',
+      });
+    }
   }
 
   return NextResponse.json({
@@ -16,12 +31,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
+  const session = await getSessionData();
+  const user = session?.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Authorization check: only users with projects:manage (e.g. project_engineer, platform_admin)
   if (!can(user, 'projects:manage')) {
     return NextResponse.json(
       { error: 'Forbidden: Insufficient permissions to create projects' },
@@ -32,7 +47,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Required fields validation
     if (!body.name?.trim()) {
       return NextResponse.json({ error: 'Project name is required' }, { status: 400 });
     }
@@ -43,9 +57,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Client or sponsoring organization is required' }, { status: 400 });
     }
 
+    // 1. Create project against the live Django Backend (`/api/v1/projects/`) when authenticated
+    if (session?.accessToken) {
+      const backendRes = await fetchBackend<Project>('/projects/', {
+        method: 'POST',
+        accessToken: session.accessToken,
+        body,
+      });
+
+      if (backendRes.ok && backendRes.data) {
+        const createdProj = backendRes.data;
+        DEMO_PROJECTS.unshift(createdProj);
+        if (user.assignedProjects && !user.assignedProjects.includes('*')) {
+          await updateSessionUser({
+            assignedProjects: [...user.assignedProjects, createdProj.id],
+          });
+        }
+        return NextResponse.json(
+          { success: true, project: createdProj, source: 'civora_backend' },
+          { status: 201 }
+        );
+      }
+
+      if (!backendRes.unreachable && backendRes.status === 409) {
+        return NextResponse.json(
+          { error: backendRes.message || `Project code '${body.code}' is already registered` },
+          { status: 409 }
+        );
+      }
+    }
+
     const cleanCode = body.code.trim().toUpperCase();
 
-    // Check code uniqueness
     const codeExists = DEMO_PROJECTS.some(
       (p) => p.code.toUpperCase() === cleanCode
     );
@@ -56,7 +99,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Format budget
     const currencySymbol = body.currency || '₦';
     const rawBudget = body.budgetAmount ? String(body.budgetAmount).trim() : '0';
     const formattedBudget = rawBudget.includes('B') || rawBudget.includes('M') || rawBudget.includes('K')
@@ -82,7 +124,6 @@ export async function POST(request: Request) {
       lastActivity: 'Just now',
       budgetFormatted: formattedBudget,
       specsReference: body.specsReference || 'Eurocode 2 & FMWH Standard Specifications (C35/45)',
-      // Extended Metadata
       projectType: body.projectType || 'Road / Highway',
       description: body.description || '',
       contractRef: body.contractRef || '',
@@ -112,10 +153,8 @@ export async function POST(request: Request) {
       governanceNotes: body.governanceNotes || '',
     };
 
-    // Insert at front of DEMO_PROJECTS
     DEMO_PROJECTS.unshift(newProject);
 
-    // Record an audit entry in DEMO_ACTIVITIES
     const newActivity: ActivityRecord = {
       id: `act_${Date.now()}`,
       projectId: newProject.id,
@@ -132,7 +171,6 @@ export async function POST(request: Request) {
     };
     DEMO_ACTIVITIES.unshift(newActivity);
 
-    // Ensure engineer has access in session
     if (user.assignedProjects && !user.assignedProjects.includes('*') && !user.assignedProjects.includes(newProject.id)) {
       user.assignedProjects.push(newProject.id);
     }
@@ -143,4 +181,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }
-

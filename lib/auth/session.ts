@@ -34,15 +34,22 @@ function deserializeSession(raw: string): SessionData | null {
   }
 }
 
+export interface SessionTokens {
+  accessToken?: string;
+  refreshToken?: string;
+}
+
 /**
  * Server-side helper to create and store session cookie
  */
-export async function createSession(user: CivoraUser): Promise<void> {
+export async function createSession(user: CivoraUser, tokens?: SessionTokens): Promise<void> {
   const cookieStore = await cookies();
   const expiresAt = Date.now() + SESSION_DURATION_MS;
 
   const sessionData: SessionData = {
     user,
+    accessToken: tokens?.accessToken,
+    refreshToken: tokens?.refreshToken,
     createdAt: Date.now(),
     expiresAt,
   };
@@ -57,9 +64,9 @@ export async function createSession(user: CivoraUser): Promise<void> {
 }
 
 /**
- * Server-side helper to retrieve current authenticated user
+ * Server-side helper to retrieve full session (user + JWT tokens)
  */
-export async function getCurrentUser(): Promise<CivoraUser | null> {
+export async function getSessionData(): Promise<SessionData | null> {
   try {
     const cookieStore = await cookies();
     const cookie = cookieStore.get(SESSION_COOKIE_NAME);
@@ -68,28 +75,38 @@ export async function getCurrentUser(): Promise<CivoraUser | null> {
       return null;
     }
 
-    const session = deserializeSession(cookie.value);
-    return session ? session.user : null;
+    return deserializeSession(cookie.value);
   } catch {
     return null;
   }
 }
 
 /**
+ * Server-side helper to retrieve current authenticated user
+ */
+export async function getCurrentUser(): Promise<CivoraUser | null> {
+  const session = await getSessionData();
+  return session ? session.user : null;
+}
+
+/**
  * Update current authenticated user profile / onboarding fields in session
  */
 export async function updateSessionUser(updates: Partial<CivoraUser>): Promise<CivoraUser | null> {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
+  const session = await getSessionData();
+  if (!session) {
     return null;
   }
 
   const updatedUser: CivoraUser = {
-    ...currentUser,
+    ...session.user,
     ...updates,
   };
 
-  await createSession(updatedUser);
+  await createSession(updatedUser, {
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+  });
   return updatedUser;
 }
 
