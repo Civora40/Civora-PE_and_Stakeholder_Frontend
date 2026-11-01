@@ -173,6 +173,51 @@ const STATUTORY_AGENCIES = [
   'Ogun State Ministry of Urban & Physical Planning — Abeokuta',
 ];
 
+const SEED_ORG_NAMES = new Set([
+  'Civora Infrastructure Ltd',
+  'Apex Coastal Civil Engineering Ltd',
+  'Apex Infrastructure Nigeria Ltd',
+  'Civora Core Infrastructure',
+]);
+
+const SEED_CAC_NUMBERS = new Set([
+  'RC-45190',
+  'RC-1928374',
+  'RC-8841023',
+  'RC 1849204',
+  'RC-11234',
+]);
+
+function sanitizeOrgForUser(rawOrg: unknown, email?: string): string {
+  const str = typeof rawOrg === 'string' ? rawOrg.trim() : '';
+  if (!str) return '';
+  const lowerEmail = (email || '').toLowerCase();
+  const isSeedAccount =
+    lowerEmail.endsWith('@civora.internal') ||
+    lowerEmail.endsWith('@civora.io') ||
+    lowerEmail.endsWith('@apexcivil.com') ||
+    lowerEmail.endsWith('@juliusberger.com');
+  if (!isSeedAccount && SEED_ORG_NAMES.has(str)) {
+    return '';
+  }
+  return str;
+}
+
+function sanitizeCacForUser(rawCac: unknown, email?: string): string {
+  const str = typeof rawCac === 'string' ? rawCac.trim() : '';
+  if (!str) return '';
+  const lowerEmail = (email || '').toLowerCase();
+  const isSeedAccount =
+    lowerEmail.endsWith('@civora.internal') ||
+    lowerEmail.endsWith('@civora.io') ||
+    lowerEmail.endsWith('@apexcivil.com') ||
+    lowerEmail.endsWith('@juliusberger.com');
+  if (!isSeedAccount && SEED_CAC_NUMBERS.has(str)) {
+    return '';
+  }
+  return str;
+}
+
 import { StakeholderOnboarding } from '@/app/(stakeholder)/components/StakeholderOnboarding';
 
 export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
@@ -225,10 +270,10 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
         if (u.corenCategory) setCorenCategory(String(u.corenCategory));
         if (u.corenNumber) setCorenNumber(String(u.corenNumber));
         if (u.phone) setPhone(String(u.phone));
-        if (u.organization && u.organization !== 'Civora Infrastructure Ltd') {
-          setOrganization(String(u.organization));
-        }
-        if (u.cacNumber) setCacNumber(String(u.cacNumber));
+        setOrganization(
+          sanitizeOrgForUser(u.registeredOrganization || u.organization, u.email)
+        );
+        setCacNumber(sanitizeCacForUser(u.cacNumber, u.email));
         if (u.officeState) setOfficeState(String(u.officeState));
         if (u.contractorTier) setContractorTier(String(u.contractorTier));
         if (u.primaryResponsibility) setOperationalRole(String(u.primaryResponsibility));
@@ -263,9 +308,12 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
 
   // Step 2: Corporate & CAC
   const [organization, setOrganization] = useState(
-    user.organization && user.organization !== 'Civora Infrastructure Ltd' ? user.organization : ''
+    sanitizeOrgForUser(
+      (user as CivoraUser & { registeredOrganization?: string }).registeredOrganization || user.organization,
+      user.email
+    )
   );
-  const [cacNumber, setCacNumber] = useState(user.cacNumber || '');
+  const [cacNumber, setCacNumber] = useState(sanitizeCacForUser(user.cacNumber, user.email));
   const [officeState, setOfficeState] = useState(user.officeState || '');
   const [contractorTier, setContractorTier] = useState('');
 

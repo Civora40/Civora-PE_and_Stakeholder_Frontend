@@ -32,6 +32,13 @@ interface StakeholderOnboardingProps {
   initialStep?: number;
 }
 
+const SEED_ORG_NAMES = new Set([
+  'Civora Infrastructure Ltd',
+  'Apex Coastal Civil Engineering Ltd',
+  'Apex Infrastructure Nigeria Ltd',
+  'Civora Core Infrastructure',
+]);
+
 export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnboardingProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(initialStep);
@@ -39,7 +46,7 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
   // Profile fields state (Step 2) - clean manual entry without seed defaults
   const [fullName, setFullName] = useState(user.name || '');
   const [organization, setOrganization] = useState(
-    user.organization && user.organization !== 'Civora Infrastructure Ltd' ? user.organization : ''
+    user.organization && !SEED_ORG_NAMES.has(user.organization) ? user.organization : ''
   );
   const [jobTitle, setJobTitle] = useState(user.jobTitle || '');
   const [phone, setPhone] = useState(user.phone || '');
