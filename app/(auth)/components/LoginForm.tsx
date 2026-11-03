@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, AlertCircle, Check, HardHat, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
@@ -61,12 +61,6 @@ export function LoginForm() {
     await signInWithCredentials(email, password);
   };
 
-  const handleQuickDemoLogin = async (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('Civora2026!');
-    await signInWithCredentials(demoEmail, 'Civora2026!');
-  };
-
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
       {/* Header Info */}
@@ -108,7 +102,7 @@ export function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="info.madhu786@gmail.com"
+            placeholder="name@company.com"
             className="w-full rounded-xl bg-white border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#001237] focus:ring-1 focus:ring-[#001237] focus:outline-none transition-all shadow-xs"
           />
         </div>
@@ -178,33 +172,6 @@ export function LoginForm() {
           )}
         </button>
       </form>
-
-      {/* Quick Workspace Access for Review / Evaluation */}
-      <div className="pt-2 border-t border-slate-100 space-y-2.5">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center">
-          Quick Workspace Access
-        </p>
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => handleQuickDemoLogin('engineer@civora.internal')}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-xs font-bold text-[#001237] transition-all cursor-pointer disabled:opacity-50"
-          >
-            <HardHat className="w-3.5 h-3.5 text-[#4FAAA7]" />
-            <span>Project Engineer</span>
-          </button>
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={() => handleQuickDemoLogin('stakeholder@civora.internal')}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-xs font-bold text-[#001237] transition-all cursor-pointer disabled:opacity-50"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#4FAAA7]" />
-            <span>Stakeholder / Client</span>
-          </button>
-        </div>
-      </div>
 
       {/* Bottom Switch Link */}
       <div className="text-center pt-2">

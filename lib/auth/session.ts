@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
-import { CivoraUser, SessionData, UserRole } from '@/types';
+import { CivoraUser, Project, SessionData, UserRole } from '@/types';
 import { getMockUserByRole, registerMockUser } from './mock-adapter';
+import { fetchBackend } from '@/lib/api/backend-client';
+import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
 
 const SESSION_COOKIE_NAME = 'civora_session';
 const REFRESH_COOKIE_NAME = 'civora_refresh';
@@ -31,7 +33,6 @@ function compactUserForCookie(user: CivoraUser): CivoraUser {
     jobTitle: u.jobTitle || u.title || '',
     department: u.department || '',
     organization: u.organization || (typeof u.organization_name === 'string' ? u.organization_name : '') || '',
-    organizationId: u.organizationId || (typeof u.organization_id === 'string' ? u.organization_id : undefined),
     phone: u.phone || (typeof u.phone_number === 'string' ? u.phone_number : '') || '',
     timeZone: u.timeZone || (typeof u.time_zone === 'string' ? u.time_zone : '') || '',
     corenNumber: u.corenNumber || (typeof u.professional_registration === 'string' ? u.professional_registration : '') || '',
@@ -173,4 +174,40 @@ export async function switchDemoRole(role: UserRole): Promise<CivoraUser> {
   const user = getMockUserByRole(role);
   await createSession(user);
   return user;
+}
+
+/**
+ * Normalize backend project records and merge with any in-session projects.
+ */
+export async function getServerProjects(): Promise<Project[]> {
+  const session = await getSessionData();
+  if (session?.accessToken) {
+    try {
+      const backendRes = await fetchBackend<
+        Project[] | { results?: Project[]; projects?: Project[] }
+      >('/projects/', {
+        method: 'GET',
+        accessToken: session.accessToken,
+      });
+
+      if (backendRes.ok && backendRes.data) {
+        const rawList = Array.isArray(backendRes.data)
+          ? backendRes.data
+          : Array.isArray(backendRes.data.results)
+            ? backendRes.data.results
+            : Array.isArray(backendRes.data.projects)
+              ? backendRes.data.projects
+              : null;
+
+        if (rawList) {
+          const backendIds = new Set(rawList.map((p) => p.id));
+          const localExtras = DEMO_PROJECTS.filter((p) => !backendIds.has(p.id));
+          return [...rawList, ...localExtras];
+        }
+      }
+    } catch {
+      // Fall back to in-memory store
+    }
+  }
+  return DEMO_PROJECTS;
 }

@@ -52,12 +52,31 @@ test('3. Workspace Navigation: "New Project" link is shown only to authorized us
 });
 
 test('4. Project Code Uniqueness: rejects existing project codes', () => {
-  const existingCode = DEMO_PROJECTS[0].code.toUpperCase();
-  const isDuplicate = DEMO_PROJECTS.some((p) => p.code.toUpperCase() === existingCode);
+  const sampleProjects: Project[] = [
+    ...DEMO_PROJECTS,
+    {
+      id: 'prj_uniqueness_check',
+      code: 'PRJ-EXISTING-01',
+      name: 'Existing Project',
+      client: 'Client Org',
+      location: 'Lagos, Nigeria',
+      status: 'active',
+      leadEngineer: 'Project Engineer',
+      progressPercent: 0,
+      submissionsCount: 0,
+      pendingReviewsCount: 0,
+      reportsCount: 0,
+      lastActivity: 'Just now',
+      budgetFormatted: '₦0M',
+      specsReference: 'Eurocode 2',
+    },
+  ];
+  const existingCode = sampleProjects[0].code.toUpperCase();
+  const isDuplicate = sampleProjects.some((p) => p.code.toUpperCase() === existingCode);
   assert.strictEqual(isDuplicate, true);
 
   const brandNewCode = 'UNIQUE-PRJ-2026-X99';
-  const isBrandNewDuplicate = DEMO_PROJECTS.some((p) => p.code.toUpperCase() === brandNewCode);
+  const isBrandNewDuplicate = sampleProjects.some((p) => p.code.toUpperCase() === brandNewCode);
   assert.strictEqual(isBrandNewDuplicate, false);
 });
 

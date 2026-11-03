@@ -26,6 +26,139 @@ import {
   DEMO_PERFORMANCE_EXCEPTIONS,
 } from '../lib/mock-data/fixtures';
 
+// Arrange test-only fixtures so production stores remain empty (`[]`) by default
+if (DEMO_PERSONNEL.length === 0) {
+  DEMO_PERSONNEL.push(
+    {
+      id: 'per_01',
+      fullName: 'Engr. Tunde Adeyemi',
+      email: 'tunde.adeyemi@civora.internal',
+      professionalTitle: 'Senior Structural QA Engineer',
+      department: 'Structural & Foundations',
+      organization: 'Civora Infrastructure Ltd',
+      assignedProjects: ['prj_metro_01'],
+      verifiedContacts: [
+        {
+          id: 'vc_01',
+          personnelId: 'per_01',
+          type: 'whatsapp',
+          value: '+234 803 419 2084',
+          maskedValue: '+234 803 ••• 2084',
+          verifiedAt: '2026-10-01',
+          verifiedBy: 'Platform Admin',
+          isActive: true,
+        },
+      ],
+      verificationStatus: 'verified',
+      activeStatus: 'active',
+      expectedReportingCadence: 'daily',
+      effectiveFrom: '2026-01-01',
+    },
+    {
+      id: 'per_02',
+      fullName: 'Chidinma Okafor',
+      email: 'chidinma.okafor@civora.internal',
+      professionalTitle: 'Lead Geotechnical Monitoring Specialist',
+      department: 'Geotechnical & Earthworks',
+      organization: 'Civora Infrastructure Ltd',
+      assignedProjects: ['prj_metro_01'],
+      verifiedContacts: [
+        {
+          id: 'vc_02',
+          personnelId: 'per_02',
+          type: 'telegram',
+          value: '@chidinma_geo_lead',
+          maskedValue: '@chid•••',
+          verifiedAt: '2026-10-01',
+          verifiedBy: 'Platform Admin',
+          isActive: true,
+        },
+      ],
+      verificationStatus: 'verified',
+      activeStatus: 'active',
+      expectedReportingCadence: 'daily',
+      effectiveFrom: '2026-01-01',
+    }
+  );
+}
+
+if (DEMO_SUBMISSIONS.length === 0) {
+  DEMO_SUBMISSIONS.push({
+    id: 'sub_06_unverified',
+    identifier: 'SUB-2026-0899',
+    projectId: 'prj_metro_01',
+    projectName: 'Test Project',
+    reportingGroup: 'Material Certification',
+    submittedBy: 'Unverified Field Contact',
+    subcontractor: 'Field Contractor',
+    senderVerificationStatus: 'needs_verification',
+    sourceChannel: 'whatsapp',
+    receivedDate: '2026-10-20',
+    title: 'Test Unverified Submission',
+    description: 'Unverified test payload',
+    reviewStatus: 'needs_verification',
+    aiFlag: {
+      status: 'unverified',
+      message: 'Sender phone not in roster.',
+      confidence: 0.72,
+      specRef: 'Eurocode 2',
+      disclaimer: 'Advisory flag',
+    },
+    evidenceItems: [],
+    attachments: [
+      {
+        id: 'att_failed_01',
+        submissionId: 'sub_06_unverified',
+        projectId: 'prj_metro_01',
+        sourceChannel: 'whatsapp',
+        originalFilename: 'corrupted_scan.pdf',
+        storageKey: 'vault/failed/corrupted_scan.pdf',
+        mimeType: 'application/pdf',
+        fileSizeBytes: 512000,
+        fileSizeFormatted: '500 KB',
+        checksum: '',
+        receivedTime: '2026-10-20T08:00:00Z',
+        downloadUrl: '/api/attachments/att_failed_01',
+        category: 'test_report',
+        processingStatus: 'failed',
+        errorMessage: 'Media download timed out from gateway.',
+      },
+    ],
+    history: [],
+  });
+}
+
+if (DEMO_TASKS.length === 0) {
+  DEMO_TASKS.push({
+    id: 'tsk_01',
+    code: 'TSK-2026-01',
+    title: 'Pier 4B Cylinder Break Verification',
+    description: 'Verify 7-day compressive strength cylinder test.',
+    projectId: 'prj_metro_01',
+    projectName: 'Test Project',
+    assignedPersonnelId: 'per_01',
+    assignedPersonnelName: 'Engr. Tunde Adeyemi',
+    category: 'Testing / Commissioning',
+    dueDate: '2026-10-21',
+    status: 'completed',
+    linkedSubmissions: [],
+  });
+}
+
+if (DEMO_PERFORMANCE_EXCEPTIONS.length === 0) {
+  DEMO_PERFORMANCE_EXCEPTIONS.push({
+    id: 'exc_01',
+    personnelId: 'per_02',
+    personnelName: 'Chidinma Okafor',
+    period: 'Week 42 (Oct 13 - Oct 19, 2026)',
+    type: 'approved_leave',
+    reason: 'Approved safety training leave.',
+    excludedPeriodsCount: 1,
+    approvedBy: 'Project Engineer',
+    approvedAt: '2026-10-15T10:00:00Z',
+  });
+}
+
 test('1. Messaging Ingestion: processes valid WhatsApp webhook and creates normalized submission', () => {
   const result = processInboundWebhook({
     channel: 'whatsapp',

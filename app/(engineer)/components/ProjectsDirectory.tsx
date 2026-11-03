@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -33,17 +33,37 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
   const isStakeholder = user.role === 'read_only_stakeholder';
   const canManage = can(user, 'projects:manage');
 
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in_review' | 'planning'>('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  useEffect(() => {
+    setProjects(initialProjects);
+  }, [initialProjects]);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Scoped strictly to assigned projects for stakeholders (Section 3.2 & 8)
   const scopedProjects = useMemo(() => {
-    if (!isStakeholder) return initialProjects;
+    if (!isStakeholder) return projects;
     if (!user.assignedProjects || user.assignedProjects.length === 0) return [];
-    if (user.assignedProjects.includes('*')) return initialProjects;
-    return initialProjects.filter((p) => user.assignedProjects?.includes(p.id));
-  }, [initialProjects, isStakeholder, user.assignedProjects]);
+    if (user.assignedProjects.includes('*')) return projects;
+    return projects.filter((p) => user.assignedProjects?.includes(p.id));
+  }, [projects, isStakeholder, user.assignedProjects]);
 
   const filteredProjects = useMemo(() => {
     return scopedProjects.filter((proj) => {

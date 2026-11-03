@@ -114,7 +114,6 @@ export function AppSidebar({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   // Real data counts for badge indicators
   const realCounts = useMemo(() => ({
@@ -127,7 +126,7 @@ export function AppSidebar({
     unverifiedSenders: DEMO_SUBMISSIONS.filter(
       (s) => s.senderVerificationStatus === 'needs_verification'
     ).length,
-    openTasks: 3,
+    openTasks: 0,
     unreadAlerts: getNotificationsForRole(user.role).filter((n) => !n.isRead).length,
   }), [user.role]);
 
@@ -144,7 +143,7 @@ export function AppSidebar({
     router.refresh();
   };
 
-  const initials = (user.name || 'Marcus Vance')
+  const initials = (user.name || 'User')
     .split(' ')
     .map((n) => n[0])
     .slice(0, 2)
@@ -434,41 +433,6 @@ export function AppSidebar({
                         <span>Engineer Settings</span>
                       </Link>
                     )}
-
-                    <button
-                      type="button"
-                      disabled={isSwitchingRole}
-                      onClick={async () => {
-                        setIsSwitchingRole(true);
-                        const targetEmail =
-                          user.role === 'read_only_stakeholder'
-                            ? 'marcus.vance@civora.internal'
-                            : 'stakeholder@civora.internal';
-                        try {
-                          const res = await fetch('/api/auth/login', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: targetEmail, password: 'Civora2026!' }),
-                          });
-                          const data = await res.json();
-                          setUserMenuOpen(false);
-                          if (data.redirectUrl) {
-                            router.push(data.redirectUrl);
-                            router.refresh();
-                          }
-                        } finally {
-                          setIsSwitchingRole(false);
-                        }
-                      }}
-                      className="w-full flex items-center gap-2 p-2 rounded-lg text-[#4FAAA7] hover:bg-[#4FAAA7]/10 transition-colors font-medium text-xs cursor-pointer"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                      <span>
-                        {user.role === 'read_only_stakeholder'
-                          ? 'Switch to Engineer View'
-                          : 'Switch to Stakeholder View'}
-                      </span>
-                    </button>
 
                     <button
                       type="button"

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_SUBMISSIONS, DEMO_REPORTS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_SUBMISSIONS, DEMO_REPORTS } from '@/lib/mock-data/fixtures';
 import { DashboardSummaryResponse } from '@/lib/api/services';
 
 export async function GET() {
@@ -9,8 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const projects = await getServerProjects();
+
   const summary: DashboardSummaryResponse = {
-    activeProjectsCount: DEMO_PROJECTS.filter((p) => p.status === 'active').length,
+    activeProjectsCount: projects.filter((p) => p.status === 'active').length,
     pendingSubmissionsCount: DEMO_SUBMISSIONS.filter(
       (s) => s.reviewStatus === 'pending_review' || s.reviewStatus === 'received'
     ).length,
@@ -21,8 +23,8 @@ export async function GET() {
     unverifiedSendersCount: DEMO_SUBMISSIONS.filter(
       (s) => s.senderVerificationStatus === 'needs_verification'
     ).length,
-    activeIntegrationsCount: 2,
-    overallComplianceAvg: 88.4,
+    activeIntegrationsCount: 0,
+    overallComplianceAvg: 0,
   };
 
   return NextResponse.json(summary);

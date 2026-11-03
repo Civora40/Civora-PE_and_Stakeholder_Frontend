@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { STAKEHOLDER_ANNOUNCEMENTS } from '@/lib/mock-data/stakeholder';
 import { StakeholderAnnouncements } from '@/app/(stakeholder)/components/StakeholderAnnouncements';
 
@@ -37,10 +37,12 @@ export default async function StakeholderAnnouncementDetailPage({
     }
   }
 
+  const projects = await getServerProjects();
+
   return (
     <StakeholderAnnouncements
       user={user}
-      projects={DEMO_PROJECTS}
+      projects={projects}
       activeAnnouncementId={announcementId}
     />
   );

@@ -83,38 +83,22 @@ export function ReportingStudioAIAnalysis({
   // Chart comments accordion
   const [isChartCommentsOpen, setIsChartCommentsOpen] = useState(false);
   const [newChartComment, setNewChartComment] = useState('');
-  const [chartComments, setChartComments] = useState([
-    {
-      id: 'c1',
-      author: 'Sarah Wyatt',
-      avatar: 'SW',
-      color: 'bg-[#0D9488]',
-      time: '12m ago',
-      text: 'Soil moisture retention readings at Chainage 14+200 corroborate the dip in natural processes during dry testing.',
-    },
-    {
-      id: 'c2',
-      author: 'Benjamin Taylor',
-      avatar: 'BT',
-      color: 'bg-[#EA580C]',
-      time: '25m ago',
-      text: 'Verified against Submittal #SUB-2024-019 lab test records. Ready for structural correlation.',
-    },
-  ]);
+  const [chartComments, setChartComments] = useState<Array<{
+    id: string;
+    author: string;
+    avatar: string;
+    color: string;
+    time: string;
+    text: string;
+  }>>([]);
 
   // Document synthesis content
-  const [docTitle, setDocTitle] = useState('Addressing Environmental Challenges');
-  const [docScopeHeading, setDocScopeHeading] = useState('The Scope of Eco-Science');
-  const [docParagraph1, setDocParagraph1] = useState(
-    'Eco-science encompasses the study of ecosystems and their intricate relationships, examining how living organisms interact with their environment. Scientists in this field study the effects of natural processes and human activities on ecosystems at various scales, from individual species to entire biospheres. One of the primary goals of eco-science is to understand how ecosystems function, how they maintain balance, and what factors disrupt their equilibrium (Jones, 2020).'
-  );
-  const [docSignificanceHeading, setDocSignificanceHeading] = useState(
-    'Significance of Key Research Areas in Eco-Science for Environmental Challenges'
-  );
-  const [docParagraph2Prefix, setDocParagraph2Prefix] = useState('The graph illustrates the ');
-  const [docParagraph2Input, setDocParagraph2Input] = useState(
-    'importance of eco-science across five key research areas: climate change research, biodiversity'
-  );
+  const [docTitle, setDocTitle] = useState('');
+  const [docScopeHeading, setDocScopeHeading] = useState('');
+  const [docParagraph1, setDocParagraph1] = useState('');
+  const [docSignificanceHeading, setDocSignificanceHeading] = useState('');
+  const [docParagraph2Prefix, setDocParagraph2Prefix] = useState('');
+  const [docParagraph2Input, setDocParagraph2Input] = useState('');
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -126,7 +110,7 @@ export function ReportingStudioAIAnalysis({
   // Dynamic Word Count
   const wordCount = useMemo(() => {
     const fullText = `${docTitle} ${docScopeHeading} ${docParagraph1} ${docSignificanceHeading} ${docParagraph2Prefix} ${docParagraph2Input}`;
-    return fullText.trim().split(/\s+/).filter(Boolean).length + 3000;
+    return fullText.trim().split(/\s+/).filter(Boolean).length;
   }, [docTitle, docScopeHeading, docParagraph1, docSignificanceHeading, docParagraph2Prefix, docParagraph2Input]);
 
   // AI Assistant Chat State
@@ -135,44 +119,7 @@ export function ReportingStudioAIAnalysis({
   const [isRetrievalExpanded, setIsRetrievalExpanded] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'm1',
-      sender: 'user',
-      text: 'what is the key research in Eco-Science for addressing Environmental challenges',
-      timestamp: '10:42 AM',
-    },
-    {
-      id: 'm2',
-      sender: 'ai',
-      text: `The key research in Eco-Science for addressing environmental challenges encompasses a variety of interdisciplinary approaches and methodologies aimed at promoting sustainability and mitigating ecological impacts. Here's a detailed breakdown of the significant areas of focus:
-
-1. Sustainable Product Development
-Research emphasizes the evolution of sustainable product development, particularly in eco-friendly innovation and market adoption. This includes the analysis of bio-composites, green IT, and corporate sustainability practices, which are crucial for reducing environmental footprints across industries(Sudirjo et al., 2024).`,
-      timestamp: '10:43 AM',
-      citations: [{ label: 'Sudirjo et al., 2024', ref: 'SUB-2024-041' }],
-      retrievalResults: [
-        {
-          title: 'Submittal #SUB-2024-041: Eco-Friendly Ground Stabilization & Bio-Composite Matrix',
-          score: 0.94,
-          excerpt:
-            'Analysis of eco-friendly bio-composites in geotechnical foundation reinforcement, highlighting sustainable materials and minimal carbon footprint.',
-        },
-        {
-          title: 'Environmental Baseline Study 2024 - Section 4.2 Eco-Hydrological Impact Assessment',
-          score: 0.91,
-          excerpt:
-            'Continuous monitoring of water tables and bio-retention swales across Chainage 12+000 to 18+500.',
-        },
-        {
-          title: 'ISO 14001 Environmental Audit & Field Verification Records',
-          score: 0.88,
-          excerpt:
-            'Audited lifecycle performance of site runoff treatments and particulate suppression procedures.',
-        },
-      ],
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     if (chatScrollRef.current) {
@@ -674,7 +621,7 @@ Incorporate the recent concrete compressive strength test metrics into Section 3
                 onClick={() => setIsChartCommentsOpen(!isChartCommentsOpen)}
                 className="text-xs font-semibold text-[#3B68DE] hover:text-[#001237] flex items-center gap-1 transition-colors"
               >
-                <span>{chartComments.length + 2} comments</span>
+                <span>{chartComments.length} comments</span>
                 {isChartCommentsOpen ? (
                   <ChevronUp className="w-3.5 h-3.5" />
                 ) : (

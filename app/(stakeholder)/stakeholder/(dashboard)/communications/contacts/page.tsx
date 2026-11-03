@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { StakeholderContactTeam } from '@/app/(stakeholder)/components/StakeholderContactTeam';
 
 export const metadata = {
@@ -20,5 +20,7 @@ export default async function StakeholderContactPage() {
     redirect('/dashboard/personnel');
   }
 
-  return <StakeholderContactTeam user={user} projects={DEMO_PROJECTS} />;
+  const projects = await getServerProjects();
+
+  return <StakeholderContactTeam user={user} projects={projects} />;
 }

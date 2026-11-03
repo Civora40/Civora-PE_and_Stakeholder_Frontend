@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Folder,
@@ -51,7 +51,7 @@ const MONITORING_FOLDERS: FolderDefinition[] = [
     sector: 'Urban Transport & Transit Corridors',
     description:
       'Mass transit heavy rail corridors, elevated precast viaducts, catenary electrification, and multi-modal terminus stations.',
-    projectIds: ['prj_metro_01'],
+    projectIds: [],
   },
   {
     id: 'fld_maritime',
@@ -60,7 +60,7 @@ const MONITORING_FOLDERS: FolderDefinition[] = [
     sector: 'Marine & Shoreline Defense',
     description:
       'Offshore breakwaters, Xbloc coastal armor revetments, deep-water quay walls, and heavy gantry crane foundations.',
-    projectIds: ['prj_civic_02', 'prj_pier_03'],
+    projectIds: [],
   },
   {
     id: 'fld_highways',
@@ -69,7 +69,7 @@ const MONITORING_FOLDERS: FolderDefinition[] = [
     sector: 'Federal Expressways & Civil Works',
     description:
       'Multi-level cloverleaf interchanges, post-tensioned flyover spans, arterial stormwater culverts, and high-speed pavement.',
-    projectIds: ['prj_datacenter_04'],
+    projectIds: [],
   },
 ];
 
@@ -84,6 +84,21 @@ export function ProjectMonitoringFolders({
   initialProjectId,
   initialFolderId,
 }: ProjectMonitoringFoldersProps) {
+  const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {
+        // Fallback to local state
+      });
+  }, []);
+
   // Folder & Project isolation states
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(() => {
     if (initialFolderId) return initialFolderId;
@@ -111,8 +126,8 @@ export function ProjectMonitoringFolders({
 
   // Currently active project object (when isolated)
   const activeProject = useMemo(
-    () => DEMO_PROJECTS.find((p) => p.id === selectedProjectId) || null,
-    [selectedProjectId]
+    () => projects.find((p) => p.id === selectedProjectId) || null,
+    [projects, selectedProjectId]
   );
 
   // Submissions strictly scoped to the active project
@@ -621,7 +636,7 @@ export function ProjectMonitoringFolders({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DEMO_PROJECTS.filter((p) => activeFolder.projectIds.includes(p.id)).map(
+              {projects.filter((p) => activeFolder.projectIds.includes(p.id)).map(
                 (project) => (
                   <div
                     key={project.id}
@@ -747,14 +762,14 @@ export function ProjectMonitoringFolders({
             <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
               <span className="text-xs text-slate-500 font-medium">Total Monitored Projects</span>
               <div className="text-2xl font-black text-slate-900 font-mono">
-                {DEMO_PROJECTS.length} Major Programs
+                {projects.length} Major Programs
               </div>
               <p className="text-[11px] text-slate-500">All registered in QA database</p>
             </div>
             <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-1">
               <span className="text-xs text-slate-500 font-medium">Total Monitored Capital</span>
-              <div className="text-2xl font-black text-slate-900 font-mono">₦226.9B</div>
-              <p className="text-[11px] text-emerald-600 font-medium">100% active FMWH / COREN oversight</p>
+              <div className="text-2xl font-black text-slate-900 font-mono">₦0</div>
+              <p className="text-[11px] text-emerald-600 font-medium">Active FMWH / COREN oversight</p>
             </div>
           </div>
 
@@ -766,13 +781,16 @@ export function ProjectMonitoringFolders({
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {MONITORING_FOLDERS.map((folder) => {
-                const containedProjects = DEMO_PROJECTS.filter((p) =>
+                const containedProjects = projects.filter((p) =>
                   folder.projectIds.includes(p.id)
                 );
-                const avgProgress = Math.round(
-                  containedProjects.reduce((acc, p) => acc + p.progressPercent, 0) /
-                    containedProjects.length
-                );
+                const avgProgress =
+                  containedProjects.length > 0
+                    ? Math.round(
+                        containedProjects.reduce((acc, p) => acc + p.progressPercent, 0) /
+                          containedProjects.length
+                      )
+                    : 0;
 
                 return (
                   <div

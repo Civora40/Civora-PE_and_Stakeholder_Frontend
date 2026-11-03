@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { StakeholderMilestones } from '@/app/(stakeholder)/components/StakeholderMilestones';
 
 export const metadata = {
@@ -20,5 +20,7 @@ export default async function StakeholderMilestonesPage() {
     redirect('/dashboard/projects/milestones');
   }
 
-  return <StakeholderMilestones user={user} projects={DEMO_PROJECTS} />;
+  const projects = await getServerProjects();
+
+  return <StakeholderMilestones user={user} projects={projects} />;
 }

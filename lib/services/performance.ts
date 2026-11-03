@@ -15,8 +15,8 @@ import {
   DEMO_SUBMISSIONS,
 } from '../mock-data/fixtures';
 
-const assessmentsStore: PerformanceAssessment[] = [...DEMO_PERFORMANCE_ASSESSMENTS];
-const exceptionsStore: PerformanceException[] = [...DEMO_PERFORMANCE_EXCEPTIONS];
+const assessmentsStore: PerformanceAssessment[] = DEMO_PERFORMANCE_ASSESSMENTS;
+const exceptionsStore: PerformanceException[] = DEMO_PERFORMANCE_EXCEPTIONS;
 let policyStore: ReportingPolicy = { ...DEMO_REPORTING_POLICY };
 
 /**

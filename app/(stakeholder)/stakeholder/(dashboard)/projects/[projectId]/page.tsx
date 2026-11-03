@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { ProjectDetailView } from '@/app/(stakeholder)/components/StakeholderProjectDetailView';
 
 interface StakeholderProjectDetailPageProps {
@@ -25,7 +25,8 @@ export default async function StakeholderProjectDetailPage({
   const { projectId } = await params;
   const { tab } = await searchParams;
 
-  const project = DEMO_PROJECTS.find((p) => p.id === projectId);
+  const projects = await getServerProjects();
+  const project = projects.find((p) => p.id === projectId);
   if (!project) {
     notFound();
   }

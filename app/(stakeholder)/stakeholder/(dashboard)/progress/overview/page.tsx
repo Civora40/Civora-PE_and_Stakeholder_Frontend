@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { StakeholderProgressOverview } from '@/app/(stakeholder)/components/StakeholderProgressOverview';
 
 export const metadata = {
@@ -20,5 +20,7 @@ export default async function StakeholderProgressOverviewPage() {
     redirect('/dashboard/performance');
   }
 
-  return <StakeholderProgressOverview user={user} projects={DEMO_PROJECTS} />;
+  const projects = await getServerProjects();
+
+  return <StakeholderProgressOverview user={user} projects={projects} />;
 }

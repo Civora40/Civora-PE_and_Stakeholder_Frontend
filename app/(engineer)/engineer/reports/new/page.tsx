@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_USERS, DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { ReportingStudioCreateReport } from '@/app/(engineer)/components/reporting/ReportingStudioCreateReport';
 
 export const metadata = {
@@ -20,6 +20,8 @@ export default async function ReportingStudioCreateReportPage() {
     redirect('/stakeholder/reports');
   }
 
+  const projects = await getServerProjects();
+
   return (
     <Suspense
       fallback={
@@ -30,7 +32,7 @@ export default async function ReportingStudioCreateReportPage() {
         </div>
       }
     >
-      <ReportingStudioCreateReport user={user} projects={DEMO_PROJECTS} />
+      <ReportingStudioCreateReport user={user} projects={projects} />
     </Suspense>
   );
 }

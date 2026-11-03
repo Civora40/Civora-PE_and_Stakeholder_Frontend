@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User,
@@ -20,7 +20,7 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react';
-import { CivoraUser } from '@/types';
+import { CivoraUser, Project } from '@/types';
 import { ROLE_LABELS } from '@/lib/permissions/rbac';
 import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
 
@@ -35,17 +35,25 @@ export function StakeholderProfile({
 }: StakeholderProfileProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'security'>(defaultTab);
+  const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Profile state (Section 11: Personal details)
-  const [fullName, setFullName] = useState(user.name || 'Elena Rostova');
-  const [organization, setOrganization] = useState(
-    user.organization || 'Aegis Capital & Infrastructure Partners'
-  );
-  const [jobTitle, setJobTitle] = useState(
-    user.title || 'Managing Partner / Project Sponsor'
-  );
-  const [phone, setPhone] = useState('+44 20 7946 0912');
-  const [timezone, setTimezone] = useState('Europe/London (GMT+0 / UTC+1)');
+  const [fullName, setFullName] = useState(user.name || '');
+  const [organization, setOrganization] = useState(user.organization || '');
+  const [jobTitle, setJobTitle] = useState(user.jobTitle || user.title || '');
+  const [phone, setPhone] = useState(user.phone || '');
+  const [timezone, setTimezone] = useState(user.timeZone || 'Africa/Lagos (WAT / UTC+1)');
 
   // Notification preferences (Section 11: Notification preferences)
   const [notifyReleasedReports, setNotifyReleasedReports] = useState(true);
@@ -70,8 +78,8 @@ export function StakeholderProfile({
   };
 
   const assignedProjectsCount = user.assignedProjects?.includes('*')
-    ? DEMO_PROJECTS.length
-    : user.assignedProjects?.length || 0;
+    ? projects.length
+    : user.assignedProjects?.length || projects.length;
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();

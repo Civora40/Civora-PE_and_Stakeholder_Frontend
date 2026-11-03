@@ -20,9 +20,9 @@ import {
 /**
  * In-memory stores for runtime demonstration and testing
  */
-const submissionsStore: Submission[] = [...DEMO_SUBMISSIONS];
-const personnelStore: Personnel[] = [...DEMO_PERSONNEL];
-const integrationEventsStore: IntegrationEvent[] = [...DEMO_INTEGRATION_EVENTS];
+const submissionsStore: Submission[] = DEMO_SUBMISSIONS;
+const personnelStore: Personnel[] = DEMO_PERSONNEL;
+const integrationEventsStore: IntegrationEvent[] = DEMO_INTEGRATION_EVENTS;
 const seenMessageIds = new Set<string>(
   DEMO_SUBMISSIONS.map((s) => s.providerMessageId).filter(Boolean) as string[]
 );

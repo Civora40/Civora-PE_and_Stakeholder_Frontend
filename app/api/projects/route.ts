@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchBackend } from '@/lib/api/backend-client';
-import { getSessionData, updateSessionUser } from '@/lib/auth/session';
+import { getSessionData, getServerProjects, updateSessionUser } from '@/lib/auth/session';
 import { DEMO_PROJECTS, DEMO_ACTIVITIES } from '@/lib/mock-data/fixtures';
 import { can } from '@/lib/permissions/rbac';
 import { Project, ActivityRecord } from '@/types';
@@ -12,21 +12,10 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (session?.accessToken) {
-    const backendRes = await fetchBackend<Project[]>('/projects/', {
-      method: 'GET',
-      accessToken: session.accessToken,
-    });
-    if (backendRes.ok && Array.isArray(backendRes.data) && backendRes.data.length > 0) {
-      return NextResponse.json({
-        projects: backendRes.data,
-        source: 'civora_backend',
-      });
-    }
-  }
-
+  const projects = await getServerProjects();
   return NextResponse.json({
-    projects: DEMO_PROJECTS,
+    projects,
+    source: session?.accessToken ? 'civora_backend' : 'session_store',
   });
 }
 
@@ -116,7 +105,7 @@ export async function POST(request: Request) {
       client: body.client.trim(),
       location: locationString,
       status: body.status === 'planning' ? 'planning' : 'active',
-      leadEngineer: body.leadEngineer || user.name || 'Marcus Vance, PE (COREN Reg.)',
+      leadEngineer: body.leadEngineer || user.name || 'Assigned Project Engineer',
       progressPercent: 0,
       submissionsCount: 0,
       pendingReviewsCount: 0,

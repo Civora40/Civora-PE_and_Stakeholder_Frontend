@@ -1,7 +1,6 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
 import { ProjectDetailView } from '@/app/(engineer)/components/ProjectDetailView';
 
 interface ProjectReportsPageProps {
@@ -17,7 +16,8 @@ export default async function ProjectReportsPage({ params }: ProjectReportsPageP
   if (!user) redirect('/login');
 
   const { projectId } = await params;
-  const project = DEMO_PROJECTS.find((p) => p.id === projectId);
+  const projects = await getServerProjects();
+  const project = projects.find((p) => p.id === projectId);
   if (!project) notFound();
 
   if (user.role === 'read_only_stakeholder') {

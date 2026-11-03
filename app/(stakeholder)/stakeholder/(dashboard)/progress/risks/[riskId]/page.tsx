@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { STAKEHOLDER_RISKS } from '@/lib/mock-data/stakeholder';
 import { StakeholderRisksIssues } from '@/app/(stakeholder)/components/StakeholderRisksIssues';
 
@@ -37,10 +37,12 @@ export default async function StakeholderRiskDetailPage({
     }
   }
 
+  const projects = await getServerProjects();
+
   return (
     <StakeholderRisksIssues
       user={user}
-      projects={DEMO_PROJECTS}
+      projects={projects}
       activeRiskId={riskId}
     />
   );

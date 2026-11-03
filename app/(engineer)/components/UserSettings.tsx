@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Shield,
@@ -32,7 +32,7 @@ import {
   Sparkles,
   Radio,
 } from 'lucide-react';
-import { CivoraUser } from '@/types';
+import { CivoraUser, Project } from '@/types';
 import { ROLE_LABELS } from '@/lib/permissions/rbac';
 import { DEMO_PROJECTS, DEMO_INTEGRATION_CONFIG } from '@/lib/mock-data/fixtures';
 import { Badge } from '@/components/ui/Badge';
@@ -46,15 +46,27 @@ export function UserSettings({ user }: UserSettingsProps) {
   const [activeTab, setActiveTab] = useState<
     'profile' | 'projects' | 'integrations' | 'notifications' | 'security'
   >('profile');
+  const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Profile Form State
-  const [fullName, setFullName] = useState(user.name || 'Marcus Vance, PE');
-  const [jobTitle, setJobTitle] = useState(user.title || 'Senior Structural Project Engineer');
-  const [department, setDepartment] = useState(user.department || 'Structural Engineering');
-  const [organization, setOrganization] = useState(user.organization || 'Civora Infrastructure Ltd');
-  const [corenNumber, setCorenNumber] = useState('COREN/R.52941');
-  const [nseNumber, setNseNumber] = useState('NSE/M.18492');
-  const [phoneContact, setPhoneContact] = useState('+234 803 555 0192');
+  const [fullName, setFullName] = useState(user.name || '');
+  const [jobTitle, setJobTitle] = useState(user.jobTitle || user.title || '');
+  const [department, setDepartment] = useState(user.department || '');
+  const [organization, setOrganization] = useState(user.organization || '');
+  const [corenNumber, setCorenNumber] = useState(user.corenNumber || '');
+  const [nseNumber, setNseNumber] = useState('');
+  const [phoneContact, setPhoneContact] = useState(user.phone || '');
 
   // Review Scope & SLA Settings
   const [reviewSla, setReviewSla] = useState<'24h' | '48h' | '72h'>('24h');
@@ -122,8 +134,10 @@ export function UserSettings({ user }: UserSettingsProps) {
     description: 'Technical reviews, submittal inspection, and discrepancy verification in assigned projects.',
   };
 
-  const assignedProjects = DEMO_PROJECTS.filter((p) =>
-    user.assignedProjects?.includes('*') ? true : user.assignedProjects?.includes(p.id)
+  const assignedProjects = projects.filter((p) =>
+    !user.assignedProjects || user.assignedProjects.length === 0 || user.assignedProjects.includes('*')
+      ? true
+      : user.assignedProjects.includes(p.id) || user.assignedProjects.includes(p.code)
   );
 
   const handleSave = (e: React.FormEvent) => {

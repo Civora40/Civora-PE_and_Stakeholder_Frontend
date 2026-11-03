@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Briefcase,
@@ -42,16 +42,34 @@ interface StakeholderOversightProps {
 }
 
 export function StakeholderOversight({ user, initialTab }: StakeholderOversightProps) {
+  const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {
+        // Fallback to local state
+      });
+  }, []);
+
   // 1. Resolve authorized assigned projects (Section 3.2: Project-level membership)
   const assignedProjects = useMemo(() => {
     if (!user.assignedProjects || user.assignedProjects.length === 0) {
-      return [];
+      return projects;
     }
     if (user.assignedProjects.includes('*')) {
-      return DEMO_PROJECTS;
+      return projects;
     }
-    return DEMO_PROJECTS.filter((p) => user.assignedProjects.includes(p.id));
-  }, [user.assignedProjects]);
+    const filtered = projects.filter(
+      (p) => user.assignedProjects.includes(p.id) || user.assignedProjects.includes(p.code)
+    );
+    return filtered.length > 0 ? filtered : projects;
+  }, [projects, user.assignedProjects]);
 
   const assignedProjectIds = useMemo(
     () => new Set(assignedProjects.map((p) => p.id)),

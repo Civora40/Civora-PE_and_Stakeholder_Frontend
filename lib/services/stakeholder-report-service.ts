@@ -53,130 +53,12 @@ export interface StakeholderShareLink {
   accessCount: number;
 }
 
-// Initial mock comments for realistic testing
-const INITIAL_STAKEHOLDER_FEEDBACKS: StakeholderFeedbackComment[] = [
-  {
-    id: 'stk_comm_01',
-    reportId: 'rep_02',
-    sectionId: 'sec_bathymetric',
-    sectionTitle: '2. Bathymetric Hydrographic Survey & 16.5m Draft Clearance',
-    authorName: 'Adeola Adeleke',
-    authorRole: 'Technical Director (Port Authority Representative)',
-    authorAvatar: 'AA',
-    content: 'Confirming if the multi-beam bathymetry scan accounts for spring tide silt accumulation along Berth 1 apron.',
-    feedbackType: 'clarification',
-    createdAt: '11 Oct 2026, 14:22',
-    status: 'resolved',
-    selectedTextSnippet: 'hydrographic survey verified 16.5m draft clearance for primary container berth',
-    replies: [
-      {
-        id: 'rep_comm_01_1',
-        authorName: 'Marcus Vance, PE',
-        authorRole: 'Lead Supervising Engineer',
-        content: 'Verified. Dual acoustic calibration was conducted at low water slack with certified NPA hydrographic surveyor on board.',
-        createdAt: '11 Oct 2026, 16:05',
-      },
-    ],
-  },
-  {
-    id: 'stk_comm_02',
-    reportId: 'rep_02',
-    sectionId: 'sec_breakwater_armor',
-    sectionTitle: '4. Secondary Breakwater X-bloc Armor Dissipation Telemetry',
-    authorName: 'Dr. K. Bello',
-    authorRole: 'Infrastructure Investor Representative',
-    authorAvatar: 'KB',
-    content: 'Wave energy dissipation telemetry of 94.2% matches the third-party numerical wave tank model. Fully endorse milestone completion.',
-    feedbackType: 'endorsement',
-    createdAt: '12 Oct 2026, 09:40',
-    status: 'open',
-    selectedTextSnippet: 'X-bloc positioning acoustic sonar verified along primary breakwater',
-  },
-  {
-    id: 'stk_comm_03',
-    reportId: 'rep_04',
-    sectionId: 'sec_structural_deck',
-    sectionTitle: '1. Marina Elevated Concourse Structural Deck Slab Sign-off',
-    authorName: 'Engr. T. Salami',
-    authorRole: 'Statutory Board Technical Assessor',
-    authorAvatar: 'TS',
-    content: 'LASBCA Stage 2 endorsement reference #2026-LB-948 confirmed. Deck propping removal may commence in accordance with section 4.2 protocol.',
-    feedbackType: 'endorsement',
-    createdAt: '16 Oct 2026, 11:15',
-    status: 'open',
-  },
-  {
-    id: 'stk_comm_04',
-    reportId: 'rep_04',
-    sectionId: 'sec_cube_break_logs',
-    sectionTitle: '2. Concrete Compressive Strength Cube Crush Logs',
-    authorName: 'Folake Davies',
-    authorRole: 'Financial & Compliance Auditor',
-    authorAvatar: 'FD',
-    content: 'Please ensure lab calibration certificates for the Denison compression machine are cross-indexed in appendix B.',
-    feedbackType: 'revision_request',
-    createdAt: '17 Oct 2026, 15:30',
-    status: 'open',
-    suggestedRevision: 'Cross-reference accredited Denison test press calibration certificate #CAL-2026-088 in Annexure B.',
-  },
-  {
-    id: 'stk_comm_05',
-    reportId: 'rep_05',
-    sectionId: 'sec_armor_density',
-    sectionTitle: '3. X-bloc Concrete Armor Interlocking Density & Stability',
-    authorName: 'Adeola Adeleke',
-    authorRole: 'Client Representative',
-    authorAvatar: 'AA',
-    content: 'The 3.2km defense perimeter telemetry looks solid. Great Wall revetment armor placement is progressing within schedule tolerances.',
-    feedbackType: 'comment',
-    createdAt: '23 Oct 2026, 10:10',
-    status: 'open',
-  },
-];
+// Production clean state (zero seed comments, approvals, or share links)
+const INITIAL_STAKEHOLDER_FEEDBACKS: StakeholderFeedbackComment[] = [];
 
-// Initial mock approvals
-const INITIAL_STAKEHOLDER_APPROVALS: StakeholderApprovalRecord[] = [
-  {
-    id: 'appr_rep_02',
-    reportId: 'rep_02',
-    approverName: 'Adeola Adeleke',
-    approverRole: 'Executive Director, Marine & Port Infrastructure',
-    organization: 'Nigerian Ports Authority / Investor Board',
-    status: 'approved',
-    signOffDate: '10 Oct 2026, 17:45',
-    digitalSignatureHash: 'SHA256:8f92b4c102a71d88924f70e932b1308a04df9876a',
-    declarationAgreed: true,
-    notes: 'Approved following verification of bathymetric sonar scans and NPA draft certification.',
-  },
-];
+const INITIAL_STAKEHOLDER_APPROVALS: StakeholderApprovalRecord[] = [];
 
-// Initial mock share links
-const INITIAL_STAKEHOLDER_SHARE_LINKS: StakeholderShareLink[] = [
-  {
-    id: 'sh_link_01',
-    reportId: 'rep_02',
-    token: 'stk_share_lekki_9021',
-    shareUrl: 'https://civora.app/stakeholder/reports/rep_02?shareToken=stk_share_lekki_9021',
-    permission: 'comment',
-    expiresAt: '09 Nov 2026 (14 days left)',
-    sharedWithEmails: ['commissioner.transport@lagosstate.gov.ng', 'investor.rep@africainfra.com'],
-    createdAt: '10 Oct 2026, 16:30',
-    createdByName: 'Marcus Vance, PE',
-    accessCount: 14,
-  },
-  {
-    id: 'sh_link_02',
-    reportId: 'rep_04',
-    token: 'stk_share_rail_4412',
-    shareUrl: 'https://civora.app/stakeholder/reports/rep_04?shareToken=stk_share_rail_4412',
-    permission: 'approve',
-    expiresAt: '15 Nov 2026 (20 days left)',
-    sharedWithEmails: ['auditor.general@lagosstate.gov.ng'],
-    createdAt: '16 Oct 2026, 10:00',
-    createdByName: 'Marcus Vance, PE',
-    accessCount: 8,
-  },
-];
+const INITIAL_STAKEHOLDER_SHARE_LINKS: StakeholderShareLink[] = [];
 
 // In-memory state
 let stakeholderFeedbacksStore: StakeholderFeedbackComment[] = [...INITIAL_STAKEHOLDER_FEEDBACKS];
@@ -390,10 +272,13 @@ export function getStakeholderReport(reportId: string): StudioReport {
     released?.executiveSummary ||
     'Official compliance dossier released for stakeholder oversight and verification.';
 
-  // If studioReport has multiple sections, use them; otherwise populate detailed sections
-  let sections: ReportSection[] = studioReport?.sections && studioReport.sections.length >= 3
-    ? studioReport.sections
-    : getDefaultSectionsForReport(baseReportId, projectName);
+  // If studioReport is a released studio report with multiple sections, use them; otherwise populate detailed sections
+  const sections: ReportSection[] =
+    studioReport?.workflowStatus === 'released' &&
+    studioReport?.sections &&
+    studioReport.sections.length >= 3
+      ? studioReport.sections
+      : getDefaultSectionsForReport(baseReportId, projectName);
 
   // Check layout settings or provide rich default layout
   const layout = studioReport?.layoutSettings || {

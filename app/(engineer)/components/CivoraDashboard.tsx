@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Calendar,
@@ -12,19 +12,13 @@ import {
   Search,
   Filter,
   ArrowUpRight,
-  ArrowDownRight,
   CheckCircle2,
   Clock,
   FileText,
-  AlertTriangle,
-  UserPlus,
-  Users,
-  BookOpen,
   ChevronDown,
   ChevronRight,
   Layout,
   Check,
-  Award,
   Phone,
   Send,
   UserCheck,
@@ -51,95 +45,16 @@ interface SubmittalItem {
   slaDue: string;
 }
 
-const INITIAL_SUBMITTALS: SubmittalItem[] = [
-  {
-    id: 's-1',
-    submittalId: '#SUB-2319',
-    title: 'Foundation pour card C30/37 deck sign-off',
-    packageGroup: 'Structural Concrete',
-    priority: 'High',
-    assignedTo: {
-      name: 'Engr. Marcus Vance, PE',
-    },
-    status: 'In Review',
-    receivedDate: '2026-10-18',
-    slaDue: '2h left',
-  },
-  {
-    id: 's-2',
-    submittalId: '#SUB-2320',
-    title: 'Rebar tensile strength test cert (Kamsteel 460)',
-    packageGroup: 'Reinforcing Steel',
-    priority: 'Medium',
-    assignedTo: {
-      name: 'Engr. Sarah Lee',
-    },
-    status: 'Approved',
-    receivedDate: '2026-10-19',
-    slaDue: '1h left',
-  },
-  {
-    id: 's-3',
-    submittalId: '#SUB-2321',
-    title: 'EIA drainage outfall compliance verification',
-    packageGroup: 'Environmental Works',
-    priority: 'Low',
-    assignedTo: {
-      name: 'Engr. John Doe',
-    },
-    status: 'In Progress',
-    receivedDate: '2026-10-19',
-    slaDue: '1d left',
-  },
-  {
-    id: 's-4',
-    submittalId: '#SUB-2322',
-    title: 'Dangote 42.5R batch cube crushing log (7-Day)',
-    packageGroup: 'Structural Concrete',
-    priority: 'Medium',
-    assignedTo: {
-      name: 'Engr. Michael Wong',
-    },
-    status: 'In Progress',
-    receivedDate: '2026-10-20',
-    slaDue: '9h left',
-  },
-  {
-    id: 's-5',
-    submittalId: '#SUB-2323',
-    title: 'LASBCA Stage 2 structural notice acknowledgment',
-    packageGroup: 'Statutory Permits',
-    priority: 'High',
-    assignedTo: {
-      name: 'Engr. Marcus Vance, PE',
-    },
-    status: 'In Review',
-    receivedDate: '2026-10-20',
-    slaDue: '4h left',
-  },
-  {
-    id: 's-6',
-    submittalId: '#SUB-2324',
-    title: 'Soil compaction plate load test (Lekki Coastal Silt)',
-    packageGroup: 'Geotechnical / Piling',
-    priority: 'Low',
-    assignedTo: {
-      name: 'Engr. Sarah Lee',
-    },
-    status: 'Approved',
-    receivedDate: '2026-10-21',
-    slaDue: '8h left',
-  },
-];
+const INITIAL_SUBMITTALS: SubmittalItem[] = [];
 
 const WEEK_BARS = [
-  { day: 'Sun', value: 420, height: 52 },
-  { day: 'Mon', value: 530, height: 66 },
-  { day: 'Tue', value: 584, height: 73, highlighted: true },
-  { day: 'Wed', value: 510, height: 64 },
-  { day: 'Thu', value: 620, height: 78 },
-  { day: 'Fri', value: 540, height: 68 },
-  { day: 'Sat', value: 460, height: 58 },
+  { day: 'Sun', value: 0, height: 0 },
+  { day: 'Mon', value: 0, height: 0 },
+  { day: 'Tue', value: 0, height: 0, highlighted: true },
+  { day: 'Wed', value: 0, height: 0 },
+  { day: 'Thu', value: 0, height: 0 },
+  { day: 'Fri', value: 0, height: 0 },
+  { day: 'Sat', value: 0, height: 0 },
 ];
 
 export function CivoraDashboard({ user }: CivoraDashboardProps) {
@@ -156,8 +71,20 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
 
   // Table state
   const [tableSearch, setTableSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<string[]>(['s-1']);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortField, setSortField] = useState<keyof SubmittalItem>('receivedDate');
+  const [projectsCount, setProjectsCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjectsCount(data.projects.length);
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const roleInfo = ROLE_LABELS[user.role] || {
@@ -242,7 +169,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-black text-[#001237] tracking-tight font-['Encode_Sans_Condensed',sans-serif] uppercase">
-              {roleHeading} &bull; Welcome, {user.name || 'Engr. Marcus Vance'}
+              {roleHeading} &bull; Welcome, {user.name || 'Engineer'}
             </h1>
             <span className="text-xl">👋</span>
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-[#001237] border border-slate-200">
@@ -322,15 +249,14 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
           </div>
           <div className="mt-3">
             <div className="text-3xl font-extrabold text-[#001237] tracking-tight">
-              {user.role === 'project_engineer' ? '3,484' : '4'}
+              {user.role === 'project_engineer' ? '0' : String(projectsCount)}
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>+7.1% vs last week</span>
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+              <span>0% vs last week</span>
             </div>
-            {renderSparkline('#4FAAA7', 'M2,28 Q18,34 32,20 T62,24 T98,12')}
+            {renderSparkline('#4FAAA7', 'M2,28 L98,28')}
           </div>
         </div>
 
@@ -348,15 +274,14 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
           </div>
           <div className="mt-3">
             <div className="text-3xl font-extrabold text-[#001237] tracking-tight">
-              {user.role === 'project_engineer' ? '486' : '8'}
+              0
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>+2% vs last week</span>
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+              <span>0% vs last week</span>
             </div>
-            {renderSparkline('#3B68DE', 'M2,25 Q16,18 30,30 T60,16 T98,22')}
+            {renderSparkline('#3B68DE', 'M2,28 L98,28')}
           </div>
         </div>
 
@@ -374,15 +299,14 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
           </div>
           <div className="mt-3">
             <div className="text-3xl font-extrabold text-[#001237] tracking-tight">
-              {user.role === 'project_engineer' ? '92%' : '78%'}
+              0%
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1 text-xs font-semibold text-rose-500">
-              <ArrowDownRight className="w-3.5 h-3.5" />
-              <span>-1.3% vs last week</span>
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+              <span>0% vs last week</span>
             </div>
-            {renderSparkline('#001237', 'M2,22 Q20,26 35,16 T65,30 T98,18')}
+            {renderSparkline('#001237', 'M2,28 L98,28')}
           </div>
         </div>
       </div>
@@ -402,7 +326,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                 WhatsApp Business Gateway
               </div>
               <div className="text-[11px] text-slate-500 font-mono">
-                489 Ingested &bull; Active
+                0 Ingested &bull; Active
               </div>
             </div>
           </div>
@@ -424,7 +348,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                 Telegram Bot API Gateway
               </div>
               <div className="text-[11px] text-slate-500 font-mono">
-                215 Ingested &bull; Active
+                0 Ingested &bull; Active
               </div>
             </div>
           </div>
@@ -446,7 +370,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
                 Identity Resolution Queue
               </div>
               <div className="text-[11px] text-slate-600">
-                1 Unmapped Mobile Submitter
+                0 Unmapped Mobile Submitters
               </div>
             </div>
           </div>
@@ -478,10 +402,10 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
 
             {/* Big Stat & Trend */}
             <div className="mt-3 flex items-baseline gap-2.5">
-              <span className="text-3xl font-extrabold text-[#001237] tracking-tight">4,790</span>
-              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold">
+              <span className="text-3xl font-extrabold text-[#001237] tracking-tight">0</span>
+              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-xs font-semibold">
                 <ArrowUpRight className="w-3 h-3" />
-                <span>+8% vs last week</span>
+                <span>0% vs last week</span>
               </span>
             </div>
           </div>
@@ -605,117 +529,11 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
             </div>
 
             {/* Count Indicator */}
-            <div className="text-xs font-semibold text-slate-600">8 new updates today</div>
+            <div className="text-xs font-semibold text-slate-600">0 new updates today</div>
 
-            {/* Activity Stream Items matching reference layout with Civora construction events */}
-            <div className="space-y-3.5 pt-1 overflow-y-auto max-h-[290px] pr-1">
-              {/* Item 1: Pour Card Approved */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#3B68DE] shrink-0 mt-0.5">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      Pour Card Approved
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      Submittal <strong className="font-semibold text-slate-700">#SUB-2319</strong> C30/37 Deck Pour signed off
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">11:20 AM</span>
-              </div>
-
-              {/* Item 2: Contractor Accredited */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[#4FAAA7] shrink-0 mt-0.5">
-                    <UserPlus className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      Contractor Accredited
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      Julius Berger EPC registered under Lagos Office
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">11:15 AM</span>
-              </div>
-
-              {/* Item 3: Lab Review Assigned */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 mt-0.5">
-                    <Users className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      Lab Review Assigned
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      Dangote 42.5R Batch <strong className="font-semibold text-slate-700">#SUB-2322</strong> to QA/QC Engr. Okon
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">11:00 AM</span>
-              </div>
-
-              {/* Item 4: AI Advisory Discrepancy */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shrink-0 mt-0.5">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      AI Advisory Flag
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      Submittal <strong className="font-semibold text-slate-700">#SUB-2320</strong> Kamsteel Yield 410 vs 460 N/mm²
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">10:45 AM</span>
-              </div>
-
-              {/* Item 5: Technical Standards */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-[#4FAAA7] shrink-0 mt-0.5">
-                    <BookOpen className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      Technical Code Updated
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      Published NIS 156:2013 / BS 8110 Spec Sheet
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">10:30 AM</span>
-              </div>
-
-              {/* Item 6: Statutory Clearance */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#008751] shrink-0 mt-0.5">
-                    <Award className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-[#001237] leading-tight">
-                      Statutory Clearance
-                    </div>
-                    <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                      LASBCA Stage 2 Foundation Notice acknowledged
-                    </div>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-400 shrink-0 font-medium">10:15 AM</span>
-              </div>
+            {/* Activity Stream Items */}
+            <div className="py-12 text-center text-xs text-slate-400">
+              No site updates recorded yet.
             </div>
 
             {/* Link to Full Notifications Center */}
@@ -858,90 +676,98 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredSubmittals.map((row) => {
-                const isChecked = selectedIds.includes(row.id);
+              {filteredSubmittals.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-10 text-center text-xs text-slate-400">
+                    No submittals recorded yet.
+                  </td>
+                </tr>
+              ) : (
+                filteredSubmittals.map((row) => {
+                  const isChecked = selectedIds.includes(row.id);
 
-                return (
-                  <tr
-                    key={row.id}
-                    className={`transition-colors hover:bg-slate-50/80 ${isChecked ? 'bg-slate-50/60' : ''
-                      }`}
-                  >
-                    <td className="py-3 px-3">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleSelectRow(row.id)}
-                        className="rounded border-slate-300 text-[#001237] focus:ring-[#4FAAA7] cursor-pointer"
-                      />
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-[#001237]">
-                      <Link
-                        href={`/dashboard/submissions?id=${row.id}`}
-                        className="hover:underline hover:text-[#4FAAA7] font-mono text-[11px]"
-                      >
-                        {row.submittalId}
-                      </Link>
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="font-semibold text-slate-900 line-clamp-1">{row.title}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">{row.packageGroup}</div>
-                    </td>
-                    <td className="py-3 px-3">
-                      {row.priority === 'High' ? (
-                        <div className="inline-flex items-center gap-1.5 text-rose-500 font-bold">
-                          <span className="text-[11px]">ıll</span>
-                          <span>High</span>
-                        </div>
-                      ) : row.priority === 'Medium' ? (
-                        <div className="inline-flex items-center gap-1.5 text-[#3B68DE] font-bold">
-                          <span className="text-[11px]">ıll</span>
-                          <span>Medium</span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
-                          <span className="text-[11px]">ıll</span>
-                          <span>Low</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className="text-slate-800 font-medium">{row.assignedTo.name}</span>
-                    </td>
-                    <td className="py-3 px-3">
-                      {row.status === 'In Review' ? (
-                        <div className="inline-flex items-center gap-1.5 text-[#3B68DE] font-semibold">
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>In Review</span>
-                        </div>
-                      ) : row.status === 'Approved' ? (
-                        <div className="inline-flex items-center gap-1.5 text-[#008751] font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Approved</span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 text-[#4FAAA7] font-semibold">
-                          <div className="w-3.5 h-3.5 rounded-full border-2 border-[#4FAAA7]/40 border-t-[#4FAAA7] animate-spin" />
-                          <span>In Progress</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
-                      {row.receivedDate}
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-slate-700">{row.slaDue}</td>
-                    <td className="py-3 px-3 text-right">
-                      <Link
-                        href={`/dashboard/submissions?id=${row.id}`}
-                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-[#001237] inline-block"
-                        title="Inspect submittal package"
-                      >
-                        <MoreVertical className="w-3.5 h-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <tr
+                      key={row.id}
+                      className={`transition-colors hover:bg-slate-50/80 ${isChecked ? 'bg-slate-50/60' : ''
+                        }`}
+                    >
+                      <td className="py-3 px-3">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleSelectRow(row.id)}
+                          className="rounded border-slate-300 text-[#001237] focus:ring-[#4FAAA7] cursor-pointer"
+                        />
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-[#001237]">
+                        <Link
+                          href={`/dashboard/submissions?id=${row.id}`}
+                          className="hover:underline hover:text-[#4FAAA7] font-mono text-[11px]"
+                        >
+                          {row.submittalId}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="font-semibold text-slate-900 line-clamp-1">{row.title}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">{row.packageGroup}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        {row.priority === 'High' ? (
+                          <div className="inline-flex items-center gap-1.5 text-rose-500 font-bold">
+                            <span className="text-[11px]">ıll</span>
+                            <span>High</span>
+                          </div>
+                        ) : row.priority === 'Medium' ? (
+                          <div className="inline-flex items-center gap-1.5 text-[#3B68DE] font-bold">
+                            <span className="text-[11px]">ıll</span>
+                            <span>Medium</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
+                            <span className="text-[11px]">ıll</span>
+                            <span>Low</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="text-slate-800 font-medium">{row.assignedTo.name}</span>
+                      </td>
+                      <td className="py-3 px-3">
+                        {row.status === 'In Review' ? (
+                          <div className="inline-flex items-center gap-1.5 text-[#3B68DE] font-semibold">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>In Review</span>
+                          </div>
+                        ) : row.status === 'Approved' ? (
+                          <div className="inline-flex items-center gap-1.5 text-[#008751] font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approved</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 text-[#4FAAA7] font-semibold">
+                            <div className="w-3.5 h-3.5 rounded-full border-2 border-[#4FAAA7]/40 border-t-[#4FAAA7] animate-spin" />
+                            <span>In Progress</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
+                        {row.receivedDate}
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-slate-700">{row.slaDue}</td>
+                      <td className="py-3 px-3 text-right">
+                        <Link
+                          href={`/dashboard/submissions?id=${row.id}`}
+                          className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-[#001237] inline-block"
+                          title="Inspect submittal package"
+                        >
+                          <MoreVertical className="w-3.5 h-3.5" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_USERS, DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { ReportingStudioReviewSubmissions } from '@/app/(engineer)/components/reporting/ReportingStudioReviewSubmissions';
 
 export const metadata = {
@@ -20,5 +20,7 @@ export default async function ReportingStudioReviewSubmissionsPage() {
     redirect('/stakeholder/reports');
   }
 
-  return <ReportingStudioReviewSubmissions user={user} projects={DEMO_PROJECTS} />;
+  const projects = await getServerProjects();
+
+  return <ReportingStudioReviewSubmissions user={user} projects={projects} />;
 }

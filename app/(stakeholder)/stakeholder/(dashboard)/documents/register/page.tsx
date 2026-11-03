@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { StakeholderDocumentRegister } from '@/app/(stakeholder)/components/StakeholderDocumentRegister';
 
 export const metadata = {
@@ -20,5 +20,7 @@ export default async function StakeholderDocumentRegisterPage() {
     redirect('/dashboard/submissions/attachments');
   }
 
-  return <StakeholderDocumentRegister user={user} projects={DEMO_PROJECTS} />;
+  const projects = await getServerProjects();
+
+  return <StakeholderDocumentRegister user={user} projects={projects} />;
 }

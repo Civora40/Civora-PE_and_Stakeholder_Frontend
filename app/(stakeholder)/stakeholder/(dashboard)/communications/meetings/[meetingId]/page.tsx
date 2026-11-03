@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_PROJECTS, DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { STAKEHOLDER_MEETINGS } from '@/lib/mock-data/stakeholder';
 import { StakeholderMeetingSchedule } from '@/app/(stakeholder)/components/StakeholderMeetingSchedule';
 
@@ -37,10 +37,12 @@ export default async function StakeholderMeetingDetailPage({
     }
   }
 
+  const projects = await getServerProjects();
+
   return (
     <StakeholderMeetingSchedule
       user={user}
-      projects={DEMO_PROJECTS}
+      projects={projects}
       activeMeetingId={meetingId}
     />
   );
