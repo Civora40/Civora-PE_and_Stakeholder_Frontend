@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RegisterForm } from '@/app/(auth)/components/RegisterForm';
+import { CivoraLogo } from '@/components/brand/CivoraLogo';
 
 export const metadata: Metadata = {
   title: 'Create Account | Civora Construction Control Plane',
@@ -28,14 +29,9 @@ export default function RegisterPage() {
 
           {/* Top-Left Brand Mark & Name */}
           <div className="relative z-10">
-            <Link href="/" className="inline-flex items-center gap-3.5 group">
-              <div className="w-11 h-11 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <Image src="/images/browser_icon.png" width={24} height={24} alt="Civora" />
-              </div>
-              <span className="text-white font-black text-2xl font-['Encode_Sans_Condensed',sans-serif] tracking-wider drop-shadow-md uppercase">
-                Civora
-              </span>
-            </Link>
+            <div className="inline-flex items-center px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg">
+              <CivoraLogo size="md" theme="light" href="/" priority />
+            </div>
           </div>
 
           {/* Bottom Headline, Subtext, & Indicator Dots */}

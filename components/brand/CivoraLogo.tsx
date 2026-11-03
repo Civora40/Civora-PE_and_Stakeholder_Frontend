@@ -25,12 +25,12 @@ export function CivoraLogo({
   className = '',
   priority = false,
 }: CivoraLogoProps) {
-  // Sizing definitions preserving the 1449:384 (3.77:1) aspect ratio for full logo, and 350:384 (0.91:1) for mark
+  // Sizing definitions preserving the 1038:424 (2.45:1) aspect ratio for full logo, and 350:384 (0.91:1) for mark
   const fullDimensions = {
-    sm: { w: 106, h: 28, tag: 'text-[9px]' },
-    md: { w: 136, h: 36, tag: 'text-[10px]' },
-    lg: { w: 166, h: 44, tag: 'text-[11px]' },
-    xl: { w: 204, h: 54, tag: 'text-xs' },
+    sm: { w: 98, h: 40, tag: 'text-[9px]' },
+    md: { w: 118, h: 48, tag: 'text-[10px]' },
+    lg: { w: 142, h: 58, tag: 'text-[11px]' },
+    xl: { w: 176, h: 72, tag: 'text-xs' },
   }[size];
 
   const markDimensions = {
@@ -44,7 +44,7 @@ export function CivoraLogo({
   const logoSrc = isFull
     ? theme === 'dark'
       ? '/images/brand_logo_white.png'
-      : '/images/brand_logo.png'
+      : 'https://res.cloudinary.com/depeqzb6z/image/upload/v1793724813/Logo_Variation_Updated_n09pgy.png'
     : theme === 'dark'
       ? '/images/brand_mark_white.png'
       : '/images/brand_mark.png';
@@ -57,10 +57,11 @@ export function CivoraLogo({
       <div className="relative flex items-center transition-transform duration-300 group-hover:scale-[1.02]">
         <Image
           src={logoSrc}
-          alt="Civora"
+          alt="Amijad Civora"
           width={w}
           height={h}
           priority={priority}
+          unoptimized
           className="object-contain h-auto"
           style={{ width: `${w}px`, height: 'auto' }}
         />

@@ -512,11 +512,11 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md flex items-center justify-center shadow-inner">
-                  <Image src="/images/browser_icon.png" width={22} height={22} alt="Civora Nigeria" />
+                  <Image src="/images/browser_icon.png" width={22} height={22} alt="Amijad Civora Nigeria" />
                 </div>
                 <div>
                   <span className="font-['Encode_Sans_Condensed',sans-serif] font-black text-xl tracking-wider uppercase block leading-none">
-                    CIVORA
+                    AMIJAD CIVORA
                   </span>
                   <span className="text-[10px] text-[#4FAAA7] font-semibold tracking-widest uppercase block mt-1">
                     NIGERIA CONTROL PLANE

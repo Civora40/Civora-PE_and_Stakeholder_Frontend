@@ -8,7 +8,9 @@
 export const CIVORA_BACKEND_URL =
   process.env.CIVORA_BACKEND_URL ||
   process.env.NEXT_PUBLIC_BACKEND_API_URL ||
-  'https://civora-backend-api.onrender.com/api/v1';
+  'https://api.amijad-civora.com/api/v1';
+
+const FALLBACK_BACKEND_URL = 'https://civora-backend-api.onrender.com/api/v1';
 
 export interface BackendResponse<T = unknown> {
   ok: boolean;
@@ -35,7 +37,12 @@ export async function fetchBackend<T = unknown>(
   } = {}
 ): Promise<BackendResponse<T>> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${CIVORA_BACKEND_URL.replace(/\/$/, '')}${cleanEndpoint}`;
+  const primaryBase = CIVORA_BACKEND_URL.replace(/\/$/, '');
+  const fallbackBase = FALLBACK_BACKEND_URL.replace(/\/$/, '');
+  const candidateUrls =
+    primaryBase === fallbackBase
+      ? [`${primaryBase}${cleanEndpoint}`]
+      : [`${primaryBase}${cleanEndpoint}`, `${fallbackBase}${cleanEndpoint}`];
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -49,37 +56,40 @@ export async function fetchBackend<T = unknown>(
     headers['X-Organization-ID'] = options.organizationId;
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 15000);
+  for (const url of candidateUrls) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 15000);
 
-  try {
-    const response = await fetch(url, {
-      method: options.method || 'GET',
-      headers,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-      signal: controller.signal,
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(url, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+        signal: controller.signal,
+        cache: 'no-store',
+      });
 
-    clearTimeout(timer);
-    const json = await response.json().catch(() => ({}));
+      clearTimeout(timer);
+      const json = await response.json().catch(() => ({}));
 
-    return {
-      ok: response.ok && Boolean(json.success ?? response.ok),
-      status: response.status,
-      success: Boolean(json.success ?? response.ok),
-      data: json.data as T,
-      message: json.message,
-      error: json.error,
-    };
-  } catch {
-    clearTimeout(timer);
-    return {
-      ok: false,
-      status: 503,
-      success: false,
-      unreachable: true,
-    };
+      return {
+        ok: response.ok && Boolean(json.success ?? response.ok),
+        status: response.status,
+        success: Boolean(json.success ?? response.ok),
+        data: json.data as T,
+        message: json.message,
+        error: json.error,
+      };
+    } catch {
+      clearTimeout(timer);
+    }
   }
+
+  return {
+    ok: false,
+    status: 503,
+    success: false,
+    unreachable: true,
+  };
 }
 
