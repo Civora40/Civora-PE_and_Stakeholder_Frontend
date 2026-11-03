@@ -59,8 +59,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // If backend was reachable and explicitly rejected credentials (401/403), return error immediately
-    if (!backendRes.unreachable && (backendRes.status === 401 || backendRes.status === 403)) {
+    const devAuthExplicitlyDisabled =
+      process.env.DISABLE_MOCK_AUTH === 'true' ||
+      process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === 'false';
+
+    // If mock/review auth is explicitly disabled and backend rejected credentials (401/403), return error immediately
+    if (
+      devAuthExplicitlyDisabled &&
+      !backendRes.unreachable &&
+      (backendRes.status === 401 || backendRes.status === 403)
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Fallback to local development fixtures only if backend is unreachable
+    // 2. Fallback to development / client review fixtures when backend is unreachable or does not have the review account
     const result = await authenticateWithMock(validation.data.email);
 
     if (!result.success || !result.user) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchBackend } from '@/lib/api/backend-client';
+import { registerMockUser } from '@/lib/auth/mock-adapter';
 import { createSession } from '@/lib/auth/session';
 import { registerSchema } from '@/lib/validation/auth';
 import { CivoraUser, UserRole } from '@/types';
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
       invitationCode: invitationCode || undefined,
     };
 
+    registerMockUser(newUser);
     await createSession(newUser);
 
     return NextResponse.json({

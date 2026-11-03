@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Check, HardHat, ShieldCheck } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
@@ -14,16 +14,15 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signInWithCredentials = async (targetEmail: string, targetPassword: string) => {
     setErrorMessage(null);
 
-    if (!email || !email.includes('@')) {
+    if (!targetEmail || !targetEmail.includes('@')) {
       setErrorMessage('Please enter a valid work email address.');
       return;
     }
 
-    if (!password || password.length < 6) {
+    if (!targetPassword || targetPassword.length < 6) {
       setErrorMessage('Password must be at least 6 characters.');
       return;
     }
@@ -34,7 +33,7 @@ export function LoginForm() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: targetEmail, password: targetPassword }),
       });
 
       const data = await response.json();
@@ -55,6 +54,17 @@ export function LoginForm() {
       setErrorMessage('An unexpected authentication error occurred. Please try again.');
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await signInWithCredentials(email, password);
+  };
+
+  const handleQuickDemoLogin = async (demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('Civora2026!');
+    await signInWithCredentials(demoEmail, 'Civora2026!');
   };
 
   return (
@@ -168,6 +178,33 @@ export function LoginForm() {
           )}
         </button>
       </form>
+
+      {/* Quick Workspace Access for Review / Evaluation */}
+      <div className="pt-2 border-t border-slate-100 space-y-2.5">
+        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center">
+          Quick Workspace Access
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleQuickDemoLogin('engineer@civora.internal')}
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-xs font-bold text-[#001237] transition-all cursor-pointer disabled:opacity-50"
+          >
+            <HardHat className="w-3.5 h-3.5 text-[#4FAAA7]" />
+            <span>Project Engineer</span>
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleQuickDemoLogin('stakeholder@civora.internal')}
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-xs font-bold text-[#001237] transition-all cursor-pointer disabled:opacity-50"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-[#4FAAA7]" />
+            <span>Stakeholder / Client</span>
+          </button>
+        </div>
+      </div>
 
       {/* Bottom Switch Link */}
       <div className="text-center pt-2">

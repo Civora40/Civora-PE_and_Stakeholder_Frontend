@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { CivoraUser, SessionData, UserRole } from '@/types';
-import { getMockUserByRole } from './mock-adapter';
+import { getMockUserByRole, registerMockUser } from './mock-adapter';
 
 const SESSION_COOKIE_NAME = 'civora_session';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -102,6 +102,8 @@ export async function updateSessionUser(updates: Partial<CivoraUser>): Promise<C
     ...session.user,
     ...updates,
   };
+
+  registerMockUser(updatedUser);
 
   await createSession(updatedUser, {
     accessToken: session.accessToken,

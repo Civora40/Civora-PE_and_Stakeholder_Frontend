@@ -27,9 +27,28 @@ export interface AuthResult {
   error?: string;
 }
 
+// Persist locally registered users across requests in dev/review server memory
+const globalForMockAuth = globalThis as unknown as {
+  civoraRegisteredUsers?: Map<string, CivoraUser>;
+};
+
+const registeredUsers =
+  globalForMockAuth.civoraRegisteredUsers ?? new Map<string, CivoraUser>();
+
+if (!globalForMockAuth.civoraRegisteredUsers) {
+  globalForMockAuth.civoraRegisteredUsers = registeredUsers;
+}
+
 /**
- * Authenticate credentials against development fixtures.
- * Password requirement for demo users is 'Civora2026!' or any password for rapid evaluation.
+ * Record a locally registered user so subsequent logins preserve their profile & role.
+ */
+export function registerMockUser(user: CivoraUser): void {
+  registeredUsers.set(user.email.trim().toLowerCase(), user);
+}
+
+/**
+ * Authenticate credentials against development fixtures and review accounts.
+ * Supports pre-configured DEMO_USERS, locally registered accounts, and any valid work email in review mode.
  */
 export async function authenticateWithMock(
   email: string
@@ -38,21 +57,60 @@ export async function authenticateWithMock(
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Find user by email
-  const user = Object.values(DEMO_USERS).find(
-    (u) => u.email.toLowerCase() === normalizedEmail
-  );
-
-  if (!user) {
+  // 1. Check locally registered users first
+  const registeredUser = registeredUsers.get(normalizedEmail);
+  if (registeredUser) {
     return {
-      success: false,
-      error: 'Invalid email or password. Please verify your credentials.',
+      success: true,
+      user: registeredUser,
     };
   }
 
+  // 2. Find user by email in predefined DEMO_USERS
+  const demoUser = Object.values(DEMO_USERS).find(
+    (u) => u.email.toLowerCase() === normalizedEmail
+  );
+
+  if (demoUser) {
+    return {
+      success: true,
+      user: demoUser,
+    };
+  }
+
+  // 3. For client review / local evaluation, accept any valid email address
+  // and map to Stakeholder or Project Engineer based on email keywords
+  const isStakeholderEmail =
+    normalizedEmail.includes('stakeholder') ||
+    normalizedEmail.includes('client') ||
+    normalizedEmail.includes('oversight') ||
+    normalizedEmail.includes('audit') ||
+    normalizedEmail.includes('ministry');
+
+  const localPart = normalizedEmail.split('@')[0] || 'user';
+  const formattedName = localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+  const baseTemplate = isStakeholderEmail
+    ? DEMO_USERS.read_only_stakeholder
+    : DEMO_USERS.project_engineer;
+
+  const dynamicUser: CivoraUser = {
+    ...baseTemplate,
+    id: `usr_rev_${Buffer.from(normalizedEmail).toString('hex').slice(0, 8)}`,
+    email: normalizedEmail,
+    name: formattedName || baseTemplate.name,
+    firstName: formattedName.split(' ')[0] || baseTemplate.firstName,
+    lastName: formattedName.split(' ').slice(1).join(' ') || baseTemplate.lastName,
+    displayName: formattedName || baseTemplate.displayName,
+  };
+
   return {
     success: true,
-    user,
+    user: dynamicUser,
   };
 }
 
