@@ -216,11 +216,10 @@ export function StakeholderOnboarding({ user, initialStep = 1 }: StakeholderOnbo
       const resData = await res.json().catch(() => ({}));
 
       if (assignedProjects.length > 0) {
-        router.push(resData.redirectUrl || '/stakeholder');
+        window.location.assign(resData.redirectUrl || '/stakeholder');
       } else {
-        router.push('/access-pending');
+        window.location.assign('/access-pending');
       }
-      router.refresh();
     } catch {
       setIsSubmitting(false);
     }

@@ -3,7 +3,47 @@ import { CivoraUser, SessionData, UserRole } from '@/types';
 import { getMockUserByRole, registerMockUser } from './mock-adapter';
 
 const SESSION_COOKIE_NAME = 'civora_session';
+const REFRESH_COOKIE_NAME = 'civora_refresh';
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+
+/**
+ * Strips duplicate backend snake_case fields and bulky questionnaire arrays
+ * so the base64-encoded `civora_session` cookie stays ~1.4 KB (well below
+ * the 4,096-byte RFC 6265 browser cookie limit).
+ */
+function compactUserForCookie(user: CivoraUser): CivoraUser {
+  const u = user as CivoraUser & Record<string, unknown>;
+  const onboardingCompletedAt =
+    u.onboardingCompletedAt ??
+    (typeof u.onboarding_completed_at === 'string' && u.onboarding_completed_at
+      ? new Date(u.onboarding_completed_at).getTime()
+      : null);
+
+  return {
+    id: u.id,
+    name: u.name || (typeof u.full_name === 'string' ? u.full_name : '') || '',
+    firstName: u.firstName || (typeof u.first_name === 'string' ? u.first_name : '') || '',
+    lastName: u.lastName || (typeof u.last_name === 'string' ? u.last_name : '') || '',
+    displayName: u.displayName || (typeof u.display_name === 'string' ? u.display_name : '') || '',
+    email: u.email,
+    role: u.role,
+    title: u.title || u.jobTitle || '',
+    jobTitle: u.jobTitle || u.title || '',
+    department: u.department || '',
+    organization: u.organization || (typeof u.organization_name === 'string' ? u.organization_name : '') || '',
+    organizationId: u.organizationId || (typeof u.organization_id === 'string' ? u.organization_id : undefined),
+    phone: u.phone || (typeof u.phone_number === 'string' ? u.phone_number : '') || '',
+    timeZone: u.timeZone || (typeof u.time_zone === 'string' ? u.time_zone : '') || '',
+    corenNumber: u.corenNumber || (typeof u.professional_registration === 'string' ? u.professional_registration : '') || '',
+    corenStatus: u.corenStatus || (u.coren_status as CivoraUser['corenStatus']) || 'unregistered',
+    cacNumber: u.cacNumber || '',
+    officeState: u.officeState || '',
+    accountStatus: u.accountStatus || (u.account_status as CivoraUser['accountStatus']) || 'active',
+    assignedProjects: Array.isArray(u.assignedProjects) ? u.assignedProjects.slice(0, 10) : [],
+    onboardingStep: typeof u.onboardingStep === 'number' ? u.onboardingStep : (typeof u.onboarding_step === 'number' ? u.onboarding_step : 1),
+    onboardingCompletedAt: onboardingCompletedAt || null,
+  };
+}
 
 /**
  * Encode session data into cookie-safe base64 string
@@ -47,20 +87,25 @@ export async function createSession(user: CivoraUser, tokens?: SessionTokens): P
   const expiresAt = Date.now() + SESSION_DURATION_MS;
 
   const sessionData: SessionData = {
-    user,
+    user: compactUserForCookie(user),
     accessToken: tokens?.accessToken,
-    refreshToken: tokens?.refreshToken,
     createdAt: Date.now(),
     expiresAt,
   };
 
-  cookieStore.set(SESSION_COOKIE_NAME, serializeSession(sessionData), {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
-  });
+  };
+
+  cookieStore.set(SESSION_COOKIE_NAME, serializeSession(sessionData), cookieOptions);
+
+  if (tokens?.refreshToken) {
+    cookieStore.set(REFRESH_COOKIE_NAME, tokens.refreshToken, cookieOptions);
+  }
 }
 
 /**
@@ -118,6 +163,7 @@ export async function updateSessionUser(updates: Partial<CivoraUser>): Promise<C
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(REFRESH_COOKIE_NAME);
 }
 
 /**

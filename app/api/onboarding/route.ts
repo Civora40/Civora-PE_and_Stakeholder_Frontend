@@ -103,7 +103,18 @@ export async function POST(request: NextRequest) {
       });
 
       if (backendRes.ok && backendRes.data?.user) {
-        await updateSessionUser(backendRes.data.user);
+        const isCompletion = action === 'complete' || step === 10 || Boolean(backendRes.data.completed);
+        await updateSessionUser({
+          ...backendRes.data.user,
+          ...(isCompletion
+            ? {
+                onboardingCompletedAt:
+                  backendRes.data.user.onboardingCompletedAt || Date.now(),
+                onboardingStep: 10,
+                accountStatus: 'active',
+              }
+            : {}),
+        });
         return NextResponse.json({
           success: true,
           ...backendRes.data,

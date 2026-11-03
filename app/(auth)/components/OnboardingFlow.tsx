@@ -261,6 +261,12 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
         if (!active || !resData?.success || !resData.user) return;
         const u = resData.user as CivoraUser & Record<string, unknown>;
         setUser(u);
+        if (resData.completed || u.onboardingCompletedAt || u.onboarding_completed_at) {
+          const targetUrl =
+            u.role === 'read_only_stakeholder' ? '/stakeholder' : '/dashboard';
+          window.location.assign(targetUrl);
+          return;
+        }
         if (typeof resData.currentStep === 'number' && resData.currentStep >= 1 && resData.currentStep <= 10) {
           setCurrentStep(resData.currentStep);
         }
@@ -453,37 +459,34 @@ export function OnboardingFlow({ initialUser }: OnboardingFlowProps) {
           return;
         }
 
-        router.push(
+        const destination =
           resData.redirectUrl ||
-            (user.role === 'read_only_stakeholder'
-              ? '/stakeholder'
-              : '/dashboard')
-        );
-        router.refresh();
+          (user.role === 'read_only_stakeholder' ? '/stakeholder' : '/dashboard');
+        window.location.assign(destination);
         return;
       }
 
-      // Steps 1 to 9
-      const res = await fetch('/api/onboarding', {
+      // Steps 1 to 9: Advance immediately for instant step transitions while syncing in background
+      const stepToSave = currentStep;
+      setCurrentStep(stepToSave + 1);
+      setIsSaving(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      fetch('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          step: currentStep,
+          step: stepToSave,
           data: payloadData,
         }),
-      });
-
-      const resData = await res.json();
-      if (!res.ok || !resData.success) {
-        setErrorMessage(resData.error || 'Failed to save progress. Please try again.');
-        setIsSaving(false);
-        return;
-      }
-
-      setUser(resData.user);
-      setCurrentStep(resData.nextStep || currentStep + 1);
-      setIsSaving(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+        .then((res) => res.json())
+        .then((resData) => {
+          if (resData?.success && resData.user) {
+            setUser(resData.user);
+          }
+        })
+        .catch(() => {});
     } catch {
       setErrorMessage('Network connection interrupted. Please try again.');
       setIsSaving(false);
