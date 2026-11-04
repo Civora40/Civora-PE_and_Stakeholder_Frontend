@@ -92,6 +92,16 @@ export type Permission =
 
 export type ProjectStatus = 'active' | 'planning' | 'in_review' | 'completed' | 'on_hold';
 
+export interface ProjectSpecificationFolder {
+  id: string;
+  name: string;
+  code: string;
+  sector: string;
+  specsReference: string;
+  description: string;
+  projectId?: string;
+}
+
 export interface Project {
   id: string;
   code: string;
@@ -107,6 +117,7 @@ export interface Project {
   lastActivity: string;
   budgetFormatted: string;
   specsReference: string;
+  specificationFolder?: ProjectSpecificationFolder;
   // Extended Project Initiation Metadata
   projectType?: string;
   description?: string;

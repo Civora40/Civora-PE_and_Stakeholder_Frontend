@@ -1,11 +1,11 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
 import { can } from '@/lib/permissions/rbac';
 import { ProjectMonitoringFolders } from '@/app/(engineer)/components/ProjectMonitoringFolders';
 
 export const metadata = {
-  title: 'All Projects (Monitoring Folders) | Civora Control Plane',
+  title: 'All Projects (Specification Folders) | Civora Control Plane',
 };
 
 interface AllProjectsPageProps {
@@ -20,6 +20,7 @@ export default async function AllProjectsPage(props: AllProjectsPageProps) {
     redirect('/unauthorized');
   }
 
+  const projects = await getServerProjects();
   const searchParams = props.searchParams ? await props.searchParams : undefined;
   const folder = searchParams?.folder;
   const project = searchParams?.project;
@@ -27,6 +28,7 @@ export default async function AllProjectsPage(props: AllProjectsPageProps) {
   return (
     <ProjectMonitoringFolders
       user={user}
+      initialProjects={projects}
       initialFolderId={folder}
       initialProjectId={project}
     />

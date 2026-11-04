@@ -125,14 +125,17 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
   const [constraints, setConstraints] = useState('');
 
   // Step 3: Team & Responsibilities
-  const [leadEngineer, setLeadEngineer] = useState(user.name || 'Marcus Vance, PE (COREN Reg.)');
+  const [leadEngineer, setLeadEngineer] = useState(user.name || '');
   const [clientRep, setClientRep] = useState('');
-  const [contractor, setContractor] = useState(SAMPLE_CONTRACTORS[0]);
+  const [contractor, setContractor] = useState('');
   const [escalationContact, setEscalationContact] = useState('');
-  const [stakeholdersInput, setStakeholdersInput] = useState('State Infrastructure Oversight Committee, Community Liaison Unit');
-  const [assignedTeamInput, setAssignedTeamInput] = useState('Site QA/QC Engineer, HSE Lead Officer, Resident Materials Engineer');
+  const [stakeholdersInput, setStakeholdersInput] = useState('');
+  const [assignedTeamInput, setAssignedTeamInput] = useState('');
 
   // Step 4: Reporting & Governance
+  const [specsReference, setSpecsReference] = useState(
+    user.defaultSpec || 'Eurocode 2 & FMWH Standard Specifications (C35/45)'
+  );
   const [reportingCadence, setReportingCadence] = useState('daily');
   const [submissionChannels, setSubmissionChannels] = useState<string[]>(['whatsapp', 'portal']);
   const [reportingCategories, setReportingCategories] = useState<string[]>([
@@ -311,7 +314,7 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
         requireLabBreakCert,
         requireGeotaggedPhotos,
         governanceNotes,
-        specsReference: 'FMWH Civil Infrastructure Standard & BS 8110 (Eurocode 2)',
+        specsReference: specsReference.trim() || 'Eurocode 2 & FMWH Standard Specifications (C35/45)',
       };
 
       const res = await fetch('/api/projects', {
@@ -328,15 +331,20 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
 
       setSuccessMessage(
         targetStatus === 'active'
-          ? `Project ${code} (${name}) has been provisioned and authorized for active monitoring!`
-          : `Draft saved successfully for project ${code}. Status set to Pending Setup.`
+          ? `Project ${code} (${name}) and its Specification Folder (${code.toUpperCase()}-SPEC) have been provisioned!`
+          : `Draft saved successfully for project ${code} and Specification Folder (${code.toUpperCase()}-SPEC).`
       );
 
+      const createdId = data?.project?.id;
       // Redirect after brief visual feedback
       setTimeout(() => {
-        router.push('/dashboard/projects');
+        router.push(
+          createdId
+            ? `/dashboard/overview/projects?project=${encodeURIComponent(createdId)}`
+            : '/dashboard/overview/projects'
+        );
         router.refresh();
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred while creating the project.');
       setIsSubmitting(false);
@@ -1164,6 +1172,29 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
               </div>
 
               <div className="space-y-5 text-xs">
+                {/* Governing Technical Specification */}
+                <div className="space-y-1.5">
+                  <label className="font-bold text-slate-800 flex items-center justify-between">
+                    <span>
+                      Governing Project Specification Standard <span className="text-rose-500">*</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-[#4FAAA7]">
+                      Auto-creates {code ? `${code.toUpperCase()}-SPEC` : 'Project Specification'} Folder
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={specsReference}
+                    onChange={(e) => setSpecsReference(e.target.value)}
+                    placeholder="e.g. Eurocode 2 & FMWH Standard Specifications (C35/45)"
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-900 font-mono focus:bg-white focus:border-[#4FAAA7] focus:outline-none transition-colors"
+                  />
+                  <p className="text-[11px] text-slate-500">
+                    This specification standard is bound to the project&apos;s dedicated Specification Folder on the Overview &rarr; All Projects dashboard.
+                  </p>
+                </div>
+
                 {/* Reporting Cadence */}
                 <div className="space-y-2">
                   <label className="font-bold text-slate-800">

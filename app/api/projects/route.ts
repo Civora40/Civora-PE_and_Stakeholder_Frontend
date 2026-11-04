@@ -98,8 +98,13 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join(', ') || 'Authorized Field Site';
 
+    const projectId = `prj_${Date.now()}`;
+    const resolvedSpecs = body.specsReference || 'Eurocode 2 & FMWH Standard Specifications (C35/45)';
+    const resolvedType = body.projectType || 'Road / Highway';
+    const resolvedScope = body.scopeSummary || body.description || '';
+
     const newProject: Project = {
-      id: `prj_${Date.now()}`,
+      id: projectId,
       code: cleanCode,
       name: body.name.trim(),
       client: body.client.trim(),
@@ -112,8 +117,19 @@ export async function POST(request: Request) {
       reportsCount: 0,
       lastActivity: 'Just now',
       budgetFormatted: formattedBudget,
-      specsReference: body.specsReference || 'Eurocode 2 & FMWH Standard Specifications (C35/45)',
-      projectType: body.projectType || 'Road / Highway',
+      specsReference: resolvedSpecs,
+      specificationFolder: {
+        id: `fld_spec_${projectId}`,
+        name: `${body.name.trim()} — Specification Folder`,
+        code: `${cleanCode}-SPEC`,
+        sector: resolvedType,
+        specsReference: resolvedSpecs,
+        description:
+          resolvedScope ||
+          `Project specification, deliverables, and QA governance folder for ${body.name.trim()} (${cleanCode}).`,
+        projectId,
+      },
+      projectType: resolvedType,
       description: body.description || '',
       contractRef: body.contractRef || '',
       priority: body.priority || 'normal',
