@@ -1,6 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getFreshCurrentUser } from '@/lib/auth/session';
 import { UserSettings } from '@/app/(engineer)/components/UserSettings';
 
 export const metadata = {
@@ -8,13 +8,13 @@ export const metadata = {
 };
 
 export default async function EngineerProfilePage() {
-  const user = await getCurrentUser();
+  const user = await getFreshCurrentUser();
   if (!user) {
     redirect('/login');
   }
 
   if (user.role === 'read_only_stakeholder') {
-    redirect('/stakeholder/profile');
+    redirect('/stakeholder/account/profile');
   }
 
   return <UserSettings user={user} />;

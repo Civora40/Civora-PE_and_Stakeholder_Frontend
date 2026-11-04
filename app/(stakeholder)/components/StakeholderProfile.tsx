@@ -56,11 +56,21 @@ export function StakeholderProfile({
   const [timezone, setTimezone] = useState(user.timeZone || 'Africa/Lagos (WAT / UTC+1)');
 
   // Notification preferences (Section 11: Notification preferences)
-  const [notifyReleasedReports, setNotifyReleasedReports] = useState(true);
-  const [notifyMilestones, setNotifyMilestones] = useState(true);
-  const [notifyAnnouncements, setNotifyAnnouncements] = useState(true);
-  const [channelEmail, setChannelEmail] = useState(true);
-  const [channelInApp, setChannelInApp] = useState(true);
+  const [notifyReleasedReports, setNotifyReleasedReports] = useState(
+    typeof user.notifyReleasedReports === 'boolean' ? user.notifyReleasedReports : true
+  );
+  const [notifyMilestones, setNotifyMilestones] = useState(
+    typeof user.notifyMilestones === 'boolean' ? user.notifyMilestones : true
+  );
+  const [notifyAnnouncements, setNotifyAnnouncements] = useState(
+    typeof user.notifyAnnouncements === 'boolean' ? user.notifyAnnouncements : true
+  );
+  const [channelEmail, setChannelEmail] = useState(
+    typeof user.channelEmail === 'boolean' ? user.channelEmail : true
+  );
+  const [channelInApp, setChannelInApp] = useState(
+    typeof user.channelInApp === 'boolean' ? user.channelInApp : true
+  );
 
   // Security state (Section 11: Security)
   const [currentPassword, setCurrentPassword] = useState('');
@@ -68,8 +78,30 @@ export function StakeholderProfile({
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Feedback states
+  const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState('Preferences updated successfully.');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const u = data?.user as CivoraUser | undefined;
+        if (!u) return;
+        if (u.name) setFullName(u.name);
+        if (typeof u.organization === 'string') setOrganization(u.organization);
+        if (u.jobTitle || u.title) setJobTitle(u.jobTitle || u.title || '');
+        if (typeof u.phone === 'string') setPhone(u.phone);
+        if (typeof u.timeZone === 'string' && u.timeZone) setTimezone(u.timeZone);
+        if (typeof u.notifyReleasedReports === 'boolean') setNotifyReleasedReports(u.notifyReleasedReports);
+        if (typeof u.notifyMilestones === 'boolean') setNotifyMilestones(u.notifyMilestones);
+        if (typeof u.notifyAnnouncements === 'boolean') setNotifyAnnouncements(u.notifyAnnouncements);
+        if (typeof u.channelEmail === 'boolean') setChannelEmail(u.channelEmail);
+        if (typeof u.channelInApp === 'boolean') setChannelInApp(u.channelInApp);
+      })
+      .catch(() => {});
+  }, []);
 
   const roleInfo = ROLE_LABELS[user.role] || {
     badge: 'Stakeholder',
@@ -81,32 +113,107 @@ export function StakeholderProfile({
     ? projects.length
     : user.assignedProjects?.length || projects.length;
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setSaveMessage('Profile information saved successfully.');
-    setTimeout(() => setIsSaved(false), 3500);
+    setErrorMessage(null);
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          organization,
+          jobTitle,
+          phone,
+          timeZone: timezone,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.error || 'Unable to save profile changes.');
+        return;
+      }
+      setIsSaved(true);
+      setSaveMessage('Profile information saved successfully.');
+      router.refresh();
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch {
+      setErrorMessage('Network error while saving profile changes.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSaveNotifications = (e: React.FormEvent) => {
+  const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setSaveMessage('Notification preferences updated successfully.');
-    setTimeout(() => setIsSaved(false), 3500);
+    setErrorMessage(null);
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notifyReleasedReports,
+          notifyMilestones,
+          notifyAnnouncements,
+          channelEmail,
+          channelInApp,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.error || 'Unable to update notification preferences.');
+        return;
+      }
+      setIsSaved(true);
+      setSaveMessage('Notification preferences updated successfully.');
+      router.refresh();
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch {
+      setErrorMessage('Network error while updating notification preferences.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (newPassword !== confirmPassword) {
-      alert('New password and confirmation do not match.');
+      setErrorMessage('New password and confirmation do not match.');
       return;
     }
-    setIsSaved(true);
-    setSaveMessage('Password updated successfully.');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setIsSaved(false), 3500);
+    if (newPassword.length < 8) {
+      setErrorMessage('New password must be at least 8 characters.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.error || 'Current password is incorrect or update failed.');
+        return;
+      }
+      setIsSaved(true);
+      setSaveMessage('Password updated successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch {
+      setErrorMessage('Network error while updating password.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -136,6 +243,14 @@ export function StakeholderProfile({
           </p>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       {/* Success Banner */}
       {isSaved && (

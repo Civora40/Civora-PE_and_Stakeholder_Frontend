@@ -1,7 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_USERS } from '@/lib/mock-data/fixtures';
+import { getFreshCurrentUser } from '@/lib/auth/session';
 import { StakeholderSettings } from '@/app/(stakeholder)/components/StakeholderSettings';
 
 export const metadata = {
@@ -10,7 +9,7 @@ export const metadata = {
 };
 
 export default async function StakeholderSettingsPage() {
-  const user = (await getCurrentUser()) || DEMO_USERS.read_only_stakeholder;
+  const user = await getFreshCurrentUser();
 
   if (!user) {
     redirect('/login');

@@ -37,8 +37,29 @@ function compactUserForCookie(user: CivoraUser): CivoraUser {
     timeZone: u.timeZone || (typeof u.time_zone === 'string' ? u.time_zone : '') || '',
     corenNumber: u.corenNumber || (typeof u.professional_registration === 'string' ? u.professional_registration : '') || '',
     corenStatus: u.corenStatus || (u.coren_status as CivoraUser['corenStatus']) || 'unregistered',
+    corenCategory: u.corenCategory || '',
+    nseNumber: u.nseNumber || (typeof u.nse_number === 'string' ? u.nse_number : '') || '',
     cacNumber: u.cacNumber || '',
     officeState: u.officeState || '',
+    reviewSla: u.reviewSla || '24h',
+    defaultSpec: u.defaultSpec || 'Eurocode 2 / FMWH Civil Standards',
+    requireLabBreakCert: typeof u.requireLabBreakCert === 'boolean' ? u.requireLabBreakCert : true,
+    requireGeotaggedPhotos: typeof u.requireGeotaggedPhotos === 'boolean' ? u.requireGeotaggedPhotos : true,
+    autoFlagLowStrength: typeof u.autoFlagLowStrength === 'boolean' ? u.autoFlagLowStrength : true,
+    inboundSubmissionsAlert: typeof u.inboundSubmissionsAlert === 'boolean' ? u.inboundSubmissionsAlert : true,
+    whatsappPushAlerts: typeof u.whatsappPushAlerts === 'boolean' ? u.whatsappPushAlerts : true,
+    telegramBotAlerts: typeof u.telegramBotAlerts === 'boolean' ? u.telegramBotAlerts : true,
+    criticalDiscrepancyAlerts: typeof u.criticalDiscrepancyAlerts === 'boolean' ? u.criticalDiscrepancyAlerts : true,
+    weeklyComplianceDigest: typeof u.weeklyComplianceDigest === 'boolean' ? u.weeklyComplianceDigest : true,
+    sessionTimeout: u.sessionTimeout || '1h',
+    twoFactorEnabled: typeof u.twoFactorEnabled === 'boolean' ? u.twoFactorEnabled : true,
+    notifyReleasedReports: typeof u.notifyReleasedReports === 'boolean' ? u.notifyReleasedReports : true,
+    notifyMilestones: typeof u.notifyMilestones === 'boolean' ? u.notifyMilestones : true,
+    notifyAnnouncements: typeof u.notifyAnnouncements === 'boolean' ? u.notifyAnnouncements : true,
+    channelEmail: typeof u.channelEmail === 'boolean' ? u.channelEmail : true,
+    channelInApp: typeof u.channelInApp === 'boolean' ? u.channelInApp : true,
+    dateFormat: u.dateFormat || 'DD MMM YYYY',
+    highContrast: typeof u.highContrast === 'boolean' ? u.highContrast : false,
     accountStatus: u.accountStatus || (u.account_status as CivoraUser['accountStatus']) || 'active',
     assignedProjects: Array.isArray(u.assignedProjects) ? u.assignedProjects.slice(0, 10) : [],
     onboardingStep: typeof u.onboardingStep === 'number' ? u.onboardingStep : (typeof u.onboarding_step === 'number' ? u.onboarding_step : 1),
@@ -133,6 +154,36 @@ export async function getSessionData(): Promise<SessionData | null> {
 export async function getCurrentUser(): Promise<CivoraUser | null> {
   const session = await getSessionData();
   return session ? session.user : null;
+}
+
+/**
+ * Server-side helper that fetches the freshest profile from `/users/me/` on the
+ * backend when an access token is present, falling back to the session user.
+ */
+export async function getFreshCurrentUser(): Promise<CivoraUser | null> {
+  const session = await getSessionData();
+  if (!session?.user) {
+    return null;
+  }
+
+  if (session.accessToken) {
+    try {
+      const backendRes = await fetchBackend<CivoraUser>('/users/me/', {
+        method: 'GET',
+        accessToken: session.accessToken,
+      });
+      if (backendRes.ok && backendRes.data) {
+        return {
+          ...session.user,
+          ...backendRes.data,
+        };
+      }
+    } catch {
+      // Fall back to session user
+    }
+  }
+
+  return session.user;
 }
 
 /**

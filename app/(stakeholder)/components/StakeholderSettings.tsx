@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Settings,
-  Shield,
   Clock,
   Eye,
   Lock,
   Globe,
   Monitor,
   CheckCircle2,
+  AlertCircle,
   Save,
-  Key,
 } from 'lucide-react';
 import { CivoraUser } from '@/types';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,21 +21,59 @@ interface StakeholderSettingsProps {
 }
 
 export function StakeholderSettings({ user }: StakeholderSettingsProps) {
-  const [timezone, setTimezone] = useState('WAT');
-  const [dateFormat, setDateFormat] = useState('DD MMM YYYY');
-  const [highContrast, setHighContrast] = useState(false);
-  const [sessionTimeout, setSessionTimeout] = useState('30');
+  const router = useRouter();
+  const [timezone, setTimezone] = useState(user.timeZone || 'WAT');
+  const [dateFormat, setDateFormat] = useState(user.dateFormat || 'DD MMM YYYY');
+  const [highContrast, setHighContrast] = useState(
+    typeof user.highContrast === 'boolean' ? user.highContrast : false
+  );
+  const [sessionTimeout, setSessionTimeout] = useState(user.sessionTimeout || '30');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetch('/api/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const u = data?.user as CivoraUser | undefined;
+        if (!u) return;
+        if (typeof u.timeZone === 'string' && u.timeZone) setTimezone(u.timeZone);
+        if (typeof u.dateFormat === 'string' && u.dateFormat) setDateFormat(u.dateFormat);
+        if (typeof u.highContrast === 'boolean') setHighContrast(u.highContrast);
+        if (typeof u.sessionTimeout === 'string' && u.sessionTimeout) setSessionTimeout(u.sessionTimeout);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeZone: timezone,
+          dateFormat,
+          highContrast,
+          sessionTimeout,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.error || 'Unable to save workspace settings.');
+        return;
+      }
       setSaveSuccess(true);
+      router.refresh();
       setTimeout(() => setSaveSuccess(false), 3000);
-    }, 500);
+    } catch {
+      setErrorMessage('Network error while saving workspace settings.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -46,6 +83,12 @@ export function StakeholderSettings({ user }: StakeholderSettingsProps) {
         description="Manage your institutional display preferences, regional time standards, and session security parameters."
       />
 
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-3 text-rose-800 text-xs">
+          <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span className="font-semibold">{errorMessage}</span>
+        </div>
+      )}
 
       {saveSuccess && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3 text-emerald-800 text-xs">

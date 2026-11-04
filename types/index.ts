@@ -23,6 +23,8 @@ export interface CivoraUser {
   // Nigerian Construction & Regulatory Context
   corenNumber?: string;
   corenStatus?: string;
+  corenCategory?: string;
+  nseNumber?: string;
   cacNumber?: string;
   officeState?: string;
   geopoliticalZone?: string;
@@ -30,10 +32,30 @@ export interface CivoraUser {
   standardsBaseline?: string[];
   testingLab?: string;
   reviewSlaDays?: number;
+  reviewSla?: '24h' | '48h' | '72h' | string;
+  defaultSpec?: string;
+  requireLabBreakCert?: boolean;
+  requireGeotaggedPhotos?: boolean;
+  autoFlagLowStrength?: boolean;
   rfiEscalationTier?: string;
   reportingCadence?: string;
   lasbcaPermitNumber?: string;
   eiaApprovalStatus?: string;
+  // Notification, Governance & Security Preferences
+  inboundSubmissionsAlert?: boolean;
+  whatsappPushAlerts?: boolean;
+  telegramBotAlerts?: boolean;
+  criticalDiscrepancyAlerts?: boolean;
+  weeklyComplianceDigest?: boolean;
+  sessionTimeout?: string;
+  twoFactorEnabled?: boolean;
+  notifyReleasedReports?: boolean;
+  notifyMilestones?: boolean;
+  notifyAnnouncements?: boolean;
+  channelEmail?: boolean;
+  channelInApp?: boolean;
+  dateFormat?: string;
+  highContrast?: boolean;
   // Onboarding & Access State
   onboardingCompletedAt?: number | null;
   onboardingStep?: number; // 1 through 10

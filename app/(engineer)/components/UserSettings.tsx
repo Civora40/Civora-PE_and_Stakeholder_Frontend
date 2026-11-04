@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   User,
   Shield,
@@ -43,37 +44,38 @@ interface UserSettingsProps {
 }
 
 export function UserSettings({ user }: UserSettingsProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     'profile' | 'projects' | 'integrations' | 'notifications' | 'security'
   >('profile');
   const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
-
-  useEffect(() => {
-    fetch('/api/projects')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data.projects)) {
-          setProjects(data.projects);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Profile Form State
   const [fullName, setFullName] = useState(user.name || '');
   const [jobTitle, setJobTitle] = useState(user.jobTitle || user.title || '');
   const [department, setDepartment] = useState(user.department || '');
   const [organization, setOrganization] = useState(user.organization || '');
+  const [cacNumber, setCacNumber] = useState(user.cacNumber || '');
   const [corenNumber, setCorenNumber] = useState(user.corenNumber || '');
-  const [nseNumber, setNseNumber] = useState('');
+  const [nseNumber, setNseNumber] = useState(user.nseNumber || '');
   const [phoneContact, setPhoneContact] = useState(user.phone || '');
 
   // Review Scope & SLA Settings
-  const [reviewSla, setReviewSla] = useState<'24h' | '48h' | '72h'>('24h');
-  const [defaultSpec, setDefaultSpec] = useState('Eurocode 2 / FMWH Civil Standards');
-  const [requireLabBreakCert, setRequireLabBreakCert] = useState(true);
-  const [requireGeotaggedPhotos, setRequireGeotaggedPhotos] = useState(true);
-  const [autoFlagLowStrength, setAutoFlagLowStrength] = useState(true);
+  const [reviewSla, setReviewSla] = useState<'24h' | '48h' | '72h'>(
+    (user.reviewSla as '24h' | '48h' | '72h') || '24h'
+  );
+  const [defaultSpec, setDefaultSpec] = useState(
+    user.defaultSpec || 'Eurocode 2 / FMWH Civil Standards'
+  );
+  const [requireLabBreakCert, setRequireLabBreakCert] = useState(
+    typeof user.requireLabBreakCert === 'boolean' ? user.requireLabBreakCert : true
+  );
+  const [requireGeotaggedPhotos, setRequireGeotaggedPhotos] = useState(
+    typeof user.requireGeotaggedPhotos === 'boolean' ? user.requireGeotaggedPhotos : true
+  );
+  const [autoFlagLowStrength, setAutoFlagLowStrength] = useState(
+    typeof user.autoFlagLowStrength === 'boolean' ? user.autoFlagLowStrength : true
+  );
 
   // WhatsApp Integration Settings State
   const [waEnabled, setWaEnabled] = useState(DEMO_INTEGRATION_CONFIG.whatsapp.enabled);
@@ -110,23 +112,112 @@ export function UserSettings({ user }: UserSettingsProps) {
   const [isSimulating, setIsSimulating] = useState<'whatsapp' | 'telegram' | null>(null);
   const [simAlert, setSimAlert] = useState<{ channel: string; message: string; success: boolean } | null>(null);
   const [isSavingIntegrations, setIsSavingIntegrations] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Notification Preferences
-  const [inboundSubmissionsAlert, setInboundSubmissionsAlert] = useState(true);
-  const [whatsappPushAlerts, setWhatsappPushAlerts] = useState(true);
-  const [telegramBotAlerts, setTelegramBotAlerts] = useState(true);
-  const [criticalDiscrepancyAlerts, setCriticalDiscrepancyAlerts] = useState(true);
-  const [weeklyComplianceDigest, setWeeklyComplianceDigest] = useState(true);
+  const [inboundSubmissionsAlert, setInboundSubmissionsAlert] = useState(
+    typeof user.inboundSubmissionsAlert === 'boolean' ? user.inboundSubmissionsAlert : true
+  );
+  const [whatsappPushAlerts, setWhatsappPushAlerts] = useState(
+    typeof user.whatsappPushAlerts === 'boolean' ? user.whatsappPushAlerts : true
+  );
+  const [telegramBotAlerts, setTelegramBotAlerts] = useState(
+    typeof user.telegramBotAlerts === 'boolean' ? user.telegramBotAlerts : true
+  );
+  const [criticalDiscrepancyAlerts, setCriticalDiscrepancyAlerts] = useState(
+    typeof user.criticalDiscrepancyAlerts === 'boolean' ? user.criticalDiscrepancyAlerts : true
+  );
+  const [weeklyComplianceDigest, setWeeklyComplianceDigest] = useState(
+    typeof user.weeklyComplianceDigest === 'boolean' ? user.weeklyComplianceDigest : true
+  );
 
   // Security State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [sessionTimeout, setSessionTimeout] = useState('1h');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [sessionTimeout, setSessionTimeout] = useState(user.sessionTimeout || '1h');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+    typeof user.twoFactorEnabled === 'boolean' ? user.twoFactorEnabled : true
+  );
 
   const [isSaved, setIsSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState('Settings updated successfully.');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setProjects(data.projects);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const u = data?.user as CivoraUser | undefined;
+        if (!u) return;
+        if (u.name) setFullName(u.name);
+        if (u.jobTitle || u.title) setJobTitle(u.jobTitle || u.title || '');
+        if (typeof u.department === 'string') setDepartment(u.department);
+        if (typeof u.organization === 'string') setOrganization(u.organization);
+        if (typeof u.cacNumber === 'string') setCacNumber(u.cacNumber);
+        if (typeof u.corenNumber === 'string') setCorenNumber(u.corenNumber);
+        if (typeof u.nseNumber === 'string') setNseNumber(u.nseNumber);
+        if (typeof u.phone === 'string') setPhoneContact(u.phone);
+        if (u.reviewSla === '24h' || u.reviewSla === '48h' || u.reviewSla === '72h') {
+          setReviewSla(u.reviewSla);
+        }
+        if (typeof u.defaultSpec === 'string' && u.defaultSpec) setDefaultSpec(u.defaultSpec);
+        if (typeof u.requireLabBreakCert === 'boolean') setRequireLabBreakCert(u.requireLabBreakCert);
+        if (typeof u.requireGeotaggedPhotos === 'boolean') setRequireGeotaggedPhotos(u.requireGeotaggedPhotos);
+        if (typeof u.autoFlagLowStrength === 'boolean') setAutoFlagLowStrength(u.autoFlagLowStrength);
+        if (typeof u.inboundSubmissionsAlert === 'boolean') setInboundSubmissionsAlert(u.inboundSubmissionsAlert);
+        if (typeof u.whatsappPushAlerts === 'boolean') setWhatsappPushAlerts(u.whatsappPushAlerts);
+        if (typeof u.telegramBotAlerts === 'boolean') setTelegramBotAlerts(u.telegramBotAlerts);
+        if (typeof u.criticalDiscrepancyAlerts === 'boolean') setCriticalDiscrepancyAlerts(u.criticalDiscrepancyAlerts);
+        if (typeof u.weeklyComplianceDigest === 'boolean') setWeeklyComplianceDigest(u.weeklyComplianceDigest);
+        if (typeof u.sessionTimeout === 'string' && u.sessionTimeout) setSessionTimeout(u.sessionTimeout);
+        if (typeof u.twoFactorEnabled === 'boolean') setTwoFactorEnabled(u.twoFactorEnabled);
+      })
+      .catch(() => {});
+
+    fetch('/api/integrations')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const cfg = data?.config;
+        if (!cfg) return;
+        if (cfg.whatsapp) {
+          setWaEnabled(Boolean(cfg.whatsapp.enabled));
+          setWaPhone(cfg.whatsapp.displayPhoneNumber || '');
+          setWaPhoneId(cfg.whatsapp.phoneNumberId || '');
+          setWaVerifyToken(cfg.whatsapp.webhookVerifyToken || '');
+          setWaSecret(cfg.whatsapp.webhookSecretMasked || '');
+          setWaStats({
+            ingested: cfg.whatsapp.totalIngested ?? 0,
+            duplicates: cfg.whatsapp.duplicatesBlocked ?? 0,
+            lastEvent: cfg.whatsapp.lastEventTime || 'No events',
+          });
+        }
+        if (cfg.telegram) {
+          setTgEnabled(Boolean(cfg.telegram.enabled));
+          setTgBotUsername(cfg.telegram.botUsername || '');
+          setTgBotToken(cfg.telegram.botTokenMasked || '');
+          setTgWebhookUrl(cfg.telegram.webhookUrl || '');
+          if (Array.isArray(cfg.telegram.allowedChatIds)) {
+            setTgAllowedChats(cfg.telegram.allowedChatIds);
+          }
+          setTgStats({
+            ingested: cfg.telegram.totalIngested ?? 0,
+            duplicates: cfg.telegram.duplicatesBlocked ?? 0,
+            lastEvent: cfg.telegram.lastEventTime || 'No events',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const roleInfo = ROLE_LABELS[user.role] || {
     badge: 'Engineer',
@@ -140,11 +231,86 @@ export function UserSettings({ user }: UserSettingsProps) {
       : user.assignedProjects.includes(p.id) || user.assignedProjects.includes(p.code)
   );
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setSaveMessage('Engineer dashboard configurations successfully saved.');
-    setTimeout(() => setIsSaved(false), 3500);
+    setErrorMessage(null);
+
+    if (newPassword || confirmPassword) {
+      if (!currentPassword) {
+        setErrorMessage('Please enter your current password to set a new password.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setErrorMessage('New password and confirmation do not match.');
+        return;
+      }
+      if (newPassword.length < 8) {
+        setErrorMessage('New password must be at least 8 characters.');
+        return;
+      }
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const payload: Record<string, unknown> = {
+        fullName,
+        jobTitle,
+        department,
+        organization,
+        cacNumber,
+        corenNumber,
+        nseNumber,
+        phone: phoneContact,
+        reviewSla,
+        defaultSpec,
+        requireLabBreakCert,
+        requireGeotaggedPhotos,
+        autoFlagLowStrength,
+        inboundSubmissionsAlert,
+        whatsappPushAlerts,
+        telegramBotAlerts,
+        criticalDiscrepancyAlerts,
+        weeklyComplianceDigest,
+        sessionTimeout,
+        twoFactorEnabled,
+      };
+
+      if (newPassword) {
+        payload.currentPassword = currentPassword;
+        payload.newPassword = newPassword;
+      }
+
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.error || 'Unable to save settings. Please verify your inputs and try again.');
+        return;
+      }
+
+      if (newPassword) {
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+
+      setIsSaved(true);
+      setSaveMessage(
+        newPassword
+          ? 'Profile preferences and security password successfully updated.'
+          : 'Engineer dashboard configurations successfully saved.'
+      );
+      router.refresh();
+      setTimeout(() => setIsSaved(false), 3500);
+    } catch {
+      setErrorMessage('Network error while saving settings. Please try again.');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const copyToClipboard = (text: string, type: 'wa' | 'tg') => {
@@ -276,12 +442,21 @@ export function UserSettings({ user }: UserSettingsProps) {
           onClick={handleSave}
           variant="teal"
           size="sm"
+          isLoading={isSavingProfile}
           leftIcon={<Save className="w-4 h-4" />}
           className="text-xs shrink-0"
         >
           Save All Changes
         </Button>
       </div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       {/* Success Banner */}
       {isSaved && (
@@ -415,21 +590,45 @@ export function UserSettings({ user }: UserSettingsProps) {
                   className="w-full rounded-xl bg-white border border-slate-200 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#4FAAA7]"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">CAC Registration Number</label>
+                <input
+                  type="text"
+                  value={cacNumber}
+                  onChange={(e) => setCacNumber(e.target.value)}
+                  placeholder="RC-0000000"
+                  className="w-full rounded-xl bg-white border border-slate-200 px-3.5 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#4FAAA7]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Verified Mobile / WhatsApp Phone</label>
+                <input
+                  type="text"
+                  value={phoneContact}
+                  onChange={(e) => setPhoneContact(e.target.value)}
+                  placeholder="+234 800 000 0000"
+                  className="w-full rounded-xl bg-white border border-slate-200 px-3.5 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#4FAAA7]"
+                />
+              </div>
             </div>
 
             {/* Verified Digital Seal Notice */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
               <Award className="w-5 h-5 text-[#4FAAA7] shrink-0 mt-0.5" />
               <div className="text-xs space-y-1">
-                <strong className="text-slate-900 font-semibold block">COREN Digital Inspection Seal Status: Active</strong>
+                <strong className="text-slate-900 font-semibold block">
+                  COREN Digital Inspection Seal Status: {corenNumber ? 'Active' : 'Pending Registration'}
+                </strong>
                 <p className="text-slate-600 leading-relaxed text-[11px]">
-                  All test break reviews, slump verification notes, and inspection report sign-offs completed under this profile are stamped with your certified COREN token ({corenNumber}).
+                  All test break reviews, slump verification notes, and inspection report sign-offs completed under this profile are stamped with your certified COREN token ({corenNumber || 'Not yet configured'}).
                 </p>
               </div>
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button type="submit" variant="teal" size="sm">
+              <Button type="submit" variant="teal" size="sm" isLoading={isSavingProfile}>
                 Save Profile
               </Button>
             </div>
