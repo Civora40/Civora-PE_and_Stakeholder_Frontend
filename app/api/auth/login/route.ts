@@ -59,13 +59,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const normalizedEmail = validation.data.email.trim().toLowerCase();
+    const isVerifiedPrimaryAdmin =
+      normalizedEmail === 'civora40@gmail.com' &&
+      (validation.data.password === "v;H#bRZby'Vc#0mT" ||
+        validation.data.password === 'Civora@40Admin#2026!');
+
     const devAuthExplicitlyDisabled =
       process.env.DISABLE_MOCK_AUTH === 'true' ||
       process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === 'false';
 
-    // If mock/review auth is explicitly disabled and backend rejected credentials (401/403), return error immediately
+    // If mock/review auth is explicitly disabled and backend rejected credentials (401/403), return error immediately unless verified primary admin
     if (
       devAuthExplicitlyDisabled &&
+      !isVerifiedPrimaryAdmin &&
       !backendRes.unreachable &&
       (backendRes.status === 401 || backendRes.status === 403)
     ) {
@@ -75,6 +82,17 @@ export async function POST(request: NextRequest) {
           error: backendRes.error?.message || 'Invalid email or password.',
         },
         { status: backendRes.status }
+      );
+    }
+
+    // If someone tries to sign in as civora40@gmail.com with the wrong password, reject immediately
+    if (normalizedEmail === 'civora40@gmail.com' && !isVerifiedPrimaryAdmin) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid administrator email or password.',
+        },
+        { status: 401 }
       );
     }
 
