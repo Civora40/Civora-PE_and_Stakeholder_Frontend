@@ -1,6 +1,5 @@
 import React from 'react';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_SUBMISSIONS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerSubmissions } from '@/lib/auth/session';
 import { SubmissionsInbox } from '@/app/(engineer)/components/SubmissionsInbox';
 
 export const metadata = {
@@ -11,8 +10,8 @@ export default async function PendingSubmissionsPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  // Filter to pending review or verification needed
-  const pendingSubmissions = DEMO_SUBMISSIONS.filter(
+  const allSubmissions = await getServerSubmissions();
+  const pendingSubmissions = allSubmissions.filter(
     (s) => s.reviewStatus === 'pending_review' || s.reviewStatus === 'needs_verification'
   );
 

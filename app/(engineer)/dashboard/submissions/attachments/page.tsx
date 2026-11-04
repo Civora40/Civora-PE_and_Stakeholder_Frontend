@@ -1,9 +1,8 @@
 import React from 'react';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, getServerSubmissions } from '@/lib/auth/session';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { FileText, Download, Image as ImageIcon } from 'lucide-react';
-import { DEMO_SUBMISSIONS } from '@/lib/mock-data/fixtures';
 
 export const metadata = {
   title: 'Attachments & Evidence Media | Civora Control Plane',
@@ -13,8 +12,9 @@ export default async function SubmissionsAttachmentsPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
+  const submissions = await getServerSubmissions();
   // Flatten all attachments across submissions
-  const allAttachments = DEMO_SUBMISSIONS.flatMap((sub) =>
+  const allAttachments = submissions.flatMap((sub) =>
     (sub.attachments || []).map((att) => ({
       ...att,
       submissionId: sub.id,

@@ -1,8 +1,7 @@
 import React from 'react';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, getServerSubmissions } from '@/lib/auth/session';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { DEMO_SUBMISSIONS } from '@/lib/mock-data/fixtures';
 import { SubmissionsInbox } from '@/app/(engineer)/components/SubmissionsInbox';
 import { HardHat, Compass, ShieldCheck, Layers } from 'lucide-react';
 
@@ -21,6 +20,8 @@ export default async function SubmissionsByProfessionPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
+  const submissions = await getServerSubmissions();
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -33,7 +34,7 @@ export default async function SubmissionsByProfessionPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CADRES.map((cadre) => {
           const Icon = cadre.icon;
-          const count = DEMO_SUBMISSIONS.filter(
+          const count = submissions.filter(
             (s) =>
               s.senderRole?.toLowerCase().includes(cadre.filter.toLowerCase()) ||
               s.primaryCategory?.toLowerCase().includes(cadre.filter.toLowerCase()) ||
@@ -59,7 +60,7 @@ export default async function SubmissionsByProfessionPage() {
         })}
       </div>
 
-      <SubmissionsInbox user={user} submissions={DEMO_SUBMISSIONS} />
+      <SubmissionsInbox user={user} submissions={submissions} />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React from 'react';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_SUBMISSIONS } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerSubmissions } from '@/lib/auth/session';
 import { SubmissionsInbox } from '@/app/(engineer)/components/SubmissionsInbox';
 
 export const metadata = {
@@ -11,5 +10,7 @@ export default async function DashboardSubmissionsPage() {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  return <SubmissionsInbox user={user} submissions={DEMO_SUBMISSIONS} />;
+  const submissions = await getServerSubmissions();
+
+  return <SubmissionsInbox user={user} submissions={submissions} />;
 }

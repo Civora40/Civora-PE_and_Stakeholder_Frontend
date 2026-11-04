@@ -1,6 +1,6 @@
 import React from 'react';
-import { getCurrentUser } from '@/lib/auth/session';
-import { DEMO_USERS, DEMO_TASKS, DEMO_ACTIVITIES } from '@/lib/mock-data/fixtures';
+import { getCurrentUser, getServerTasksAndActivities } from '@/lib/auth/session';
+import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { ActivityTasks } from '@/app/(engineer)/components/ActivityTasks';
 
 export const metadata = {
@@ -9,12 +9,13 @@ export const metadata = {
 
 export default async function ProjectTasksPage() {
   const user = (await getCurrentUser()) || DEMO_USERS.project_engineer;
+  const { tasks, activities } = await getServerTasksAndActivities();
 
   return (
     <ActivityTasks
       user={user}
-      initialTasks={DEMO_TASKS}
-      initialActivities={DEMO_ACTIVITIES}
+      initialTasks={tasks}
+      initialActivities={activities}
     />
   );
 }

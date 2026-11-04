@@ -74,6 +74,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortField, setSortField] = useState<keyof SubmittalItem>('receivedDate');
   const [projectsCount, setProjectsCount] = useState(0);
+  const [submittals, setSubmittals] = useState<SubmittalItem[]>(INITIAL_SUBMITTALS);
 
   useEffect(() => {
     fetch('/api/projects')
@@ -81,6 +82,33 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
       .then((data) => {
         if (data && Array.isArray(data.projects)) {
           setProjectsCount(data.projects.length);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/submissions')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.submissions)) {
+          const mapped: SubmittalItem[] = data.submissions.map((s: Record<string, unknown>) => ({
+            id: String(s.id || ''),
+            submittalId: String(s.identifier || s.reference_code || 'SUB-2026'),
+            title: String(s.title || 'Field Submission'),
+            packageGroup: String(s.reportingGroup || s.primaryCategory || 'Site Work'),
+            priority: s.reviewStatus === 'needs_information' ? 'High' : 'Medium',
+            assignedTo: {
+              name: String(s.submittedBy || s.senderName || 'Field Engineer'),
+            },
+            status:
+              s.reviewStatus === 'approved'
+                ? 'Approved'
+                : s.reviewStatus === 'pending_review'
+                  ? 'In Review'
+                  : 'In Progress',
+            receivedDate: String(s.receivedDate || '').slice(0, 10),
+            slaDue: '24h SLA',
+          }));
+          setSubmittals(mapped);
         }
       })
       .catch(() => {});
@@ -106,7 +134,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
 
   // Filtered & sorted table data
   const filteredSubmittals = useMemo(() => {
-    return INITIAL_SUBMITTALS.filter((item) => {
+    return submittals.filter((item) => {
       const matchSearch =
         item.submittalId.toLowerCase().includes(tableSearch.toLowerCase()) ||
         item.title.toLowerCase().includes(tableSearch.toLowerCase()) ||
@@ -124,7 +152,7 @@ export function CivoraDashboard({ user }: CivoraDashboardProps) {
       }
       return 0;
     });
-  }, [tableSearch, sortField, sortDirection]);
+  }, [submittals, tableSearch, sortField, sortDirection]);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredSubmittals.length) {

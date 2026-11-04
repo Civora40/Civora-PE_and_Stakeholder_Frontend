@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
+import { fetchBackend } from '@/lib/api/backend-client';
+import { getCurrentUser, getSessionData } from '@/lib/auth/session';
 import { getSubmissionsStore } from '@/lib/services/ingestion';
+import { Submission } from '@/types';
 
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUser();
+  const session = await getSessionData();
+  const user = session?.user ?? (await getCurrentUser());
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -15,11 +18,32 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get('category');
   const verificationStatus = searchParams.get('verificationStatus');
 
-  let submissions = getSubmissionsStore();
+  let submissions: Submission[] = [...getSubmissionsStore()];
+
+  if (session?.accessToken) {
+    const query = projectId && projectId !== 'all' ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const backendRes = await fetchBackend<{
+      submissions: Submission[];
+      totalCount: number;
+      unverifiedCount: number;
+    }>(`/submissions/${query}`, {
+      method: 'GET',
+      accessToken: session.accessToken,
+    });
+    if (backendRes.ok && backendRes.data && Array.isArray(backendRes.data.submissions)) {
+      const backendIds = new Set(backendRes.data.submissions.map((s) => s.id));
+      submissions = [
+        ...backendRes.data.submissions,
+        ...submissions.filter((s) => !backendIds.has(s.id)),
+      ];
+    }
+  }
 
   // Enforce project authorization scope
   if (user.role !== 'platform_admin' && !user.assignedProjects.includes('*')) {
-    submissions = submissions.filter((s) => user.assignedProjects.includes(s.projectId));
+    submissions = submissions.filter(
+      (s) => user.assignedProjects.length === 0 || user.assignedProjects.includes(s.projectId)
+    );
   }
 
   // Filter params
@@ -33,7 +57,9 @@ export async function GET(req: NextRequest) {
     submissions = submissions.filter((s) => s.reviewStatus === status);
   }
   if (category && category !== 'all') {
-    submissions = submissions.filter((s) => s.primaryCategory === category || s.reportingGroup === category);
+    submissions = submissions.filter(
+      (s) => s.primaryCategory === category || s.reportingGroup === category
+    );
   }
   if (verificationStatus && verificationStatus !== 'all') {
     submissions = submissions.filter((s) => s.senderVerificationStatus === verificationStatus);
@@ -44,4 +70,57 @@ export async function GET(req: NextRequest) {
     totalCount: submissions.length,
     unverifiedCount: submissions.filter((s) => s.senderVerificationStatus === 'needs_verification').length,
   });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getSessionData();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  if (session.accessToken) {
+    const backendRes = await fetchBackend<Submission>('/submissions/', {
+      method: 'POST',
+      accessToken: session.accessToken,
+      body,
+    });
+    if (backendRes.ok && backendRes.data) {
+      return NextResponse.json(
+        { success: true, submission: backendRes.data },
+        { status: 201 }
+      );
+    }
+  }
+
+  return NextResponse.json(
+    { error: 'Unable to record submission against backend.' },
+    { status: 400 }
+  );
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getSessionData();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const submissionId = body.submissionId || body.id;
+  if (!submissionId) {
+    return NextResponse.json({ error: 'submissionId is required' }, { status: 400 });
+  }
+
+  if (session.accessToken) {
+    const backendRes = await fetchBackend<Submission>(`/submissions/${submissionId}/`, {
+      method: 'PATCH',
+      accessToken: session.accessToken,
+      body,
+    });
+    if (backendRes.ok && backendRes.data) {
+      return NextResponse.json({ success: true, submission: backendRes.data });
+    }
+  }
+
+  return NextResponse.json({ error: 'Submission update failed.' }, { status: 400 });
 }

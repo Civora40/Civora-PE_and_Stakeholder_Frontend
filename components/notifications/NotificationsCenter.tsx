@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Bell,
@@ -66,6 +66,40 @@ export function NotificationsCenter({ user }: NotificationsCenterProps) {
   const [stakeholderNotifs, setStakeholderNotifs] = useState<NotificationItem[]>(
     STAKEHOLDER_NOTIFICATIONS
   );
+
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.notifications)) {
+          const mapped: NotificationItem[] = data.notifications.map(
+            (n: Record<string, unknown>) => ({
+              id: String(n.id || ''),
+              targetRole: isStakeholder ? 'read_only_stakeholder' : 'project_engineer',
+              category: 'submission',
+              severity: (n.severity === 'critical' ? 'urgent' : (n.severity as NotificationSeverity)) || 'info',
+              title: String(n.title || 'Platform Notification'),
+              message: String(n.message || n.body || ''),
+              timestamp: String(n.timestamp || n.createdAt || 'Just now'),
+              isoDate: String(n.createdAt || new Date().toISOString()),
+              isRead: Boolean(n.read ?? n.isRead),
+              isStarred: false,
+              projectId: n.projectId ? String(n.projectId) : undefined,
+              projectName: n.projectName ? String(n.projectName) : undefined,
+              channel: 'portal' as NotificationChannel,
+              actionLabel: 'View Details',
+              actionUrl: String(n.actionUrl || (isStakeholder ? '/stakeholder' : '/dashboard')),
+            })
+          );
+          if (isStakeholder) {
+            setStakeholderNotifs(mapped);
+          } else {
+            setEngineerNotifs(mapped);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [isStakeholder]);
 
   const currentRoleNotifications =
     activeRoleView === 'stakeholder' ? stakeholderNotifs : engineerNotifs;

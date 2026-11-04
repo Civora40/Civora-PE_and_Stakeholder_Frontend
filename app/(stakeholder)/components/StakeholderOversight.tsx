@@ -43,6 +43,9 @@ interface StakeholderOversightProps {
 
 export function StakeholderOversight({ user, initialTab }: StakeholderOversightProps) {
   const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+  const [liveReleasedReports, setLiveReleasedReports] = useState<StakeholderReleasedReport[]>(
+    STAKEHOLDER_RELEASED_REPORTS
+  );
 
   useEffect(() => {
     fetch('/api/projects')
@@ -55,6 +58,30 @@ export function StakeholderOversight({ user, initialTab }: StakeholderOversightP
       .catch(() => {
         // Fallback to local state
       });
+
+    fetch('/api/reports')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.reports)) {
+          const mapped: StakeholderReleasedReport[] = data.reports.map(
+            (r: Record<string, unknown>) => ({
+              id: String(r.id || ''),
+              reportNumber: String(r.reportNumber || r.reference_code || 'REP-2026'),
+              projectId: String(r.projectId || ''),
+              projectName: String(r.projectName || ''),
+              title: String(r.title || 'Project Dossier'),
+              period: String(r.period || '2026'),
+              releasedAt: String(r.releasedAt || r.lastSavedAt || '2026'),
+              approvedBy: String(r.approvedBy || r.generatedBy || 'Project Engineer'),
+              executiveSummary: String(r.executiveSummary || ''),
+              keyHighlights: [],
+              fileSize: '2.4 MB',
+            })
+          );
+          setLiveReleasedReports(mapped);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // 1. Resolve authorized assigned projects (Section 3.2: Project-level membership)
@@ -86,8 +113,10 @@ export function StakeholderOversight({ user, initialTab }: StakeholderOversightP
   }, [assignedProjectIds]);
 
   const authorizedReports = useMemo(() => {
-    return STAKEHOLDER_RELEASED_REPORTS.filter((r) => assignedProjectIds.has(r.projectId));
-  }, [assignedProjectIds]);
+    return liveReleasedReports.filter(
+      (r) => assignedProjectIds.size === 0 || assignedProjectIds.has(r.projectId)
+    );
+  }, [liveReleasedReports, assignedProjectIds]);
 
   // Section 7.1: Summary Cards Metrics
   const activeProjectsCount = useMemo(() => {

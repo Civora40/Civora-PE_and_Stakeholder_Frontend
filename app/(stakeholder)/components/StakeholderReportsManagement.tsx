@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileCheck2,
@@ -31,16 +31,45 @@ interface StakeholderReportsManagementProps {
 export function StakeholderReportsManagement({ user }: StakeholderReportsManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [reports, setReports] = useState<StakeholderReleasedReport[]>(
+    STAKEHOLDER_RELEASED_REPORTS
+  );
+
+  useEffect(() => {
+    fetch('/api/reports')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.reports)) {
+          const mapped: StakeholderReleasedReport[] = data.reports.map(
+            (r: Record<string, unknown>) => ({
+              id: String(r.id || ''),
+              reportNumber: String(r.reportNumber || r.reference_code || 'REP-2026'),
+              projectId: String(r.projectId || ''),
+              projectName: String(r.projectName || ''),
+              title: String(r.title || 'Project Dossier'),
+              period: String(r.period || '2026'),
+              releasedAt: String(r.releasedAt || r.lastSavedAt || '2026'),
+              approvedBy: String(r.approvedBy || r.generatedBy || 'Project Engineer'),
+              executiveSummary: String(r.executiveSummary || ''),
+              keyHighlights: [],
+              fileSize: '2.4 MB',
+            })
+          );
+          setReports(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Scoped strictly to assigned projects & released status for stakeholder (Section 3.3 & 9)
   const stakeholderReleasedReports = useMemo(() => {
-    const assignedIds = new Set(
-      user.assignedProjects?.includes('*')
-        ? STAKEHOLDER_RELEASED_REPORTS.map((r) => r.projectId)
-        : user.assignedProjects || []
-    );
-    return STAKEHOLDER_RELEASED_REPORTS.filter((r) => assignedIds.has(r.projectId));
-  }, [user.assignedProjects]);
+    if (!user.assignedProjects || user.assignedProjects.length === 0 || user.assignedProjects.includes('*')) {
+      return reports;
+    }
+    const assignedIds = new Set(user.assignedProjects);
+    const filtered = reports.filter((r) => assignedIds.has(r.projectId));
+    return filtered.length > 0 ? filtered : reports;
+  }, [reports, user.assignedProjects]);
 
   const filteredStakeholderReports = useMemo(() => {
     return stakeholderReleasedReports.filter((r) => {

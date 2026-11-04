@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
-import { CivoraUser, Project, SessionData, UserRole } from '@/types';
+import { ActivityRecord, CivoraUser, Project, ProjectTask, SessionData, Submission, UserRole } from '@/types';
 import { getMockUserByRole, registerMockUser } from './mock-adapter';
 import { fetchBackend } from '@/lib/api/backend-client';
-import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import { DEMO_ACTIVITIES, DEMO_PROJECTS, DEMO_SUBMISSIONS, DEMO_TASKS } from '@/lib/mock-data/fixtures';
 
 const SESSION_COOKIE_NAME = 'civora_session';
 const REFRESH_COOKIE_NAME = 'civora_refresh';
@@ -261,4 +261,59 @@ export async function getServerProjects(): Promise<Project[]> {
     }
   }
   return DEMO_PROJECTS;
+}
+
+/**
+ * Fetch live field submissions from the Django Backend for server-rendered Engineer pages.
+ */
+export async function getServerSubmissions(): Promise<Submission[]> {
+  const session = await getSessionData();
+  if (session?.accessToken) {
+    try {
+      const backendRes = await fetchBackend<{ submissions?: Submission[] }>('/submissions/', {
+        method: 'GET',
+        accessToken: session.accessToken,
+      });
+      if (backendRes.ok && backendRes.data && Array.isArray(backendRes.data.submissions)) {
+        const backendIds = new Set(backendRes.data.submissions.map((s) => s.id));
+        const localExtras = DEMO_SUBMISSIONS.filter((s) => !backendIds.has(s.id));
+        return [...backendRes.data.submissions, ...localExtras];
+      }
+    } catch {
+      // Fall back to in-memory store
+    }
+  }
+  return DEMO_SUBMISSIONS;
+}
+
+/**
+ * Fetch live tasks and WBS activities from the Django Backend for server-rendered Engineer pages.
+ */
+export async function getServerTasksAndActivities(): Promise<{
+  tasks: ProjectTask[];
+  activities: ActivityRecord[];
+}> {
+  const session = await getSessionData();
+  if (session?.accessToken) {
+    try {
+      const backendRes = await fetchBackend<{
+        tasks?: ProjectTask[];
+        activities?: ActivityRecord[];
+      }>('/tasks/', {
+        method: 'GET',
+        accessToken: session.accessToken,
+      });
+      if (backendRes.ok && backendRes.data) {
+        return {
+          tasks: Array.isArray(backendRes.data.tasks) ? backendRes.data.tasks : DEMO_TASKS,
+          activities: Array.isArray(backendRes.data.activities)
+            ? backendRes.data.activities
+            : DEMO_ACTIVITIES,
+        };
+      }
+    } catch {
+      // Fall back to in-memory store
+    }
+  }
+  return { tasks: DEMO_TASKS, activities: DEMO_ACTIVITIES };
 }
