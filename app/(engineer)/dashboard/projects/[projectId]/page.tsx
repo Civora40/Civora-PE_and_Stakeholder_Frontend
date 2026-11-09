@@ -1,7 +1,9 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { getCurrentUser, getSessionData, getServerProjects } from '@/lib/auth/session';
+import { fetchBackend } from '@/lib/api/backend-client';
 import { ProjectDetailView } from '@/app/(engineer)/components/ProjectDetailView';
+import { Project } from '@/types';
 
 interface ProjectDetailPageProps {
   params: Promise<{ projectId: string }>;
@@ -25,7 +27,20 @@ export default async function ProjectDetailPage({
   const { tab } = await searchParams;
 
   const projects = await getServerProjects();
-  const project = projects.find((p) => p.id === projectId);
+  let project = projects.find((p) => p.id === projectId || p.code === projectId);
+
+  if (!project) {
+    const session = await getSessionData();
+    if (session?.accessToken) {
+      const backendRes = await fetchBackend<Project>(`/projects/${projectId}/`, {
+        accessToken: session.accessToken,
+      });
+      if (backendRes.ok && backendRes.data) {
+        project = backendRes.data;
+      }
+    }
+  }
+
   if (!project) {
     notFound();
   }
@@ -35,8 +50,17 @@ export default async function ProjectDetailPage({
     redirect(`/stakeholder/projects/${projectId}`);
   }
 
-  const validTabs = ['overview', 'milestones', 'reports', 'updates'] as const;
+  const validTabs = [
+    'overview',
+    'disciplines',
+    'wbs',
+    'history',
+    'milestones',
+    'reports',
+    'updates',
+  ] as const;
   const initialTab = validTabs.includes(tab as any) ? (tab as any) : 'overview';
 
   return <ProjectDetailView user={user} project={project} initialTab={initialTab} />;
 }
+

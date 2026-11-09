@@ -90,7 +90,64 @@ export type Permission =
   | 'users:manage'
   | 'settings:manage';
 
-export type ProjectStatus = 'active' | 'planning' | 'in_review' | 'completed' | 'on_hold';
+export type ProjectStatus =
+  | 'draft'
+  | 'setup'
+  | 'active'
+  | 'on_hold'
+  | 'completed'
+  | 'archived'
+  | 'planning'
+  | 'in_review';
+
+export interface ProjectDepartment {
+  id: string;
+  organizationId?: string;
+  projectId?: string;
+  name: string;
+  code: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectActivity {
+  id: string;
+  organizationId?: string;
+  projectId?: string;
+  code: string;
+  name: string;
+  description?: string;
+  wbsReference?: string;
+  locationZone?: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'delayed' | 'blocked';
+  progressPercent: number;
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  departmentId?: string;
+  departmentCode?: string;
+  departmentName?: string;
+  leadEngineerId?: string;
+  leadEngineerName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProjectMember {
+  id: string;
+  organizationId?: string;
+  projectId?: string;
+  userId: string;
+  userEmail: string;
+  userFullName: string;
+  roleSlug: string;
+  departmentId?: string;
+  departmentName?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
 
 export interface ProjectSpecificationFolder {
   id: string;
@@ -118,10 +175,14 @@ export interface Project {
   budgetFormatted: string;
   specsReference: string;
   specificationFolder?: ProjectSpecificationFolder;
+  departments?: ProjectDepartment[];
+  activities?: ProjectActivity[];
+  members?: ProjectMember[];
   // Extended Project Initiation Metadata
   projectType?: string;
   description?: string;
   contractRef?: string;
+  lasbcaPermitNumber?: string;
   priority?: 'low' | 'normal' | 'high' | 'critical';
   country?: string;
   state?: string;

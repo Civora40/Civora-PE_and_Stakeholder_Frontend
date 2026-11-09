@@ -48,3 +48,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ error: 'Failed to submit review or approval.' }, { status: 400 });
 }
+

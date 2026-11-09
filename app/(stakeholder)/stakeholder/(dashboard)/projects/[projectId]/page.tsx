@@ -1,8 +1,10 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import { getCurrentUser, getSessionData, getServerProjects } from '@/lib/auth/session';
+import { fetchBackend } from '@/lib/api/backend-client';
 import { DEMO_USERS } from '@/lib/mock-data/fixtures';
 import { ProjectDetailView } from '@/app/(stakeholder)/components/StakeholderProjectDetailView';
+import { Project } from '@/types';
 
 interface StakeholderProjectDetailPageProps {
   params: Promise<{ projectId: string }>;
@@ -26,7 +28,20 @@ export default async function StakeholderProjectDetailPage({
   const { tab } = await searchParams;
 
   const projects = await getServerProjects();
-  const project = projects.find((p) => p.id === projectId);
+  let project = projects.find((p) => p.id === projectId || p.code === projectId);
+
+  if (!project) {
+    const session = await getSessionData();
+    if (session?.accessToken) {
+      const backendRes = await fetchBackend<Project>(`/projects/${projectId}/`, {
+        accessToken: session.accessToken,
+      });
+      if (backendRes.ok && backendRes.data) {
+        project = backendRes.data;
+      }
+    }
+  }
+
   if (!project) {
     notFound();
   }
@@ -34,7 +49,9 @@ export default async function StakeholderProjectDetailPage({
   // Authorization Check: Scoped strictly to assigned projects
   if (user.role === 'read_only_stakeholder') {
     const isAssigned =
-      user.assignedProjects?.includes('*') || user.assignedProjects?.includes(projectId);
+      user.assignedProjects?.includes('*') ||
+      user.assignedProjects?.includes(project.id) ||
+      user.assignedProjects?.includes(project.code);
 
     if (!isAssigned) {
       redirect('/unauthorized');
