@@ -68,10 +68,10 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!backendRes.unreachable && backendRes.status === 409) {
+      if (!backendRes.unreachable) {
         return NextResponse.json(
-          { error: backendRes.message || `Project code '${body.code}' is already registered` },
-          { status: 409 }
+          { error: backendRes.error?.message || backendRes.message || 'Failed to create project.' },
+          { status: backendRes.status || 400 }
         );
       }
     }
@@ -102,6 +102,16 @@ export async function POST(request: Request) {
     const resolvedSpecs = body.specsReference || 'Eurocode 2 & FMWH Standard Specifications (C35/45)';
     const resolvedType = body.projectType || 'Road / Highway';
     const resolvedScope = body.scopeSummary || body.description || '';
+    const isAdmin = user.role === 'platform_admin';
+    const resolvedStatus = isAdmin
+      ? body.status === 'planning'
+        ? 'setup'
+        : 'active'
+      : body.status === 'draft'
+      ? 'draft'
+      : body.status === 'planning'
+      ? 'setup'
+      : 'pending_approval';
 
     const newProject: Project = {
       id: projectId,
@@ -109,7 +119,13 @@ export async function POST(request: Request) {
       name: body.name.trim(),
       client: body.client.trim(),
       location: locationString,
-      status: body.status === 'planning' ? 'planning' : 'active',
+      status: resolvedStatus,
+      approvalStatus: isAdmin ? 'approved' : 'pending_review',
+      isAdminApproved: isAdmin,
+      canAcceptFieldSubmissions: isAdmin && resolvedStatus === 'active',
+      fieldSubmissionBlockReason: isAdmin
+        ? null
+        : `Field submissions are locked until a Platform Administrator reviews and approves ${cleanCode}.`,
       leadEngineer: body.leadEngineer || user.name || 'Assigned Project Engineer',
       progressPercent: 0,
       submissionsCount: 0,

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchBackend } from '@/lib/api/backend-client';
-import { getCurrentUser, getSessionData } from '@/lib/auth/session';
+import { getCurrentUser, getSessionData, getServerProjects } from '@/lib/auth/session';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import { getSubmissionsStore } from '@/lib/services/ingestion';
 import { Submission } from '@/types';
 
@@ -79,6 +83,24 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+  const targetProjectId = body.projectId || body.project;
+
+  if (targetProjectId) {
+    const knownProjects = await getServerProjects();
+    const matchedProject = knownProjects.find((p) => p.id === targetProjectId);
+    if (matchedProject && !canProjectAcceptFieldSubmissions(matchedProject)) {
+      return NextResponse.json(
+        {
+          error:
+            getProjectSubmissionBlockReason(matchedProject) ||
+            'Project must be approved by a Platform Administrator before field submissions can begin.',
+          code: 'project_approval_required',
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   if (session.accessToken) {
     const backendRes = await fetchBackend<Submission>('/submissions/', {
       method: 'POST',
@@ -89,6 +111,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: true, submission: backendRes.data },
         { status: 201 }
+      );
+    }
+    if (!backendRes.unreachable) {
+      return NextResponse.json(
+        {
+          error: backendRes.error?.message || backendRes.message || 'Unable to record field submission.',
+          code: backendRes.error?.code,
+        },
+        { status: backendRes.status || 400 }
       );
     }
   }

@@ -89,3 +89,4 @@ export async function POST(
 
   return NextResponse.json({ success: true, activity: mockActivity }, { status: 201 });
 }
+

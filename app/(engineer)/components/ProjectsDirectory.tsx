@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import { Project, CivoraUser } from '@/types';
 import { can } from '@/lib/permissions/rbac';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectStatusBadgeInfo,
+} from '@/lib/projects/governance';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { STAKEHOLDER_MILESTONES, STAKEHOLDER_UPDATES } from '@/lib/mock-data/stakeholder';
@@ -35,7 +39,9 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
 
   const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'in_review' | 'planning'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'pending_approval' | 'setup' | 'draft' | 'rejected'
+  >('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
@@ -151,17 +157,17 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
           <Filter className="w-4 h-4 text-slate-400 hidden sm:inline-block" />
           <span className="text-xs text-slate-500 hidden sm:inline-block">Status:</span>
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto overflow-x-auto text-xs">
-            {(['all', 'active', 'in_review', 'planning'] as const).map((status) => (
+            {(['all', 'active', 'pending_approval', 'setup', 'draft', 'rejected'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1 rounded font-medium transition-colors uppercase text-[10px] tracking-wider cursor-pointer ${
+                className={`px-3 py-1 rounded font-medium transition-colors uppercase text-[10px] tracking-wider cursor-pointer whitespace-nowrap ${
                   statusFilter === status
                     ? 'bg-[#001237] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {status.replace('_', ' ')}
+                {status.replace(/_/g, ' ')}
               </button>
             ))}
           </div>
@@ -239,18 +245,25 @@ export function ProjectsDirectory({ user, projects: initialProjects }: ProjectsD
                       </p>
                     </div>
                     <Badge
-                      variant={
-                        proj.status === 'active'
-                          ? 'teal'
-                          : proj.status === 'in_review'
-                          ? 'blue'
-                          : 'slate'
-                      }
+                      variant={getProjectStatusBadgeInfo(proj).variant}
                       size="sm"
                     >
-                      {proj.status.replace('_', ' ')}
+                      {getProjectStatusBadgeInfo(proj).label}
                     </Badge>
                   </div>
+
+                  {!canProjectAcceptFieldSubmissions(proj) && (
+                    <div className="px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span className="truncate">
+                        {proj.approvalStatus === 'rejected' || proj.status === 'rejected'
+                          ? 'Rejected by Admin — revise & resubmit before field logging'
+                          : proj.approvalStatus === 'changes_requested'
+                          ? 'Admin requested changes before field logging'
+                          : 'Awaiting Platform Admin approval — field submissions locked'}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="text-xs text-slate-500 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />

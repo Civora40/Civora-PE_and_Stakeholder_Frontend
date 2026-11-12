@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Inbox,
   Search,
@@ -13,9 +13,17 @@ import {
   UserCheck,
   Link2,
   Clock,
+  Plus,
+  Lock,
+  AlertCircle,
+  X,
 } from 'lucide-react';
-import { Submission, CivoraUser, SubmissionStatus } from '@/types';
+import { Submission, CivoraUser, SubmissionStatus, Project } from '@/types';
 import { can } from '@/lib/permissions/rbac';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { CustomSelect, SelectOption } from '@/components/ui/CustomSelect';
@@ -70,7 +78,76 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
   const [isLinkTaskModalOpen, setIsLinkTaskModalOpen] = useState(false);
   const [isRequestInfoModalOpen, setIsRequestInfoModalOpen] = useState(false);
 
+  // New Field Submission modal state
+  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
+  const [isNewSubModalOpen, setIsNewSubModalOpen] = useState(false);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState('');
+  const [newSubTitle, setNewSubTitle] = useState('');
+  const [newSubDesc, setNewSubDesc] = useState('');
+  const [newSubChannel, setNewSubChannel] = useState<'portal' | 'whatsapp' | 'telegram'>('portal');
+  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
+  const [newSubError, setNewSubError] = useState<string | null>(null);
+
   const canReview = can(user, 'submissions:review');
+  const isStakeholder = user.role === 'read_only_stakeholder';
+
+  useEffect(() => {
+    if (isStakeholder) return;
+    fetch('/api/projects')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.projects)) {
+          setAvailableProjects(data.projects);
+          const firstApproved = data.projects.find((p: Project) => canProjectAcceptFieldSubmissions(p));
+          if (firstApproved) {
+            setSelectedSubProjectId(firstApproved.id);
+          } else if (data.projects[0]) {
+            setSelectedSubProjectId(data.projects[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [isStakeholder]);
+
+  const selectedModalProject = availableProjects.find((p) => p.id === selectedSubProjectId) || null;
+  const selectedModalProjectBlocked = selectedModalProject
+    ? getProjectSubmissionBlockReason(selectedModalProject)
+    : null;
+
+  const handleCreateSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSubProjectId || !newSubTitle.trim()) return;
+    setIsSubmittingNew(true);
+    setNewSubError(null);
+    try {
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: selectedSubProjectId,
+          title: newSubTitle.trim(),
+          description: newSubDesc.trim(),
+          sourceChannel: newSubChannel,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to log field submission.');
+      }
+      if (data.submission) {
+        setSubmissionsList((prev) => [data.submission, ...prev]);
+      }
+      setIsNewSubModalOpen(false);
+      setNewSubTitle('');
+      setNewSubDesc('');
+      setFeedbackMessage('Field submission logged successfully.');
+      setTimeout(() => setFeedbackMessage(null), 3500);
+    } catch (err: any) {
+      setNewSubError(err.message || 'Field submission rejected.');
+    } finally {
+      setIsSubmittingNew(false);
+    }
+  };
 
   // Filtered submissions list
   const filteredSubmissions = useMemo(() => {
@@ -225,12 +302,28 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
           </p>
         </div>
 
-        {feedbackMessage && (
-          <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-800 text-xs flex items-center gap-2 shadow-xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-medium">{feedbackMessage}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {!isStakeholder && (
+            <Button
+              type="button"
+              variant="teal"
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              onClick={() => {
+                setNewSubError(null);
+                setIsNewSubModalOpen(true);
+              }}
+            >
+              Log Field Submission
+            </Button>
+          )}
+          {feedbackMessage && (
+            <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/40 text-emerald-800 text-xs flex items-center gap-2 shadow-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-medium">{feedbackMessage}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Filter Chips Ribbon */}
@@ -680,6 +773,127 @@ export function SubmissionsInbox({ user, submissions: initialSubmissions }: Subm
             setTimeout(() => setFeedbackMessage(null), 3500);
           }}
         />
+      )}
+
+      {/* New Field Submission Modal */}
+      {isNewSubModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#001237]/60 backdrop-blur-xs">
+          <form
+            onSubmit={handleCreateSubmission}
+            className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif]">
+                  Log Field Submission
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Requires an active, Platform Administrator approved project.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewSubModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {newSubError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                <span>{newSubError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Target Project *</label>
+                <select
+                  value={selectedSubProjectId}
+                  onChange={(e) => setSelectedSubProjectId(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:border-[#001237] focus:outline-none"
+                >
+                  {availableProjects.length === 0 && (
+                    <option value="">No authorized projects found</option>
+                  )}
+                  {availableProjects.map((p) => {
+                    const unlocked = canProjectAcceptFieldSubmissions(p);
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.code} — {p.name} {unlocked ? '(Approved)' : `(${p.status.replace('_', ' ')} — Locked)`}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {selectedModalProjectBlocked && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-2">
+                  <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>{selectedModalProjectBlocked}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Submission Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Viaduct Pier P3 Concrete Break Log"
+                  value={newSubTitle}
+                  onChange={(e) => setNewSubTitle(e.target.value)}
+                  disabled={Boolean(selectedModalProjectBlocked)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none disabled:bg-slate-100"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Source Channel</label>
+                <select
+                  value={newSubChannel}
+                  onChange={(e) => setNewSubChannel(e.target.value as 'portal' | 'whatsapp' | 'telegram')}
+                  disabled={Boolean(selectedModalProjectBlocked)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:border-[#001237] focus:outline-none disabled:bg-slate-100"
+                >
+                  <option value="portal">Civora Web Portal</option>
+                  <option value="whatsapp">WhatsApp Business</option>
+                  <option value="telegram">Telegram Field Bot</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Field Notes</label>
+                <textarea
+                  rows={3}
+                  placeholder="Include measurements, test results, or observation details..."
+                  value={newSubDesc}
+                  onChange={(e) => setNewSubDesc(e.target.value)}
+                  disabled={Boolean(selectedModalProjectBlocked)}
+                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-900 focus:border-[#001237] focus:outline-none disabled:bg-slate-100"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsNewSubModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingNew || Boolean(selectedModalProjectBlocked) || !selectedSubProjectId || !newSubTitle.trim()}
+                className="px-4 py-2 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isSubmittingNew ? 'Submitting...' : 'Submit Field Log'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

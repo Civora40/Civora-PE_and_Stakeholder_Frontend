@@ -92,13 +92,21 @@ export type Permission =
 
 export type ProjectStatus =
   | 'draft'
+  | 'pending_approval'
   | 'setup'
   | 'active'
   | 'on_hold'
   | 'completed'
+  | 'rejected'
   | 'archived'
   | 'planning'
   | 'in_review';
+
+export type ProjectApprovalStatus =
+  | 'pending_review'
+  | 'approved'
+  | 'changes_requested'
+  | 'rejected';
 
 export interface ProjectDepartment {
   id: string;
@@ -178,6 +186,25 @@ export interface Project {
   departments?: ProjectDepartment[];
   activities?: ProjectActivity[];
   members?: ProjectMember[];
+  // Platform Administrator Project Review & Field Submission Gate
+  approvalStatus?: ProjectApprovalStatus;
+  approval_status?: ProjectApprovalStatus;
+  isAdminApproved?: boolean;
+  is_admin_approved?: boolean;
+  canAcceptFieldSubmissions?: boolean;
+  can_accept_field_submissions?: boolean;
+  fieldSubmissionBlockReason?: string | null;
+  field_submission_block_reason?: string | null;
+  reviewedById?: string | null;
+  reviewedByName?: string | null;
+  reviewedByEmail?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string;
+  createdById?: string | null;
+  createdByName?: string | null;
+  createdByEmail?: string | null;
+  organizationId?: string;
+  organizationName?: string;
   // Extended Project Initiation Metadata
   projectType?: string;
   description?: string;

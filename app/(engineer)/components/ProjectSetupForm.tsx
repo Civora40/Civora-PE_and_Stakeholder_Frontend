@@ -259,7 +259,7 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
   ]);
 
   // Submit Handler
-  const handleSubmit = async (targetStatus: 'active' | 'planning') => {
+  const handleSubmit = async (targetStatus: 'pending_approval' | 'draft') => {
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -329,10 +329,13 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
         throw new Error(data.error || 'Failed to initialize project.');
       }
 
+      const isAdminCreated = data?.project?.isAdminApproved === true;
       setSuccessMessage(
-        targetStatus === 'active'
-          ? `Project ${code} (${name}) and its Specification Folder (${code.toUpperCase()}-SPEC) have been provisioned!`
-          : `Draft saved successfully for project ${code} and Specification Folder (${code.toUpperCase()}-SPEC).`
+        targetStatus === 'draft'
+          ? `Draft saved successfully for ${code} (${code.toUpperCase()}-SPEC). Submit it for Platform Admin approval before field submissions.`
+          : isAdminCreated
+          ? `Project ${code} (${name}) has been provisioned and approved for field submissions!`
+          : `Project ${code} (${name}) has been submitted for Platform Administrator review and approval. Field submissions will unlock upon approval.`
       );
 
       const createdId = data?.project?.id;
@@ -388,7 +391,7 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => handleSubmit('planning')}
+            onClick={() => handleSubmit('draft')}
             isLoading={isSubmitting}
             leftIcon={<Save className="w-4 h-4 text-slate-500" />}
           >
@@ -402,13 +405,13 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
               if (currentStep < 5) {
                 setCurrentStep(5);
               } else {
-                handleSubmit('active');
+                handleSubmit('pending_approval');
               }
             }}
             isLoading={isSubmitting}
             leftIcon={<Sparkles className="w-4 h-4" />}
           >
-            {currentStep === 5 ? 'Authorize & Create' : 'Review & Finalize'}
+            {currentStep === 5 ? 'Submit for Admin Approval' : 'Review & Finalize'}
           </Button>
         </div>
       </div>
@@ -1589,6 +1592,17 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
                 </div>
               </div>
 
+              {/* Admin Review Notice */}
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-start gap-3 text-xs text-amber-900">
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Administrator Approval Gate</span>
+                  <span>
+                    Submitting this project routes it to the Platform Administrator review queue. Field submissions (WhatsApp, Telegram, and Web Portal) remain locked until an administrator reviews and approves the project.
+                  </span>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <Button
@@ -1606,22 +1620,22 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
                     type="button"
                     variant="outline"
                     size="md"
-                    onClick={() => handleSubmit('planning')}
+                    onClick={() => handleSubmit('draft')}
                     isLoading={isSubmitting}
                     className="flex-1 sm:flex-initial"
                   >
-                    Save as Draft (Planning)
+                    Save as Draft
                   </Button>
                   <Button
                     type="button"
                     variant="teal"
                     size="md"
-                    onClick={() => handleSubmit('active')}
+                    onClick={() => handleSubmit('pending_approval')}
                     isLoading={isSubmitting}
-                    leftIcon={<CheckCircle2 className="w-4 h-4" />}
+                    leftIcon={<Send className="w-4 h-4" />}
                     className="flex-1 sm:flex-initial"
                   >
-                    Create Project
+                    Submit for Admin Approval
                   </Button>
                 </div>
               </div>
@@ -1766,7 +1780,7 @@ export function ProjectSetupForm({ user }: ProjectSetupFormProps) {
                 <Info className="w-3.5 h-3.5 text-[#3B68DE]" /> Governance Notice
               </div>
               <p>
-                Civora provisions automated webhook bindings for WhatsApp and Telegram upon project creation. Field crew submissions will automatically link to this scope.
+                Projects initiated by engineers require Platform Administrator review and approval before WhatsApp, Telegram, or portal field submissions are unlocked.
               </p>
             </div>
           </div>

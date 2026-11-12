@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, getServerProjects } from '@/lib/auth/session';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import { processInboundWebhook } from '@/lib/services/ingestion';
 
 export async function POST(req: NextRequest) {
@@ -31,12 +35,27 @@ export async function POST(req: NextRequest) {
     ? '+2348199990011' // Unregistered number
     : senderRaw || (channel === 'whatsapp' ? '+2348034192084' : '@chidinma_geo_lead');
 
+  const targetProjectId = projectId || 'prj_metro_01';
+  const serverProjects = await getServerProjects();
+  const targetProject = serverProjects.find((p) => p.id === targetProjectId);
+  if (targetProject && !canProjectAcceptFieldSubmissions(targetProject)) {
+    return NextResponse.json(
+      {
+        error:
+          getProjectSubmissionBlockReason(targetProject) ||
+          'Field submissions are locked until Platform Administrator approval.',
+        code: 'project_approval_required',
+      },
+      { status: 403 }
+    );
+  }
+
   const result = processInboundWebhook({
     channel,
     providerEventId: `sim_evt_${Date.now()}`,
     providerMessageId,
     senderRaw: finalSenderRaw,
-    projectId: projectId || 'prj_metro_01',
+    projectId: targetProjectId,
     messageText: messageText || 'Real-time test submission via field simulation',
     attachments: [
       {

@@ -25,8 +25,18 @@ import {
   History,
   Check,
   ChevronDown,
+  Lock,
+  Send,
+  XCircle,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { CivoraUser, Project, ProjectActivity, ProjectDepartment, ProjectStatus } from '@/types';
+import {
+  resolveApprovalStatus,
+  isProjectAdminApproved,
+  canProjectAcceptFieldSubmissions,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import {
   STAKEHOLDER_MILESTONES,
   STAKEHOLDER_UPDATES,
@@ -45,10 +55,12 @@ interface ProjectDetailViewProps {
 
 const ALLOWED_PROJECT_TRANSITIONS: Record<string, string[]> = {
   draft: ['setup', 'archived'],
+  pending_approval: ['draft', 'archived'],
   setup: ['active', 'on_hold', 'archived'],
   active: ['on_hold', 'completed'],
   on_hold: ['active', 'archived'],
   completed: ['archived'],
+  rejected: ['draft', 'archived'],
   archived: [],
   planning: ['setup', 'active', 'on_hold', 'archived'],
   in_review: ['active', 'completed', 'on_hold'],
@@ -76,6 +88,18 @@ export function ProjectDetailView({
   const [selectedTargetStatus, setSelectedTargetStatus] = useState<string>('');
   const [transitionReason, setTransitionReason] = useState<string>('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
+
+  // Admin Approval Submission state
+  const [isSubmittingForApproval, setIsSubmittingForApproval] = useState(false);
+
+  // Quick Field Submission modal state (gated until Admin approval + active)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [subTitle, setSubTitle] = useState('');
+  const [subDescription, setSubDescription] = useState('');
+  const [subLocation, setSubLocation] = useState('');
+  const [subChannel, setSubChannel] = useState<'portal' | 'whatsapp' | 'telegram'>('portal');
+  const [isSubmittingLog, setIsSubmittingLog] = useState(false);
+  const [subError, setSubError] = useState<string | null>(null);
 
   // New Department modal state
   const [showDeptModal, setShowDeptModal] = useState(false);
@@ -178,7 +202,8 @@ export function ProjectDetailView({
 
       setProject((prev) => ({
         ...prev,
-        status: selectedTargetStatus as ProjectStatus,
+        ...(data.project || {}),
+        status: (data.project?.status || selectedTargetStatus) as ProjectStatus,
       }));
       setShowTransitionModal(false);
       setTransitionReason('');
@@ -187,6 +212,74 @@ export function ProjectDetailView({
       setTransitionError(err.message || 'Status transition rejected.');
     } finally {
       setIsTransitioning(false);
+    }
+  };
+
+  // Handle Engineer Submission for Platform Administrator Approval
+  const handleSubmitForApproval = async () => {
+    setIsSubmittingForApproval(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/submit-for-approval`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: 'Submitted from Project Workspace for Platform Administrator review.',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit project for approval.');
+      }
+      setProject((prev) => ({
+        ...prev,
+        ...(data.project || {}),
+        status: 'pending_approval',
+        approvalStatus: 'pending_review',
+      }));
+      showToast('Project submitted to Platform Administrator for review and approval.');
+    } catch (err: any) {
+      showToast(err.message || 'Could not submit project for approval.');
+    } finally {
+      setIsSubmittingForApproval(false);
+    }
+  };
+
+  // Handle Logging a Field Submission (only unlocked after Admin approval)
+  const handleCreateFieldSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subTitle.trim()) return;
+    setIsSubmittingLog(true);
+    setSubError(null);
+    try {
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          title: subTitle.trim(),
+          description: subDescription.trim(),
+          location: subLocation.trim() || project.location,
+          sourceChannel: subChannel,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Field submission rejected.');
+      }
+      setProject((prev) => ({
+        ...prev,
+        submissionsCount: (prev.submissionsCount || 0) + 1,
+        pendingReviewsCount: (prev.pendingReviewsCount || 0) + 1,
+      }));
+      setShowSubmissionModal(false);
+      setSubTitle('');
+      setSubDescription('');
+      setSubLocation('');
+      showToast('Field submission recorded and queued for QA verification.');
+    } catch (err: any) {
+      setSubError(err.message || 'Failed to record field submission.');
+    } finally {
+      setIsSubmittingLog(false);
     }
   };
 
@@ -287,8 +380,19 @@ export function ProjectDetailView({
     }
   };
 
-  const allowedTransitions = ALLOWED_PROJECT_TRANSITIONS[project.status] || [];
   const isStakeholder = user.role === 'read_only_stakeholder';
+  const isPlatformAdmin = user.role === 'platform_admin';
+  const approvalStatus = resolveApprovalStatus(project);
+  const adminApproved = isProjectAdminApproved(project);
+  const canAcceptSubmissions = canProjectAcceptFieldSubmissions(project);
+  const submissionBlockReason = getProjectSubmissionBlockReason(project);
+
+  const rawAllowedTransitions = ALLOWED_PROJECT_TRANSITIONS[project.status] || [];
+  const allowedTransitions =
+    !isPlatformAdmin && !adminApproved
+      ? rawAllowedTransitions.filter((st) => st !== 'active')
+      : rawAllowedTransitions;
+
   const lastUpdate = projectUpdates.length > 0 ? projectUpdates[0].timestamp : 'Just now';
 
   // Status badge coloring
@@ -296,6 +400,10 @@ export function ProjectDetailView({
     switch (st) {
       case 'active':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'pending_approval':
+        return 'bg-amber-50 text-amber-800 border-amber-300';
+      case 'rejected':
+        return 'bg-rose-50 text-rose-700 border-rose-300';
       case 'setup':
       case 'planning':
         return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -309,6 +417,19 @@ export function ProjectDetailView({
         return 'bg-slate-200 text-slate-800 border-slate-400';
       default:
         return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
+  };
+
+  const getApprovalBadgeStyle = () => {
+    switch (approvalStatus) {
+      case 'approved':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'changes_requested':
+        return 'bg-amber-50 text-amber-800 border-amber-300';
+      case 'rejected':
+        return 'bg-rose-50 text-rose-700 border-rose-300';
+      default:
+        return 'bg-amber-50 text-amber-800 border-amber-300';
     }
   };
 
@@ -348,10 +469,18 @@ export function ProjectDetailView({
                   project.status
                 )}`}
               >
-                {project.status.replace('_', ' ')}
+                {project.status.replace(/_/g, ' ')}
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">
-                {isStakeholder ? 'Authorized Stakeholder Scope' : 'Phase 4 Engineering Control'}
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getApprovalBadgeStyle()}`}
+              >
+                {approvalStatus === 'approved'
+                  ? 'ADMIN APPROVED'
+                  : approvalStatus === 'changes_requested'
+                  ? 'CHANGES REQUESTED'
+                  : approvalStatus === 'rejected'
+                  ? 'REJECTED BY ADMIN'
+                  : 'PENDING ADMIN REVIEW'}
               </span>
 
               {/* Status Transition Button for Engineers/Admins */}
@@ -366,6 +495,50 @@ export function ProjectDetailView({
                 >
                   <span>Transition Status</span>
                   <ChevronDown className="w-3 h-3" />
+                </button>
+              )}
+
+              {/* Submit for Admin Approval Button for Engineers when Draft/Setup/Rejected/Changes Requested */}
+              {!isStakeholder && !adminApproved && project.status !== 'pending_approval' && (
+                <button
+                  type="button"
+                  disabled={isSubmittingForApproval}
+                  onClick={handleSubmitForApproval}
+                  className="px-3 py-0.5 rounded-full bg-[#001237] hover:bg-[#18243D] text-white text-[10px] font-bold transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                >
+                  <Send className="w-3 h-3 text-[#4FAAA7]" />
+                  <span>
+                    {isSubmittingForApproval
+                      ? 'Submitting...'
+                      : approvalStatus === 'changes_requested' || approvalStatus === 'rejected'
+                      ? 'Resubmit for Admin Approval'
+                      : 'Submit for Admin Approval'}
+                  </span>
+                </button>
+              )}
+
+              {/* Log Field Submission CTA (Locked until Admin Approval) */}
+              {!isStakeholder && (
+                <button
+                  type="button"
+                  disabled={!canAcceptSubmissions}
+                  title={submissionBlockReason || 'Log verified site/field submission'}
+                  onClick={() => {
+                    setSubError(null);
+                    setShowSubmissionModal(true);
+                  }}
+                  className={`px-3 py-0.5 rounded-full text-[10px] font-bold transition-colors flex items-center gap-1 ${
+                    canAcceptSubmissions
+                      ? 'bg-[#4FAAA7] hover:bg-[#3e8e8b] text-[#001237] cursor-pointer'
+                      : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  }`}
+                >
+                  {canAcceptSubmissions ? (
+                    <MessageSquarePlus className="w-3 h-3" />
+                  ) : (
+                    <Lock className="w-3 h-3" />
+                  )}
+                  <span>{canAcceptSubmissions ? 'Log Field Submission' : 'Field Submissions Locked'}</span>
                 </button>
               )}
             </div>
@@ -411,6 +584,81 @@ export function ProjectDetailView({
             </p>
           </div>
         </div>
+
+        {/* Platform Administrator Approval & Field Submission Governance Banner */}
+        {!canAcceptSubmissions ? (
+          <div
+            className={`rounded-xl p-3.5 border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+              approvalStatus === 'rejected' || project.status === 'rejected'
+                ? 'bg-rose-50 border-rose-200 text-rose-900'
+                : 'bg-amber-50 border-amber-200 text-amber-900'
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              {approvalStatus === 'rejected' || project.status === 'rejected' ? (
+                <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              ) : (
+                <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-0.5">
+                <span className="font-bold block">
+                  {approvalStatus === 'rejected' || project.status === 'rejected'
+                    ? 'Project Rejected — Field Submissions Locked'
+                    : approvalStatus === 'changes_requested'
+                    ? 'Administrator Requested Changes Before Approval'
+                    : adminApproved
+                    ? `Project Status '${project.status}' — Field Submissions Paused`
+                    : 'Awaiting Platform Administrator Review & Approval'}
+                </span>
+                <p className="text-[11px] opacity-90">
+                  {submissionBlockReason ||
+                    'Field submissions cannot begin until a Platform Administrator reviews and approves this project.'}
+                </p>
+                {project.reviewNotes && (
+                  <p className="text-[11px] font-medium pt-1">
+                    Admin Feedback: <span className="underline">{project.reviewNotes}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            {!isStakeholder && !adminApproved && project.status !== 'pending_approval' && (
+              <button
+                type="button"
+                disabled={isSubmittingForApproval}
+                onClick={handleSubmitForApproval}
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                <Send className="w-3.5 h-3.5 text-[#4FAAA7]" />
+                <span>
+                  {isSubmittingForApproval ? 'Submitting...' : 'Submit for Admin Approval'}
+                </span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl p-3 bg-emerald-50/70 border border-emerald-200 text-emerald-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>
+                <strong>Admin Approved:</strong> Field submissions are unlocked
+                {project.reviewedByName ? ` (reviewed by ${project.reviewedByName})` : ''}.
+              </span>
+            </div>
+            {!isStakeholder && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubError(null);
+                  setShowSubmissionModal(true);
+                }}
+                className="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5" />
+                <span>New Field Submission</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Navigation Tabs */}
         <div className="flex items-center gap-2 border-t border-slate-100 pt-3 overflow-x-auto no-scrollbar">
@@ -1292,6 +1540,107 @@ export function ProjectDetailView({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Field Submission Modal (Only accessible once Admin Approved & Active) */}
+      {showSubmissionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#001237]/60 backdrop-blur-xs animate-in fade-in">
+          <form
+            onSubmit={handleCreateFieldSubmission}
+            className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-[#001237] font-['Encode_Sans_Condensed',sans-serif]">
+                  Log Field Submission ({project.code})
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Admin approval verified &mdash; submit site inspection or break log.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSubmissionModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {subError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                <span>{subError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Submission Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CH 12+400 C35/45 Pour & Cylinder Break Log"
+                  value={subTitle}
+                  onChange={(e) => setSubTitle(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Channel</label>
+                <select
+                  value={subChannel}
+                  onChange={(e) => setSubChannel(e.target.value as 'portal' | 'whatsapp' | 'telegram')}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:border-[#001237] focus:outline-none"
+                >
+                  <option value="portal">Civora Web Portal</option>
+                  <option value="whatsapp">WhatsApp Business Bridge</option>
+                  <option value="telegram">Telegram Field Bot</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Zone / Chainage Location</label>
+                <input
+                  type="text"
+                  placeholder={project.location || 'e.g. Span 3 Pier 2'}
+                  value={subLocation}
+                  onChange={(e) => setSubLocation(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Field Observation / Test Results</label>
+                <textarea
+                  rows={3}
+                  placeholder="Record concrete slump, strength MPa, rebar checks, or inspection notes..."
+                  value={subDescription}
+                  onChange={(e) => setSubDescription(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-900 focus:border-[#001237] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowSubmissionModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingLog || !subTitle.trim()}
+                className="px-4 py-2 rounded-xl bg-[#001237] hover:bg-[#18243D] text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-60"
+              >
+                {isSubmittingLog ? 'Submitting...' : 'Submit Field Log'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

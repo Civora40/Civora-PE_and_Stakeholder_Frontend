@@ -21,8 +21,14 @@ import {
   Plus,
   MapPin,
   Calendar,
+  Lock,
 } from 'lucide-react';
 import { CivoraUser, Project, Submission, Personnel, Report } from '@/types';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectStatusBadgeInfo,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import {
   DEMO_PROJECTS,
   DEMO_SUBMISSIONS,
@@ -560,6 +566,26 @@ export function ProjectMonitoringFolders({
                 </span>
               </div>
 
+              {!canProjectAcceptFieldSubmissions(activeProject) && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900 flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block">Field Submissions Locked</span>
+                      <span className="text-[11px] opacity-90">
+                        {getProjectSubmissionBlockReason(activeProject)}
+                      </span>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/dashboard/projects/${activeProject.id}`}
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-[#001237] text-white text-[11px] font-bold hover:bg-[#18243D] transition-colors"
+                  >
+                    Manage Approval
+                  </Link>
+                </div>
+              )}
+
               {projectSubmissions.length === 0 ? (
                 <div className="rounded-2xl bg-white border border-slate-200/80 p-10 text-center text-slate-500 text-xs shadow-xs">
                   No submissions recorded for {activeProject.code} yet.
@@ -804,10 +830,10 @@ export function ProjectMonitoringFolders({
                           </h3>
                         </div>
                         <Badge
-                          variant={project.status === 'active' ? 'teal' : 'slate'}
+                          variant={getProjectStatusBadgeInfo(project).variant}
                           size="sm"
                         >
-                          {project.status.toUpperCase()}
+                          {getProjectStatusBadgeInfo(project).label}
                         </Badge>
                       </div>
 

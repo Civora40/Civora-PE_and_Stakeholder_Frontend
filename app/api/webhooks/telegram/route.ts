@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DEMO_PROJECTS } from '@/lib/mock-data/fixtures';
+import {
+  canProjectAcceptFieldSubmissions,
+  getProjectSubmissionBlockReason,
+} from '@/lib/projects/governance';
 import { processInboundWebhook } from '@/lib/services/ingestion';
 
 /**
@@ -54,6 +59,21 @@ export async function POST(req: NextRequest) {
 
     // Direct normalized ingestion simulation payload
     if (body.providerMessageId && body.senderRaw) {
+      if (body.projectId) {
+        const matched = DEMO_PROJECTS.find((p) => p.id === body.projectId);
+        if (matched && !canProjectAcceptFieldSubmissions(matched)) {
+          return NextResponse.json(
+            {
+              error:
+                getProjectSubmissionBlockReason(matched) ||
+                'Field submissions are locked until Platform Administrator approval.',
+              code: 'project_approval_required',
+            },
+            { status: 403 }
+          );
+        }
+      }
+
       const result = processInboundWebhook({
         channel: 'telegram',
         providerEventId: body.providerEventId || `evt_${Date.now()}`,

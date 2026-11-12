@@ -66,3 +66,4 @@ export async function PATCH(
 
   return NextResponse.json({ success: true, message: 'Project updated in local session.' });
 }
+
