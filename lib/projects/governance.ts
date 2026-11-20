@@ -98,3 +98,4 @@ export function getProjectStatusBadgeInfo(project: Partial<Project>): {
       return { label: String(project.status || 'UNKNOWN').replace(/_/g, ' ').toUpperCase(), variant: 'slate' };
   }
 }
+
